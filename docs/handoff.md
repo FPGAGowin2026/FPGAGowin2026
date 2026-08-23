@@ -73,25 +73,27 @@ Jetson 协同模式：
 - 已建立 `ros_ws/src/robot` 和 `ros_ws/src/external`；`external` 当前为空，系统依赖优先使用 ROS 2 Humble 已安装包。
 - `fpga_gateway` 已作为独立私有仓库发布，包含 C++17 固定二进制协议、POSIX UDP 网关、主机侧 `fake_fpga_node` 和 4 项 GTest。
 - `robot_bringup` 已作为独立私有仓库发布，包含仿真与硬件两套 launch、集中 YAML 参数，以及一项自动化 ROS 主机闭环 launch 测试；`robot_navigation` 和 `vision_bridge` 尚未开始实施。
-- 父仓库不重复保存这两个包的源码；运行 `Scripts/sync_ros_packages.sh` 可将它们首次克隆或快进更新到 `ros_ws/src/robot/`。
+- `fpga_rtl` 已作为独立私有仓库发布，包含 Verilog-2001 模式仲裁器和一项自检 testbench；运行 `Scripts/sync_fpga_workspace.sh` 可将其首次克隆或快进更新到 `FPGA_ws/`。
+- 父仓库不重复保存三个独立仓库的源码；运行 `Scripts/sync_ros_packages.sh` 可将两个 ROS 2 包首次克隆或快进更新到 `ros_ws/src/robot/`。
 - 协议源文件为 [`udp_protocol.md`](./udp_protocol.md)，当前只定义控制、综合遥测和状态三类报文，不含参数或轨迹段上传。
+- `FPGA_ws` 当前是 `fpga_rtl` 的独立检出。模式仲裁器验证覆盖 15 项模式隔离与安全置零检查，但尚未接入 ACG720 顶层工程。
 - `build/`、`install/`、`log/`、Python 缓存和两个独立包目录已由 `ros_ws/.gitignore` 排除，不进入父仓库提交。
 - 已只读检查 ACG720 官方例程包目录，确认存在 DDR3、OV5640→HDMI、UDP 收发、RGMII 回环和 OV5640→UDP 工程；661 MB 临时下载包已清理，例程源码未导入仓库。
 - 从两个独立仓库的干净克隆联合验证通过：两个包的 `colcon build`、4/4 协议 GTest，以及一项自动化 launch 测试。launch 测试覆盖约 100 Hz 遥测、速度命令、200 ms 命令超时归零、软件急停、急停释放后的安全保持与恢复、模拟 FPGA 进程退出后的断链诊断。
 - launch 测试使用独立 ROS domain 和 Fast DDS 同机共享内存传输，只用于隔离主机测试环境，不是实机部署配置，也不证明以太网链路行为。
 - 当前系统未安装 `robot_localization`、`slam_toolbox` 和 `nav2_bringup`，因此没有创建无法构建和运行的导航配置占位包。
-- 尚无 FPGA RTL、约束或 HDL 仿真；尚未运行综合、布线、FPGA 实板 UDP、电机、实车、SLAM、Nav2 或 AI 验证。主机侧仿真结果不得表述为 FPGA 看门狗、PWM 关闭或实车安全证明。
+- 除独立模式仲裁器外，尚无 FPGA 顶层、网络、电机或传感器 RTL 和板卡约束；尚未运行综合、布线、FPGA 实板 UDP、电机、实车、SLAM、Nav2 或 AI 验证。HDL 与主机侧仿真结果不得表述为 FPGA 看门狗、PWM 关闭或实车安全证明。
 
 ## 6. 下一步
 
-ROS 主机通信基线和自动回归闭环已经完成。本轮按当前决定暂不实现 FPGA 模式仲裁器；也不提前创建无法运行的导航或视觉占位配置。
+ROS 主机通信基线、自动回归闭环和独立模式仲裁器 HDL 基线已经完成。仲裁器会在真实顶层接口确定后再做同步、停止判定、综合和实板集成；不提前创建无法运行的导航或视觉占位配置。
 
 可以独立推进的后续工作分为两条，但每次仍应只选择一个最小闭环：
 
 1. **FPGA 网络基线**：跑通 ACG720 官方 UDP 回环、ARP 和 Ping；之后在电机禁用状态下，按 [`udp_protocol.md`](./udp_protocol.md) 的黄金报文完成 FPGA—ROS 实板联调。
 2. **ROS 导航准备**：先安装并确认 `robot_localization`、`slam_toolbox` 和 Nav2 的 Humble 系统包，再根据真实 IMU、激光雷达、轮式里程计话题和 TF 约定创建 `robot_navigation`。依赖和传感器接口未确认前不写占位配置。
 
-FPGA 模式仲裁器仍是进入电机控制前必须补齐的安全门槛，只是按当前决定延期，不能因本轮 ROS 主机测试通过而跳过。
+进入电机控制前，必须先把模式仲裁器接入真实顶层，并完成 Gowin 综合和实板安全验证；独立模块仿真通过不能替代这道门槛。
 
 ## 7. 未决项
 
@@ -106,7 +108,7 @@ FPGA 模式仲裁器仍是进入电机控制前必须补齐的安全门槛，只
 
 ## 8. 安全与实施边界
 
-- 未完成仲裁、急停、限幅和看门狗验证前，不得在车轮接地状态下启用电机。
+- 未完成仲裁器顶层集成以及急停、限幅和看门狗验证前，不得在车轮接地状态下启用电机。
 - 实车首次闭环测试必须架空车轮并保证物理急停可直接切断驱动使能。
 - 不从零重写通用网络栈，优先复用 ACG720 官方 RGMII/GMII、ARP、IPv4 和 UDP 模块。
 - 不在首版引入 FPGA 内 SLAM、Nav2、DDS、micro-ROS、TCP、DHCP 或未证明必要的 PicoRV32。
