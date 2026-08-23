@@ -1,0 +1,9 @@
+build/
+install/
+log/
+**/__pycache__/
+*.py[cod]
+
+# ROS 2 功能包由独立仓库维护，通过 Scripts/sync_ros_packages.sh 拉取。
+src/robot/fpga_gateway/
+src/robot/robot_bringup/
