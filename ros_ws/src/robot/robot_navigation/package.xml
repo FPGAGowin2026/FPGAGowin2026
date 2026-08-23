@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>robot_navigation</name>
+  <version>0.1.0</version>
+  <description>差速机器人融合、SLAM、Nav2 与主机侧激光仿真。</description>
+  <maintainer email="aa@example.com">aa</maintainer>
+  <license>Apache-2.0</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <exec_depend>ament_index_python</exec_depend>
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+  <exec_depend>nav2_bringup</exec_depend>
+  <depend>nav_msgs</depend>
+  <depend>rclcpp</depend>
+  <exec_depend>robot_bringup</exec_depend>
+  <exec_depend>robot_localization</exec_depend>
+  <depend>sensor_msgs</depend>
+  <exec_depend>slam_toolbox</exec_depend>
+  <exec_depend>tf2_ros</exec_depend>
+
+  <test_depend>ament_cmake_gtest</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

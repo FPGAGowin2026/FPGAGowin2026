@@ -1,6 +1,6 @@
 # FPGAGowin2026
 
-本仓库保存 FPGAGowin2026 项目的总体方案、接口文档以及 FPGA 和 ROS 2 工作区入口。功能源码使用独立仓库维护，不在本仓库重复提交。
+本仓库保存 FPGAGowin2026 项目的总体方案、接口文档以及 FPGA 和 ROS 2 工作区入口。已发布的 FPGA、网关与 bringup 源码使用独立仓库维护；尚在快速迭代的导航、视觉和任务包暂由本仓库直接维护。自研运行时节点统一使用 C++17 与 `rclcpp`，Python 只保留给 ROS 2 launch。
 
 ## 独立仓库
 
@@ -34,17 +34,42 @@ vvp /tmp/tb_motion_mode_arbiter
 
 ## ROS 2 构建与测试
 
-环境要求为 Linux、ROS 2 Humble、`colcon` 和包清单中声明的依赖。
+环境要求为 Ubuntu 22.04、ROS 2 Humble 和 `colcon`。导航依赖安装到工作区的 `ros_ws/src/external/ros_humble_overlay`，不需要修改系统 ROS：
+
+```bash
+./Scripts/install_ros_dependencies.sh
+```
 
 ```bash
 source /opt/ros/humble/setup.bash
+source Scripts/setup_ros_dependencies.bash
 cd ros_ws
-rosdep install --from-paths src --ignore-src -r -y
+rosdep install --from-paths src --ignore-src -r -y \
+  --skip-keys="robot_localization slam_toolbox nav2_bringup"
 colcon build --symlink-install
 source install/setup.bash
-colcon test --packages-select fpga_gateway robot_bringup
+colcon test --packages-select \
+  fpga_gateway robot_bringup robot_navigation vision_bridge mission_control
 colcon test-result --verbose
 ```
+
+无实物时可启动完整主机仿真：
+
+```bash
+ros2 launch mission_control simulation.launch.py
+```
+
+该入口依次运行本机 UDP 网关、轮式里程计与 IMU 融合、矩形场景激光、在线 SLAM、Nav2、合成相机、红色目标识别和任务状态机。任务状态应经过 `WAITING_NAV → NAVIGATING → SEARCHING → TRACKING → COMPLETE`。
+
+实机建图使用：
+
+```bash
+ros2 launch robot_navigation mapping.launch.py \
+  imu_x:=0.0 imu_y:=0.0 imu_z:=0.0 \
+  laser_x:=0.0 laser_y:=0.0 laser_z:=0.0 laser_yaw:=0.0
+```
+
+上面的零外参只适合主机仿真；实机必须替换成实际测量值，并保证真实激光发布 `/scan`、相机发布 `/camera/image_raw`。
 
 ## 仓库结构
 
@@ -54,7 +79,14 @@ FPGAGowin2026/
 ├── Scripts/                   # 工作区辅助脚本
 ├── docs/                      # 总体方案、交接记录和 UDP 协议
 └── ros_ws/
-    └── src/robot/             # 同步脚本拉取独立 ROS 2 功能包的位置
+    └── src/
+        ├── external/          # 本地 ROS 依赖覆盖层，整体忽略、不上传
+        └── robot/
+            ├── fpga_gateway       # 独立仓库：UDP 网关与 FPGA 模拟器
+            ├── robot_bringup      # 独立仓库：通信启动与闭环测试
+            ├── robot_navigation   # 本仓库 C++：融合、SLAM、Nav2 与激光仿真
+            ├── vision_bridge      # 本仓库 C++：单目标观测与合成相机
+            └── mission_control    # 本仓库 C++：搜索、对准、接近、停车任务
 ```
 
-当前自动化验证仅覆盖模式仲裁器 HDL 仿真、ROS 主机编译、协议单元测试和本机 UDP 闭环，不代表 FPGA 综合、实板、RGMII 时序、电机或实车验证。当前状态和下一步门禁见 [`docs/handoff.md`](docs/handoff.md)。
+当前自动化与主机仿真验证覆盖模式仲裁器 HDL、ROS 构建、协议测试、本机 UDP、融合、SLAM、Nav2 和红色目标任务闭环。红色阈值识别是可替换的算法基线，不是 TensorRT/神经网络性能证明；所有主机结果也不代表 FPGA 综合、实板、RGMII 时序、电机、真实传感器或实车验证。当前状态和下一步门禁见 [`docs/handoff.md`](docs/handoff.md)。

@@ -78,7 +78,8 @@ CRC16-CCITT-FALSE 参数：多项式 `0x1021`、初值 `0xffff`、不反射输�
 
 ## 当前实现与验证状态
 
-- C++17 实现在 `ros_ws/src/robot/fpga_gateway`，逐字段编解码，不直接复制结构体内存。
+- C++17 实现在独立 [`fpga_gateway`](https://github.com/FPGAGowin2026/fpga_gateway) 仓库；同步后的本地路径为 `ros_ws/src/robot/fpga_gateway`，逐字段编解码，不直接复制结构体内存。
 - 4 项 GTest 覆盖黄金向量、三类报文往返、CRC/头部/长度拒绝和序号回绕，当前全部通过。
 - `fake_fpga_node` 与 `fpga_gateway_node` 的本机 UDP 闭环达到约 100 Hz，并已验证速度命令、超时归零、软件急停和断链诊断。
+- [`fpga_rtl`](https://github.com/FPGAGowin2026/fpga_rtl) 当前工作区已有官方通用 RGMII/IPv4/UDP 回环 RTL 和自检 testbench，但尚未实现本文定义的应用层报文解析、CRC16-CCITT、序号检查、频率控制或遥测发送；坏 FCS 拒绝路径仍未闭环，也没有实板证据。
 - 尚未与 ACG720 实板通信；当前结果不能证明 RGMII 时序、FPGA CRC 实现、PHY 断链看门狗或 PWM 关闭。
