@@ -51,7 +51,24 @@ CRC16-CCITT-FALSE 参数：多项式 `0x1021`、初值 `0xffff`、不反射输�
 | range_front_mm, range_left_mm, range_right_mm | uint16 | mm |
 | status_bits | uint32 | 位状态 |
 
-`status_bits` 的位分配尚未冻结，当前主机模拟器发送 `0`；必须在 FPGA 传感器有效性和看门狗状态定义完成后再固化。
+`status_bits` 在机器人网络 RTL 中冻结如下；位 `14..31` 保留为 `0`：
+
+| 位 | 名称 | 置位条件 |
+|---:|---|---|
+| 0 | active_mode | `1` Jetson 协同模式，`0` FPGA 独立模式 |
+| 1 | motion_enabled | 最终逻辑运动输出已使能 |
+| 2 | physical_estop | 物理急停输入有效 |
+| 3 | software_estop | 最近合法 Control 的软件急停有效 |
+| 4 | safety_stop | 测距安全层要求停车 |
+| 5 | control_command_active | Control 看门狗内存在有效 Jetson 命令 |
+| 6 | ranges_valid | 三路测距当前均有效 |
+| 7 | path_active | FPGA 独立路径正在运行 |
+| 8 | path_finished | FPGA 独立路径已完成 |
+| 9 | avoidance_active | 局部绕障状态机有效 |
+| 10 | switch_pending | 模式切换等待停车或零输出保护 |
+| 11 | critical_fault | 严重故障输入有效 |
+| 12 | rx_control_fifo_full | 网络域到系统域 Control FIFO 满，经系统域同步 |
+| 13 | tx_frame_fifo_full | 系统域到网络域返回报文 FIFO 满 |
 
 ### Status（类型 3，payload 16 字节）
 
@@ -65,9 +82,26 @@ CRC16-CCITT-FALSE 参数：多项式 `0x1021`、初值 `0xffff`、不反射输�
 | uptime_ms | uint32 | FPGA 上电毫秒数 |
 | last_control_sequence | uint32 | 最近一次已接受的控制序号 |
 
-`fault_bits` 的位分配同样尚未冻结。未知位应保留并上报，不用于主机侧自动恢复。
+`fault_bits` 在机器人网络 RTL 中冻结如下；位 `6..31` 保留为 `0`。锁存位只用于报告和安全诊断，不授权主机自动恢复：
+
+| 位 | 名称 | 语义与清除条件 |
+|---:|---|---|
+| 0 | critical_fault | 严重故障输入的当前电平 |
+| 1 | control_timeout | Control 看门狗曾超时；下一合法 Control 或复位清除 |
+| 2 | imu_sample_error | IMU 原子样本曾不完整；复位清除 |
+| 3 | ranges_invalid | 三路测距任一路当前无效 |
+| 4 | rx_overflow | Control CDC FIFO 或辅助报文提交曾溢出；复位清除 |
+| 5 | tx_backpressure | Telemetry/Status CDC FIFO 曾满；复位清除 |
 
 初始端口分配：Jetson 到 FPGA 控制端口 `5000`，FPGA 到 Jetson 遥测/状态端口 `5001`。控制与遥测目标频率均为 100 Hz，状态目标频率为 10 Hz；图像使用独立端口和 FIFO，不得阻塞控制链路。
+
+当前 RTL 的 Telemetry 和 Status 分别按系统时钟参数调度为 100 Hz 与 10 Hz；接受首个合法 Control 后还会各挂起一帧，便于尽快建立返回路径。挂起标志会在拥塞时合并周期事件，不累积无界队列；Status 在两者同时挂起时优先编码。当前 IPv4/UDP 发送端使用 UDP checksum `0`，接收端接受 `0` 或校验正确的非零 checksum，均符合 IPv4 UDP 规则。
+
+### 最小以太网控制面
+
+- Control 只接受目标 MAC、目标 IPv4 和 UDP 端口均匹配的 IPv4 IHL=5、非分片报文，并检查以太网 FCS、IPv4 header checksum、UDP 长度与可选 UDP checksum。
+- ARP responder 只处理以本机 IPv4 为目标的 Ethernet/IPv4 ARP Request。帧字段和发送边界参考官方第 52 章资料；项目只实现固定 responder，不扩展为通用 ARP cache。
+- ICMP 只处理发往本机、IHL=5、非分片且 checksum 正确的 Echo Request，最多回显 64 字节 ICMP 报文。该最小 Echo Reply 是项目 RTL，不属于官方第 58 章 Ping 例程。
 
 ## 主机侧安全行为
 
@@ -81,5 +115,11 @@ CRC16-CCITT-FALSE 参数：多项式 `0x1021`、初值 `0xffff`、不反射输�
 - C++17 实现在独立 [`fpga_gateway`](https://github.com/FPGAGowin2026/fpga_gateway) 仓库；同步后的本地路径为 `ros_ws/src/robot/fpga_gateway`，逐字段编解码，不直接复制结构体内存。
 - 4 项 GTest 覆盖黄金向量、三类报文往返、CRC/头部/长度拒绝和序号回绕，当前全部通过。
 - `fake_fpga_node` 与 `fpga_gateway_node` 的本机 UDP 闭环达到约 100 Hz，并已验证速度命令、超时归零、软件急停和断链诊断。
-- [`fpga_rtl`](https://github.com/FPGAGowin2026/fpga_rtl) 当前工作区已有官方通用 RGMII/IPv4/UDP 回环 RTL 和自检 testbench，但尚未实现本文定义的应用层报文解析、CRC16-CCITT、序号检查、频率控制或遥测发送；坏 FCS 拒绝路径仍未闭环，也没有实板证据。
-- 尚未与 ACG720 实板通信；当前结果不能证明 RGMII 时序、FPGA CRC 实现、PHY 断链看门狗或 PWM 关闭。
+- `fpga_rtl` `main` 提交 `7922400` 已实现 Control 固定 31 字节解析、CRC16-CCITT-FALSE、头部/长度拒绝、重复/倒序检查和 `0xffffffff → 0` 回绕；模块级 10 项自检覆盖黄金向量、应用 CRC、以太网错误、错误版本、30/32 字节异常长度、重复序号和回绕。
+- 系统骨架的控制看门狗在物理急停、严重故障或离开 Jetson 模式时清除缓存速度；条件解除后必须接收新的合法 Control 报文才能恢复协同运动。
+- Telemetry 固定 72 字节和 Status 固定 38 字节编码均已接入 UDP/IPv4/以太网发送顶层；端到端 testbench 对返回字段、IPv4 checksum、应用 CRC16 和 FCS 做字节级检查，并验证 100 Hz/10 Hz 调度与发送 FIFO 背压。
+- 两个时钟域使用深度 4 的整记录异步 FIFO；Control 只有在 FCS 与网络层检查完成后才提交，返回报文在应用编码完成后才提交。复位异步置位、分别在网络域和系统域两拍同步释放。
+- 官方通用 RGMII/IPv4/UDP 回环已使用帧感知缓存完成坏 FCS 原子拒绝；自检还注入描述符 FIFO Full，断言负载写指针回滚，并用不同负载验证拒绝帧不会污染下一合法帧。真实 FIFO 填满时的读写竞争仍待器件/板级验证。
+- `tb_robot_network_e2e` 以不同频率和相位的网络/系统时钟完成 72 项检查，覆盖连续 ICMP、各层错误拒绝、合法 Control 进入 `robot_rtl_core`、Telemetry/Status 返回、序号、FIFO 满、测距减速/停车、看门狗、急停、严重故障和复位。
+- 独立 `tb_async_frame_fifo` 以不同频率、相位和复位时刻完成 23 项检查，覆盖 Gray 指针单比特变化、满/空、整记录顺序、溢出拒绝与复位恢复。
+- 以上协议行为均通过 Icarus RTL 功能仿真；14-I/O 离线 wrapper 的内部时钟 P&R/STA 也达到 125 MHz 网络目标且 setup/hold 违规为 0。但该 wrapper 使用安全常量和离线 `/2` 系统时钟，且未约束未知 PHY/PCB I/O 延迟，因此仍不能证明 RGMII 板级时序、PHY 断链看门狗、真实传感器单位换算或物理 PWM 关闭。

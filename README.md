@@ -21,16 +21,17 @@ cd FPGAGowin2026
 
 ## FPGA 仿真
 
-安装 Icarus Verilog 后运行：
+安装 Icarus Verilog 后运行全部 FPGA RTL 自检：
 
 ```bash
-cd FPGA_ws
-iverilog -g2012 -s tb_motion_mode_arbiter \
-  -o /tmp/tb_motion_mode_arbiter \
-  src/motion_mode_arbiter.v \
-  sim/tb_motion_mode_arbiter.sv
-vvp /tmp/tb_motion_mode_arbiter
+./FPGA_ws/Scripts/run_all_sim.sh
 ```
+
+当前包含 10 个 RTL 功能入口和 1 个 Gowin PLL/RGMII 板级展开检查，覆盖官方 UDP 回环坏 FCS 原子拒绝、完整机器人网络 Control/Telemetry/Status、ARP/ICMP、双时钟 CDC、摄像头/IMU/三路测距、差速电机、局部绕障、独立路径、模式仲裁和系统级组合闭环。具体运行边界见 [`FPGA_ws/README.md`](FPGA_ws/README.md)。
+
+## Gowin EDA
+
+本机商业版 `Gowin_V1.9.12.03` 和 License 保存在被 Git 忽略的 `GoWin/` 目录。2026-08-24 已确认 `gwlicense.ini` 指向本地 License，且 `gw_sh` 完成官方 UDP 回环、机器人逻辑集成顶层和 14-I/O 离线 wrapper 的综合；离线 wrapper 还完成布局布线、STA、码流与功耗报告。真实 PLL 相位下内部网络域 Fmax 为 129.443 MHz，setup/hold 违规均为 0。该 wrapper 只使用官方 RGMII/复位管脚并把未知硬件输入固定为失效安全值，系统域时钟也是离线专用的 RGMII `/2` 分频；尚无 PHY/PCB I/O 延迟、真实系统时钟、完整板级 I/O 或实板证据。入口和证据边界见 [`FPGA_ws/README.md`](FPGA_ws/README.md#acg720-gowin-工程)。
 
 ## ROS 2 构建与测试
 
@@ -89,4 +90,4 @@ FPGAGowin2026/
             └── mission_control    # 本仓库 C++：搜索、对准、接近、停车任务
 ```
 
-当前自动化与主机仿真验证覆盖模式仲裁器 HDL、ROS 构建、协议测试、本机 UDP、融合、SLAM、Nav2 和红色目标任务闭环。红色阈值识别是可替换的算法基线，不是 TensorRT/神经网络性能证明；所有主机结果也不代表 FPGA 综合、实板、RGMII 时序、电机、真实传感器或实车验证。当前状态和下一步门禁见 [`docs/handoff.md`](docs/handoff.md)。
+当前自动化与主机仿真验证覆盖 FPGA 协议、传感器前端、电机控制、绕障、独立路径、模式仲裁，以及 ROS 构建、本机 UDP、融合、SLAM、Nav2 和红色目标任务闭环。红色阈值识别是可替换的算法基线，不是 TensorRT/神经网络性能证明；Gowin 离线实现现已提供内部时钟布局布线与 STA 证据，但仍不代表 PHY/PCB I/O 时序、真实电机/传感器或实车验证。当前状态和下一步门禁见 [`docs/handoff.md`](docs/handoff.md)。
