@@ -1,0 +1,29 @@
+D:/work/waresoft/Gowin1.9.11/workspace/ADC_test/src/adc128s102.v {1 {vlog -work work -vopt -stats=none D:/work/waresoft/Gowin1.9.11/workspace/ADC_test/src/adc128s102.v
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module adc128s102
+
+Top level modules:
+	adc128s102
+
+} {} {}} D:/work/waresoft/Gowin1.9.11/workspace/ADC_test/src/tlv5618.v {1 {vlog -work work -vopt -stats=none D:/work/waresoft/Gowin1.9.11/workspace/ADC_test/src/tlv5618.v
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module tlv5618
+
+Top level modules:
+	tlv5618
+
+} {} {}} D:/work/waresoft/Gowin1.9.11/workspace/ADC_test/src/adc128s022_tb.v {1 {vlog -work work -vopt -stats=none D:/work/waresoft/Gowin1.9.11/workspace/ADC_test/src/adc128s022_tb.v
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module adc128s022_tb
+
+Top level modules:
+	adc128s022_tb
+
+} {} {}} D:/work/waresoft/Gowin1.9.11/workspace/ADC_test/src/ADC_test.v {1 {vlog -work work -vopt -stats=none D:/work/waresoft/Gowin1.9.11/workspace/ADC_test/src/ADC_test.v
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module ADC_test
+
+Top level modules:
+	ADC_test
+
+} {} {}}

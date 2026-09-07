@@ -1,0 +1,382 @@
+                     小梅哥 FPGA 团队                        武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                          开发板 培训 项目研发三位一体
+
+
+
+
+        68 USB2.0 接口 FPGA 控制 Stream_In 测试
+ 工程源码                |----02_设计实例
+                     |-------- ch68_FX2_Stream_IN.rar
+ 相关视频课程              无
+ 说明                  无
+
+      章节导读
+
+      本章我们将讲解基于 SlaveFIFO 接口的 Stream_In 数据传入测试应用，也就是使用
+FPGA 设计 SlaveFIFO 写入接口逻辑，将 FPGA 中的数据写入到 FX2 芯片的端点 6 中，然后由
+PC 上位机将端点 6 的数据读到 PC 中，进行相应的存储或者处理。该应用主要用于 FPGA 传
+输数据给 PC，例如典型的图像采集系统，高速模拟/数字信号采集系统等。
+
+
+68.1 FX2_Stream_IN 代码设计
+      FX2 的 Stream_IN 模式主要用于实现 FPGA 通过 FX2 芯片发送数据给 FPGA，实现一
+些常见的输入型应用，例如 FPGA 实时采集 ADC 数据，然后经由 FX2 发送到 PC，再由 PC
+进一步处理，或者 FPGA 接收摄像头数据，经由 FX2 传给 PC，由 PC 进行图像显示等。
+FX2_Stream_IN 模块的接口图如下图 68-1 所示。
+
+                                                                  [1:0]fx2_faddr
+                     reset_n
+                                                                     fx2_sloe
+                    fx2_flagb
+                                                                     fx2_slwr
+                    fx2_flagc
+                                       FX2_Stream_IN                 fx2_slrd
+                    fx2_ifclk
+                                                                   fx2_pkt_end
+                    fx2_clear
+                                                                  [15:0]fx2_fdata
+
+
+                                     图 68-1 FX2_Stream_IN 模块接口图
+
+
+      模块的接口说明如下表 68-1 所示。
+                                   表 68-1 FX2_Stream_IN 模块接口说明表
+
+        信号名称              I/O   信号意义
+        reset_n           I     复位信号，低电平有效
+        fx2_flagb         I     FX2 型 USB2.0 芯片的端点 2 空标志
+        fx2_flagc         I     FX2 型 USB2.0 芯片的端点 6 满标志
+        fx2_ifclk         I     FX2 型 USB2.0 芯片的接口时钟信号
+
+店铺：https://xiaomeige.taobao.com                                官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                         技术群组：
+                    小梅哥 FPGA 团队                       武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                        开发板 培训 项目研发三位一体
+
+        fx2_fdata[15:0]   O    FX2 型 USB2.0 芯片的 SlaveFIFO 的数据线
+        fx2_faddr[1:0]    O    FX2 型 USB2.0 芯片的 SlaveFIFO 的 FIFO 地址线
+        fx2_sloe          O    FX2 型 USB2.0 芯片的 SlaveFIFO 的输出使能信号，低电平有效
+        fx2_slwr          O    FX2 型 USB2.0 芯片的 SlaveFIFO 的写控制信号，低电平有效
+        fx2_slrd          O    FX2 型 USB2.0 芯片的 SlaveFIFO 的读控制信号，低电平有效
+        fx2_clear         O    FX2 型 USB2.0 芯片的清除信号
+        fx2_pkt_end       O    数据包结束标志信号
+
+    FX2_Stream_IN 模块功能的实现：FPGA 监控端点 6 的满标志（fx2_flagc）
+                                                    ，当 fx2_flagc
+为高电平的时候，FPGA 会连续将数据写入到端点 6 的 FIFO 内，当 fx2_flagc 为低电平，也
+就是端点 6 的 FIFO 写满之后，FPGA 将暂停写操作。
+
+    本次设计我们可以通过状态机的方式实现 FX2 的 Stream_IN 模式的功能，定义状态如
+下所示，分别是空闲状态和写状态。
+      parameter stream_in_idle              = 1'b0;
+      parameter stream_in_write             = 1'b1;
+    状态转移图如下图 68-2 所示，下面我们对每个状态的代码设计和功能进行说明。
+
+                                               fx2_flagc == 1
+
+
+
+
+                      stream_in_idle                            stream_in_write
+                        slwr_n = 1                                 slwr_n = 0
+                        slrd_n = 1                                 slrd_n = 1
+                        sloe_n = 1                                 sloe_n = 1
+                      fx2_faddr = 10                             fx2_faddr = 10
+
+
+
+
+                                              fx2_flagc == 0
+
+                                       图 68-2 FX2_Stream_IN 状态转移图
+
+
+               1.stream_in_idle 状态
+    stream_in_idle是指 slwr_n 处在高电平时的闲置状态，只要端点 6 的满标志（fx2_flagc）
+        ，则状态会处于 stream_in_idle 状态。slwr_n 信号产生的代码如下所示：
+为低电平（被激活）
+     //write control signal generation
+     always@(*)begin
+         if((current_stream_in_state==stream_in_write)&(fx2_flagc ==
+ 1'b1))
+             slwr_n <= 1'b0;
+         else
+             slwr_n <= 1'b1;
+     end
+    在 fx2_flagc 变成高电平的时候，代表此时端点 6 的 FIFO 还未写满，可以向 FIFO 中写
+
+店铺：https://xiaomeige.taobao.com                                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                          技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+
+入数据，状态机将从 stream_in_idle 状态跳转至 stream_in_write 状态，代码如下所示：
+      stream_in_idle:begin
+          if(fx2_flagc == 1'b1)
+              next_stream_in_state = stream_in_write;
+          else
+              next_stream_in_state = stream_in_idle;
+      end
+             2.stream_in_write 状态
+    在 stream_in_write 状态中，将会激活 slwr_n 信号，FPGA 将会持续向端点 6 的 FIFO 中
+写入数据，在 fx2_flagc 变成低电平的时候（FIFO 被写满）
+                                  ，状态机将返回到 stream_in_idle
+
+状态，代码如下所示：
+      stream_in_write:begin
+          if(fx2_flagc == 1'b0)
+              next_stream_in_state = stream_in_idle;
+          else
+              next_stream_in_state = stream_in_write;
+      end
+    通过上述讲解，完成了状态机的代码设计，接下来产生需要传送的数据，当 slwr_n 被
+激活的时候（低电平），产生从 0 开始一次增加 1 的数据 data_out1，代码如下所示：
+      //data generator counter
+      always@(posedge fx2_ifclk, negedge reset_n)begin
+          if(reset_n == 1'b0)
+              data_out1 <= 16'd0;
+          else if(slwr_n == 1'b0)
+              data_out1 <= data_out1 + 16'd1;
+      end
+    我们得到 16 位的 data_out1 之后，将其赋值给 fx2_fdata 便可以实现通过 USB 传送数据，
+但是 USB 在传送的时候是按字节进行的，如果传输 16 位的数据，将会先传送低字节然后
+传送高字节的数据，例如，如果 data_out1 递增至 0x01A8，USB 将会依次传输 0xA8 0x01，
+通 过 上 位 机 观 察 到的 数据 就 是 A8 01， 这 样不方 便 观 察 数 据 内 容， 我们 可 以 通 过 将
+data_out1 的高低字节进行转换解决该问题，使上位机显示的数据和 data_out1 一致，这样在
+进行传输时，上位机显示的数据就是 01 A8，代码如下所示：
+      assign fx2_fdata[15:0] = {data_out1[7:0],data_out1[15:8]};
+    通过上述描述，完成了对 FX2_Stream_IN 的代码设计，完整的代码请自行查看对应的
+工程文件，下面我们将进行板级验证。
+
+
+68.2 板级验证
+     经过以上工作，代码设计部分的任务已经全部完成，接下来将进行板级验证，读者将
+店铺：https://xiaomeige.taobao.com                         官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                  技术群组：
+                 小梅哥 FPGA 团队                    武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                 开发板 培训 项目研发三位一体
+
+
+USB 线、下载器、电源线依次连接在开发板上，硬件连接如下图 68-3 所示。由于数据都是
+
+在 FPGA 内部通过计数器产生，因此整个测试过程非常的简单。
+
+
+
+
+                                         图 68-3 硬件连接图
+
+
+     进行测试时，第一步，创建并生成 GAO 文件，如下图 68-4 所示：
+
+
+
+
+店铺：https://xiaomeige.taobao.com                         官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                  技术群组：
+                 小梅哥 FPGA 团队                武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力             开发板 培训 项目研发三位一体
+
+
+
+
+                                 图 68-4 生成并配置 GAO 文件
+
+
+     第二步，按照烧写 USB2.0 芯片固件小节讲述的过程和方法，使用 CyControl 软件将工
+程文件夹下的“slave_for_adc.iic”文件烧写到 ACX720 开发板的 USB 芯片的 RAM 中，也
+可以烧写到 EEPROM 中，掉电不丢失，更方便操作，如果烧写“slave_for_adc.iic”固件实
+验不成功，请烧写“slave_for_adc_clk_not.iic”固件。
+     第三步，生成配置 FPGA 用的 fs 文件。然后将该 fs 文件烧录到 FPGA 开发板中
+     第四步，打开高云在线逻辑分析仪，使用 fx2_slwr 信号的下降沿作为触发，同时将
+Trigger Position 设置为 512，然后启动捕获，如下图 68-5、图 68-6 所示。
+
+
+
+
+                                    图 68-5 设置触发
+
+
+
+店铺：https://xiaomeige.taobao.com                        官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                 技术群组：
+                 小梅哥 FPGA 团队                   武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                开发板 培训 项目研发三位一体
+
+
+
+
+                                         图 68-6 启动捕获
+
+
+     第五步，在 Control Center 中选中“Bulk in endpoint (0x86)”端点，然后在右侧的 Data
+Transfer 选项中，点击 Transfer Data-IN 读取 512 个字节的数据，则在 Control Center 的信息
+窗口中，会显示读取到的数据内容，如下图 68-7 所示：
+
+
+
+
+                            图 68-7 USB 上位机捕获到的 USB 数据流
+
+
+    第六步，观察 GAO 中写入的数据值。通过 GAO 捕获的起始值如下图 68-8 所示，结束
+值如下图 68-9 所示。
+
+
+店铺：https://xiaomeige.taobao.com                        官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                 技术群组：
+                 小梅哥 FPGA 团队              武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力            开发板 培训 项目研发三位一体
+
+
+
+
+                              图 68-8ILA 抓取到的起始值波形
+
+
+
+
+                              图 68-9LIA 抓取到的结束值波形
+
+
+
+
+                          图 68-10 fx2_slwr 为低电平的时间波形图
+
+
+    从图中可以看出实际的起始值为 0004h，结束值为 FF04h。并且从图 68-10 可以看出，
+店铺：https://xiaomeige.taobao.com                         官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                  技术群组：
+                 小梅哥 FPGA 团队              武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+
+fx2_slwr 为低电平的时间为 256 个时钟周期，这也就证明了读取了 256 个 16 位的数据（512
+  ，数据个数与 CyControl 上位机设置的一致，观察到的的数据是从 0~255 依次递增的
+字节）
+16 位数据，数据也没问题，但是为什么 ILA 抓取的是从 0004 开始的，这里经过了高低位转
+换，所以实际的数据为 0400，也就说明已经写入了 1024 个数据，这是为什么呢？下面将对
+造成这个结果的原因进行说明。
+    在本例中，使用的 FX2 固件将端点 2 和端点 6 都配置成了 512 字节、4 缓冲模式。所谓
+4 缓冲模式，就是对于 SlaveFIFO 和 FX2 的片上 8051 CPU 或者 FX2 片上的 USB 引擎来说，
+只有一个 512 字节的 FIFO 可以用，但是实际上在内部是用了 4 个 512 字节的 FIFO 进行无
+缝切换的。
+    对于 FPGA 写端点 6 来说，当一个 512 字节的 FIFO 满了之后，内部马上无缝切换到另
+一个空的 512 字节的 FIFO 中。在刚开始工作的时候，由于 4 个 512 字节的 FIFO 都是空的，
+所以显示 FIFO 满的标志信号 flagc 一直为高电平，表明端点 6 未满，直到写入 1024 个 16 位
+的数据（刚好 2048 个字节）后，由于上位机还没有操作读，所以 4 个 FIFO 都满了，这个
+时候 flagc 才变为低电平，指示端点 6 已满。然后上位机手动读取一次 512 个字节，只会读
+空一个 512 字节的 FIFO，FPGA 一次也就只能写入 256 个 16 位数据了，所以此时写入的数
+据应该是从 1024（0400）开始向后计数 256 次，也就是计数达到 04FF，ILA 抓取的也就是
+FF04。但是假设用户自己编写的上位机，自动持续读取数据，那么读取速度就非常快，可
+能 FPGA 那边一个 FIFO 还没写满，上位机已经将另外一个或多个 FIFO 都读空了，就会再
+次出现 FPGA 向 SlaveFIFO 中写入超过 256 个 16 位数据的情况。
+    用户如果想要查看前面 1024 个字节的数据，可以先将 USB 复位，将 USB 中的数据清
+空，然后开发板重新上电，按住复位按键 S0 之后，下载程序，点开 GAO 启动触发，然后
+再松开复位按键 S0，此时 GAO 抓取的波形图如下图 68-11 所示：
+
+
+
+
+                          图 68-11LIA 前面 1024 个数据整体波形图
+
+
+店铺：https://xiaomeige.taobao.com                     官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/              技术群组：
+                 小梅哥 FPGA 团队                武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力              开发板 培训 项目研发三位一体
+
+
+抓取的起始数据和结束数据如下图 68-12 和图 68-13 所示。
+
+
+
+
+                             图 68-12 写入 USB 的第一个数据
+
+
+
+
+                             图 68-13 向 USB 写入 1024 个数据
+
+
+    从上述图中可以看出，当写入 1024 个字节的数据之后，flagb 被拉低，说明 USB 被写
+满，与我们之前分析的一致，随后通过上位机读取 512 字节之后，抓取的波形图就和图
+68-10 一致了。
+
+    另外，在 Transfer Data-IN 的时候，用户也可以通过设置 Bytes to transfer 的值来一次读
+取超过 512 个字节的数据，还可以将这些读到的数据存储到文件中。例如，在 Bytes to
+transfer 中输入 524288，即 512KB，然后点击 Transfer Data-IN 按钮，软件就会自动从 FX2
+中读取出 512K 字节的数据。并显示在信息窗口中，如下图 68-14 所示：
+
+
+
+
+店铺：https://xiaomeige.taobao.com                          官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                   技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+
+
+
+                      图 68-14 上位机读取超过 512 字节数据的数值效果
+
+
+    可以看到，左侧的地址计数器中，最后一行的起始值为 7FFF0h，则最后一个数据的地
+址值应该为 7FFFFh，即十进制的 524287，也就是 512K 字节。
+    同时，如果用户希望将这些数据以二进制的形式直接保存到文件的话，也可以直接点
+击 Transfer File-IN 按钮，然后在弹出的文件对话框中指定希望保存数据的文件名。则软件
+会自动的读取相应长度的数据，以二进制的方式存储到该文件中。然后用户就可以使用该
+二进制文件进行处理了，例如将其加载到 Matlab 中进行分析变换等等。下图 68-15 为读取
+
+512KB 个数据并存储到文件 usb_stream_in.bin 文件中的操作方式。文件对话框中的文件名，
+是用户希望数据存放的文件的命名，可以直接手动输入文件名，然后点击保存，则 Control
+Center 软件就会自动创建 usb_stream_in.bin 文件并将数据存入该文件中。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+
+
+
+                      图 68-15 读取到的数据以文件的形式在计算机保存
+
+
+    存储完成后，使用二进制编辑器文件打开（例如 Winhex 软件）
+                                   ，就可以看到文件中存
+储的数据内容了，如下图 68-16 所示。用户也可以使用专业的数据分析软件如 Matlab 软件
+
+对收到的数据进行分析。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+
+
+
+                        图 68-16 二进制编辑器打开存储内容的效果图
+
+
+    该操作在对数据采集连续性没有要求的场合非常有用，可以避开开发基于 USB 上位机
+的工作。例如对一些仅需一次采集指定长度的数据，然后用来进行分析的场合，非常有用。
+而对于需要实时采集并处理数据的应用，如 USB 摄像头这种应用，就力不从心了。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+

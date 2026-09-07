@@ -1,0 +1,425 @@
+                 小梅哥 FPGA 团队                    武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                 开发板 培训 项目研发三位一体
+
+
+
+                  20 基于 PWM 波的音乐发生器
+                 |----02_设计实例
+ 工程源码
+                 |---- ch20_music_gen
+ 相关视频课程
+ 说明
+
+      章节导读
+
+      前面章节已经实现并上板验证了使用 PWM 产生模块实现对“哆来咪发梭拉
+西”音调的产生，在此基础上并结合模块化设计思想，利用蜂鸣器实现播放一
+段音乐的功能。
+
+
+20.1蜂鸣器音乐实例设计
+      在 本 章 中 ， 我 们 将选取 乐 谱 相 对 简 单 点的一 首 谱 子 “ 天 空 之城”， 在
+ACX720-GW5A138 开发板实现音乐播放。以下是“天空之城”的乐谱，这里主
+要是讲解 FPGA 实现的一个过程，关于乐谱的细节不作详细讲解。
+
+
+
+
+                                        图 20-1 天空之城简谱乐谱
+店铺：https://xiaomeige.taobao.com                           官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                    技术群组：
+                         小梅哥 FPGA 团队                                  武汉芯路恒科技
+               专注于培养您的 FPGA 独立开发能力                                   开发板 培训 项目研发三位一体
+
+
+          从简谱看，该音乐是 D 调的，这里的各音符对应的频率对应的是上一节蜂
+鸣器驱动频率表中 D 调的部分。另外，该音乐为四分之四拍，每个音符数字对
+应为 1 拍。（音符节奏分为一拍、半拍、1/4 拍、1/8 拍，）几个特殊音符说明如
+下（ 我们规定 一拍音 符的时间为 1；半拍 为 0.5；1/4 拍为 0.25；1/8 拍为
+0.125……）。
+
+                    （1）普通音符。如音符 7，对应频率 556，占一拍。
+
+                    （2）带下划线音 符，表 示 0.5 拍； 两个下划 线是四分之 一拍
+             （0.25）。
+
+                    （3）有的音符后带一个点，表示多加 0.5 拍，即 1+0.5。
+
+                    （4）有的音符后带一个“—”，表示多加 1 拍，即 1+1。
+
+                    （5）有的两个连续的音符上面带弧线，表示连音，可以稍微改下
+             连音后面那个音的频率，比如减少或增加一些数值（需自己调试），这
+             样表现会更流畅，其实不做处理，影响也不大。
+
+          这里我们采用 ROM 来存储乐谱，然后通过依次读取 ROM 的数据，然后产
+生对应的音调。存储格式采用 5bit 数据对音调进行编码，高 2bit 数据数值 3，2，
+1 作为高中低音编码，低 3bit 数据数值 1~7 作为“哆来咪发梭拉西”的编码。例
+如存储的数据 5’b01_011 表示的是低音“3”。通过这种形式将乐谱进行编码存储
+在 ROM 中（注，需要对乐谱有一定了解才能对乐谱进行正确的编码，具体编码
+后的 ROM 初始化 mi 文件可参考工程）。
+          整个音乐发生器的设计结构如下图 20-2 所示：
+
+            music_gen            clk                          clk                                clk
+
+                               reset_n                     reset_n                             reset_n
+                                                                           counter_arr[31:0]                       pwm_out
+    clk                                   music_rom    pitch[4:0]    译码器                                 pwm_gen
+                         pitch_num[8:0]
+             get_pitch                                                             counter_ccr[31:0]
+  reset_n                                                                   /2
+                                                                                        pwm_gen_en
+                                                                                 1'b1
+
+
+
+
+                                                      图 20-2 音乐发生器设计框图
+
+
+          在节拍的设计上，以 250ms 时间为一拍的时间，半拍的时间是 125ms，通
+过上面的乐谱来看，没有低于半拍的，那设计时就以 125ms 为基本单位时间，
+则 1 拍就是 2 个单位时间，半拍是一个单位时间。get_pitch 模块一方面产生这
+125ms 的单位时间，另一方面在一个个单位时间的控制下产生获取 rom 里音符
+的编码地址。下面是 get_pitch 模块的代码。
+店铺：https://xiaomeige.taobao.com                                                  官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                                           技术群组：
+                  小梅哥 FPGA 团队                武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力              开发板 培训 项目研发三位一体
+
+ module get_pitch(
+     clk,
+     reset_n,
+
+      pitch_num
+ );
+      assign reset=~reset_n;
+      input clk;     //系统时钟输入＿50MHz
+      input reset_n;    //复位信号输入，低有效
+
+      output reg[8:0] pitch_num; //获取音符 rom 的地址编号
+
+      parameter T125ms_MAX_CNT       = 24'd6250000;
+
+      reg [23:0] t125ms_dly_cnt; //125ms 延时计数器,每个节拍的时间
+
+      //125ms 延时计数器计数
+      always@(posedge clk or posedge reset)
+      if(reset)
+          t125ms_dly_cnt <= 1'd0;
+      else if(t125ms_dly_cnt == T125ms_MAX_CNT - 1'b1)
+          t125ms_dly_cnt <= 1'd0;
+      else
+          t125ms_dly_cnt <= t125ms_dly_cnt + 1'b1;
+
+      //每 125ms 切换一次音符
+      always@(posedge clk or posedge reset)
+      if(reset)
+          pitch_num <= 9'd0;
+      else if(t125ms_dly_cnt == T125ms_MAX_CNT - 1'b1)
+          pitch_num <= pitch_num + 1'd1;
+      else
+          pitch_num <= pitch_num;
+
+ endmodule
+      乐谱的存储上，保持与上面单位时间是半拍规定一致，乐谱存放也以半拍
+为 一 个 存 储 数 据 进 行 存 放 。ROM 初 始 化 文 件 存 放 目 录 为 music_gen\src\
+music_rom.mi。存放数据是以“天空之城”的乐谱实际不超过 256 个音符，也就
+是说初始化文件的数据不超过 512 个数据（数据以半拍为单位进行存储，一个
+节拍用两个数据存储），这里 ROM 的深度设置为 512，没有初始化的 ROM 数据
+选择使用 0 来进行填充。这样正好让两次音乐播放之间还能留有一定的时间间
+隔，ROM 的配置界面如下图 20-3 所示。
+
+
+
+店铺：https://xiaomeige.taobao.com                       官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                技术群组：
+                 小梅哥 FPGA 团队                武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力              开发板 培训 项目研发三位一体
+
+
+
+
+                                    图 20-3 ROM 配置界面
+
+
+     乐谱的存储是经过编码后存储在 ROM 中的，从 ROM 中获取的音符数据还
+需要经过译码器转换成 PWM 产生器产生音符对应的预重装值寄存器 counter_arr。
+具体代码见顶层设计代码，下面给出顶层设计代码如下。
+ module music_gen(
+   clk,
+   reset_n,
+
+   beep
+ );
+   wire reset;
+   input clk;   //系统时钟输入，50MHz
+   input reset_n;  //复位信号输入，低有效
+   output beep;    //蜂鸣器控制信号
+
+   reg [31:0]counter_arr;           //预重装值寄存器
+   wire [31:0]counter_ccr;          //输出比较值
+
+
+
+   wire [8:0] pitch_num;            //音乐的音调编号，0——>最大值 循环递增
+   wire [4:0] pitch;                //音乐的音调
+
+   localparam
+     DL1 = 340136, //D 调低音 1
+店铺：https://xiaomeige.taobao.com                       官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+      DL2 = 303030, //D 调低音 2
+      DL3 = 285714, //D 调低音 3
+      DL4 = 255102, //D 调低音 4
+      DL5 = 226244, //D 调低音 5
+      DL6 = 201613, //D 调低音 6
+      DL7 = 179856, //D 调低音 7
+
+      D1   = 170068, //D 调音 1
+      D2   = 151515, //D 调音 2
+      D3   = 142857, //D 调音 3
+      D4   = 127227, //D 调音 4
+      D5   = 113379, //D 调音 5
+      D6   = 101010, //D 调音 6
+      D7   = 89928 , //D 调音 7
+
+      DH1 = 84889,     //D 调高音 1
+      DH2 = 75643,     //D 调高音 2
+      DH3 = 71429,     //D 调高音 3
+      DH4 = 63613,     //D 调高音 4
+      DH5 = 56689,     //D 调高音 5
+      DH6 = 50505,     //D 调高音 6
+      DH7 = 44964;     //D 调高音 7
+
+      assign reset=~reset_n;
+
+   //乐谱存放 rom
+     Gowin_pROM Gowin_pROM(
+         .dout(pitch), //output [4:0] dout
+         .clk(clk), //input clk
+         .oce(1'b1), //input oce
+         .ce(1'b1), //input ce
+         .reset(reset), //input reset
+         .ad(pitch_num) //input [8:0] ad
+     );
+
+   get_pitch get_pitch(
+     .clk(clk),
+     .reset_n(reset_n),
+
+     .pitch_num(pitch_num)
+   );
+
+   //根据 rom 存储输出不同的音调输出不同的预置数
+   always@(posedge clk or posedge reset)
+   if(reset)
+     counter_arr = 32'd1;
+   else
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                 小梅哥 FPGA 团队                  武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力               开发板 培训 项目研发三位一体
+
+   begin
+     case(pitch)
+       5'b01_001:counter_arr        = DL1;   //D 调低音 1
+       5'b01_010:counter_arr        = DL2;   //D 调低音 2
+       5'b01_011:counter_arr        = DL3;   //D 调低音 3
+       5'b01_100:counter_arr        = DL4;   //D 调低音 4
+       5'b01_101:counter_arr        = DL5;   //D 调低音 5
+       5'b01_110:counter_arr        = DL6;   //D 调低音 6
+       5'b01_111:counter_arr        = DL7;   //D 调低音 7
+
+        5'b10_001:counter_arr       = D1;    //D 调音 1
+        5'b10_010:counter_arr       = D2;    //D 调音 2
+        5'b10_011:counter_arr       = D3;    //D 调音 3
+        5'b10_100:counter_arr       = D4;    //D 调音 4
+        5'b10_101:counter_arr       = D5;    //D 调音 5
+        5'b10_110:counter_arr       = D6;    //D 调音 6
+        5'b10_111:counter_arr       = D7;    //D 调音 7
+
+        5'b11_001:counter_arr       = DH1;   //D 调高音 1
+        5'b11_010:counter_arr       = DH2;   //D 调高音 2
+        5'b11_011:counter_arr       = DH3;   //D 调高音 3
+        5'b11_100:counter_arr       = DH4;   //D 调高音 4
+        5'b11_101:counter_arr       = DH5;   //D 调高音 5
+        5'b11_110:counter_arr       = DH6;   //D 调高音 6
+        5'b11_111:counter_arr       = DH7;   //D 调高音 7
+
+       default:     counter_arr     = 32'd1;//休止符
+     endcase
+   end
+
+   //设置输出比较值为预重装值一半
+   assign counter_ccr = counter_arr >> 1;
+
+   pwm_gen pwm_gen(
+     .clk(clk),
+     .reset_n(reset_n),
+     .pwm_gen_en(1'b1),
+     .counter_arr(counter_arr),
+     .counter_ccr(counter_ccr),
+     .pwm_out(beep)
+   );
+
+ endmodule
+
+
+
+
+店铺：https://xiaomeige.taobao.com                          官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                   技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+
+20.2仿真验证
+     在完成上面的设计并分析综合直到没有错误。然后添加并新建仿真文件命
+名为 music_gen_tb.v，在仿真文件中除了实现例化需要仿真的文件以及时钟创建，
+顶层仿真文件的设计相对比较简单，只要给出时钟和复位激励就可以，为了减
+少仿真时间，在仿真代码中使用 defparam music_gen.get_pitch.T125ms_MAX_C
+NT = 24'd62500;将 125ms 节拍间隔减小至 1.25ms，这样既能对功能进行验证，
+又能减少仿真时间，具体代码如下。
+ module music_gen_tb();
+
+      reg clk; //系统时钟输入，50M
+      reg reset_n; //复位信号输入，低有效
+
+      wire beep;         //pwm 输出信号
+
+      defparam music_gen.get_pitch.T125ms_MAX_CNT = 24'd62500;
+      GSR GSR(.GSRI(1'b1));
+      music_gen music_gen(
+          .clk(clk),
+          .reset_n(reset_n),
+
+           .beep(beep)
+      );
+
+      initial clk = 0;
+      always #(`CLK_PERIOD/2) clk = ~clk;
+
+      initial begin
+          reset_n = 0;
+          #(`CLK_PERIOD*20 +1);
+          reset_n = 1;
+
+           wait(music_gen.pitch_num == 512);
+           #200;
+
+           $stop;
+     end
+     endmodule
+     设计好仿真文件之后，打开 Modelsim，新建仿真工程，添加仿真所需文件，
+配置好仿真环境，将 music_gen 模块中的 clk、reset_n、beep、pitch_num、count
+
+er_ccr、counter_arr 信号添加至 Wave 窗口观察，然后点击                 全速运行，然后运
+
+店铺：https://xiaomeige.taobao.com                    官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/             技术群组：
+                 小梅哥 FPGA 团队                武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力             开发板 培训 项目研发三位一体
+
+
+行一会儿，手动点击                停止，可以看到如下图 20-4 所示的部分波形文件。
+
+
+
+
+                                     图 20-4 仿真波形文件
+
+
+     放大上图红框中的波形图，其中 pitch_num 转换为 Unsigned 显示，如下图
+20-5 所示，波形文件如下图 20-6 所示。
+
+
+
+
+                                   图 20-5 转换信号显示格式
+
+
+
+
+                              图 20-6 放大波形文件局部（左红框）
+
+
+
+
+                              图 20-7 放大波形文件局部（右红框）
+
+
+     从波形上可以看出，循环音乐循环播放之间有一定的时间间隔，这个与设
+计预期是一致的。可以放大波形后看，其波形也是与预期设计是一致的。
+店铺：https://xiaomeige.taobao.com                      官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/               技术群组：
+                 小梅哥 FPGA 团队                    武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                 开发板 培训 项目研发三位一体
+
+
+20.3板级验证
+     本实验的板级验证环节，主要验证以下几个目标：
+
+              1.能否正确将生成的 fs 文件下载到 ACX720-GW5A138 开发板。
+
+              2.下载完成后蜂鸣器能否播放音乐：天空之城。
+
+20.3.1系统所需硬件
+              1.ACX720-GW5A138 开发板。
+
+              2.电源电缆一根
+
+              3.高云下载器一个
+
+              4.硬件条件符合实验要求，具有完全开发功能的 PC 机一台。
+
+20.3.2添加 I/O 约束
+     打开管脚约束窗口，其中 Location 和 I/O Type 是我们要约束的内容。这里，
+参考以下表 20-1 管脚约束表即可完成管脚绑定。
+                                         表 20-1 管脚绑定表
+
+                           功能信号      接口编号      ACX720-GW5A138 开发板
+                           clk       CLK_G     Y18
+                 基本管脚      beep      BEEP      N19
+                           reset_n   KEY0      F15
+
+     具体管脚约束如下图 20-8 所示。
+
+
+
+
+                                     图 20-8 管脚绑定效果图
+
+
+     然 后点击“Place & Route”进行布局布 线 ，成功之后，点 击“Program
+Device”下载文件，下载完成后蜂鸣器即开始循环播放音乐。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                          官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                   技术群组：
+                 小梅哥 FPGA 团队               武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力            开发板 培训 项目研发三位一体
+
+
+
+
+                               图 20-9 下载好 fs 文件后蜂鸣器发声
+
+
+     读者可以在此基础上做更多的尝试进行熟悉和实验。
+
+20.4总结
+     本节在上一节使用蜂鸣器奏出音阶的基础上，进一步结合前面的 ROM 存储
+器章节进行综合运用，将音乐“天空之城”乐谱翻译成 PWM 脉冲控制信息而
+从蜂鸣器输出。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                     官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/              技术群组：
+

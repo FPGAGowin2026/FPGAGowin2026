@@ -1,0 +1,14 @@
+<?xml version="1" encoding="UTF-8"?>
+<!DOCTYPE gowin-fpga-project>
+<Project>
+    <Template>FPGA</Template>
+    <Version>5</Version>
+    <Device name="GW5AT-138B" pn="GW5AT-LV138PG484AC1/I0">gw5at138b-012</Device>
+    <FileList>
+        <File path="../../raw/ch44/ch44_ov5640_init_DVP/camera_init/i2c_control/i2c_bit_shift.v" type="file.verilog" enable="1"/>
+        <File path="../../raw/ch44/ch44_ov5640_init_DVP/camera_init/i2c_control/i2c_control.v" type="file.verilog" enable="1"/>
+        <File path="../../raw/ch44/ch44_ov5640_init_DVP/camera_init/ov5640_init_table_jpeg.v" type="file.verilog" enable="1"/>
+        <File path="../../raw/ch44/ch44_ov5640_init_DVP/camera_init/ov5640_init_table_rgb.v" type="file.verilog" enable="1"/>
+        <File path="../../raw/ch44/ch44_ov5640_init_DVP/camera_init/camera_init.v" type="file.verilog" enable="1"/>
+    </FileList>
+</Project>

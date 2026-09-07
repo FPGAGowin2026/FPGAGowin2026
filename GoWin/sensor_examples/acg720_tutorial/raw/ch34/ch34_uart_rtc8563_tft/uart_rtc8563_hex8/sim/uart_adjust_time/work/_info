@@ -1,0 +1,113 @@
+m255
+K4
+z2
+13
+!s112 1.1
+!i10d 8192
+!i10e 25
+!i10f 100
+cModel Technology
+Z0 dH:/01_gaoyun/gao_project/30_uart_eeprom/uart_eeprom/sim
+T_opt
+!s110 1689142570
+Vc[3E>GQ:jc`298GJchE522
+Z1 04 19 4 work uart_adjust_time_tb fast 0
+=1-1ca0b877e192-64ae452a-327-2dec
+o-quiet -auto_acc_if_foreign -work work -L gw5a -Lf gw5a +acc
+Z2 tCvgOpt 0
+n@_opt
+OL;O;10.7;67
+R0
+T_opt1
+!s110 1733815343
+V2]7b_DFRSJ@n[RCYz2cCI1
+R1
+=1-d4d853392ad8-6757ec2f-224-4020
+o-quiet -auto_acc_if_foreign -work work -L G:/modelsim/gw5at -Lf G:/modelsim/gw5at +acc
+R2
+n@_opt1
+OL;O;10.6d;65
+vuart_adjust_time
+Z3 !s110 1733815341
+!i10b 1
+!s100 bT4jH03Tzm4UUII0Rcn_m0
+IW_1eY0h[eWgH<NZoJ?_n02
+Z4 VDg1SIo80bB@j0V0VzS_@n1
+Z5 dD:/work/waresoft/Gowin2/workspace/720138K/uart_rtc8563_hex8/sim/uart_adjust_time
+w1636588251
+8D:/work/waresoft/Gowin2/workspace/720138K/uart_rtc8563_hex8/src/uart_adjust_time/uart_adjust_time.v
+FD:/work/waresoft/Gowin2/workspace/720138K/uart_rtc8563_hex8/src/uart_adjust_time/uart_adjust_time.v
+Z6 L0 22
+Z7 OL;L;10.6d;65
+r1
+!s85 0
+31
+Z8 !s108 1733815341.000000
+!s107 D:/work/waresoft/Gowin2/workspace/720138K/uart_rtc8563_hex8/src/uart_adjust_time/uart_adjust_time.v|
+!s90 -reportprogress|300|-work|work|-vopt|-stats=none|D:/work/waresoft/Gowin2/workspace/720138K/uart_rtc8563_hex8/src/uart_adjust_time/uart_adjust_time.v|
+!i113 0
+Z9 o-work work -L mtiAvm -L mtiRnm -L mtiOvm -L mtiUvm -L mtiUPF -L infact
+R2
+vuart_adjust_time_tb
+R3
+!i10b 1
+!s100 KWZQj4@lml`O:UcS6LgEM0
+IT3NcT22U]SXPSc9WJ^Pa11
+R4
+R5
+w1636602653
+8D:/work/waresoft/Gowin2/workspace/720138K/uart_rtc8563_hex8/src/tb/uart_adjust_time_tb.v
+FD:/work/waresoft/Gowin2/workspace/720138K/uart_rtc8563_hex8/src/tb/uart_adjust_time_tb.v
+L0 24
+R7
+r1
+!s85 0
+31
+R8
+!s107 D:/work/waresoft/Gowin2/workspace/720138K/uart_rtc8563_hex8/src/tb/uart_adjust_time_tb.v|
+!s90 -reportprogress|300|-work|work|-vopt|-stats=none|D:/work/waresoft/Gowin2/workspace/720138K/uart_rtc8563_hex8/src/tb/uart_adjust_time_tb.v|
+!i113 0
+R9
+R2
+vuart_byte_rx
+R3
+!i10b 1
+!s100 NPPJhoW0fKR8`N`BTYR003
+IaGD^9fZSRifQ4L9Q]9nA52
+R4
+R5
+w1733815274
+8D:/work/waresoft/Gowin2/workspace/720138K/uart_rtc8563_hex8/src/uart_byte/uart_byte_rx.v
+FD:/work/waresoft/Gowin2/workspace/720138K/uart_rtc8563_hex8/src/uart_byte/uart_byte_rx.v
+R6
+R7
+r1
+!s85 0
+31
+R8
+!s107 D:/work/waresoft/Gowin2/workspace/720138K/uart_rtc8563_hex8/src/uart_byte/uart_byte_rx.v|
+!s90 -reportprogress|300|-work|work|-vopt|-stats=none|D:/work/waresoft/Gowin2/workspace/720138K/uart_rtc8563_hex8/src/uart_byte/uart_byte_rx.v|
+!i113 0
+R9
+R2
+vuart_byte_tx
+R3
+!i10b 1
+!s100 5[bFP:Fdijg@L?nojNO;a2
+IG:mg==_8dM^W9ob=AYElc2
+R4
+R5
+w1649645728
+8D:/work/waresoft/Gowin2/workspace/720138K/uart_rtc8563_hex8/src/uart_byte/uart_byte_tx.v
+FD:/work/waresoft/Gowin2/workspace/720138K/uart_rtc8563_hex8/src/uart_byte/uart_byte_tx.v
+R6
+R7
+r1
+!s85 0
+31
+R8
+!s107 D:/work/waresoft/Gowin2/workspace/720138K/uart_rtc8563_hex8/src/uart_byte/uart_byte_tx.v|
+!s90 -reportprogress|300|-work|work|-vopt|-stats=none|D:/work/waresoft/Gowin2/workspace/720138K/uart_rtc8563_hex8/src/uart_byte/uart_byte_tx.v|
+!i113 0
+R9
+R2

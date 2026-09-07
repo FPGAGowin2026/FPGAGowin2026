@@ -1,0 +1,569 @@
+{
+  "schema": "choice3-evidence-manifest-v1",
+  "generated_at": "2026-08-28T18:31:55.2884416Z",
+  "project": "Choice3_Robot_25K",
+  "target": "GW5A-LV25MG121NC1/I0",
+  "scope": "Hashes bind current source, tests, constraints, scripts and firmware HEX to retained simulation, synthesis, PnR, bitstream, programmer and UART evidence.",
+  "inputs": [
+    {
+      "path": "choice3_robot_25k_demo.gprj",
+      "bytes": 3534,
+      "sha256": "a365895172e00956e48e9e0a971219df801ff0ddaf57e9a6cf3268570b4f8cef",
+      "last_write_utc": "2026-08-28T17:08:46.3122396Z"
+    },
+    {
+      "path": "choice3_robot_25k.gprj",
+      "bytes": 3524,
+      "sha256": "a6c8477f3741e39219431a2885144da22bbd57535de9485d59c78b00ddb6d0f2",
+      "last_write_utc": "2026-08-28T17:08:46.3132397Z"
+    },
+    {
+      "path": "constraints/choice3_robot_25k_demo.cst",
+      "bytes": 470,
+      "sha256": "0bfa17801eadcad66e028eaed8b1d4a43a2b9083eeb902e104e40d36834359f0",
+      "last_write_utc": "2026-08-28T16:59:12.5185892Z"
+    },
+    {
+      "path": "constraints/choice3_robot_25k_demo.sdc",
+      "bytes": 261,
+      "sha256": "ee409468a92306e2e4600d2f97827fb1fcb8f47d7aec7567786c8cfa36698ea8",
+      "last_write_utc": "2026-08-28T17:09:48.7102013Z"
+    },
+    {
+      "path": "constraints/choice3_robot_25k.cst",
+      "bytes": 6122,
+      "sha256": "0968953511e792dab43b21da58add3f5731a114d1f07d81d94657e60ec88f01f",
+      "last_write_utc": "2026-08-28T16:59:12.5175890Z"
+    },
+    {
+      "path": "constraints/choice3_robot_25k.sdc",
+      "bytes": 1055,
+      "sha256": "3a1bf23446da87d5c54d5049a6caaf6716873479bca7de3a85d6160d99a762d5",
+      "last_write_utc": "2026-08-26T20:50:45.0842542Z"
+    },
+    {
+      "path": "firmware/build_robot_firmware.py",
+      "bytes": 23134,
+      "sha256": "5290c3de532e1cd5a6848fd25fa698001c3ab2c76a040d2c540171e1df113284",
+      "last_write_utc": "2026-08-28T18:11:29.0143670Z"
+    },
+    {
+      "path": "firmware/picorv32_selftest.hex",
+      "bytes": 3699,
+      "sha256": "22dd390e6a8fb57170bd43f361d1e12de075f208c47b16a811e77f6c570984cf",
+      "last_write_utc": "2026-08-28T18:29:54.0446549Z"
+    },
+    {
+      "path": "README.md",
+      "bytes": 6973,
+      "sha256": "f17b1aeec2c9a10be7e984e608bf9a7c8aa6bb86dc637aa984c0f0105edfb5b7",
+      "last_write_utc": "2026-08-28T18:31:46.1297940Z"
+    },
+    {
+      "path": "Scripts/program_demo_sram.ps1",
+      "bytes": 2010,
+      "sha256": "771cc2858d00aa71044484a8bfb9e047b722fd8d56ee3860bb995acfb1b1521d",
+      "last_write_utc": "2026-08-28T18:15:48.2258317Z"
+    },
+    {
+      "path": "Scripts/run_gowin_demo.tcl",
+      "bytes": 406,
+      "sha256": "103746362e8dc3e52674149da013170eb77ac5d6b3e5bd777b22f2f71f603000",
+      "last_write_utc": "2026-08-28T17:00:05.7206521Z"
+    },
+    {
+      "path": "Scripts/run_gowin_profiles.ps1",
+      "bytes": 3481,
+      "sha256": "0da13e6eddc97916185a0142e127e9100e9443713883a3d0225ca9e86e8e81f0",
+      "last_write_utc": "2026-08-28T18:15:18.9664082Z"
+    },
+    {
+      "path": "Scripts/run_gowin_release.tcl",
+      "bytes": 426,
+      "sha256": "36531ce74e4eebde02d983b3fd38380fa2b1f05e32f34a5e11c206e8bcc05cda",
+      "last_write_utc": "2026-08-28T17:00:05.7196515Z"
+    },
+    {
+      "path": "Scripts/run_sim.ps1",
+      "bytes": 4184,
+      "sha256": "828d72eb6ec6f2fdccdbb2337b59309ad98c074cb8b4251543bd60fade888f6b",
+      "last_write_utc": "2026-08-28T18:29:31.0412344Z"
+    },
+    {
+      "path": "Scripts/serial_demo_test.ps1",
+      "bytes": 2527,
+      "sha256": "75e6f42776042d540f04ec0c771c85c353a4ffd20f94e6aef58a63e5139ee7ff",
+      "last_write_utc": "2026-08-28T18:29:31.0417402Z"
+    },
+    {
+      "path": "Scripts/write_evidence_manifest.ps1",
+      "bytes": 2593,
+      "sha256": "c1970aa5da319a7acec17a35e1a06e58b8a60078097a7c46001fde493a8f83cb",
+      "last_write_utc": "2026-08-28T18:31:46.1277893Z"
+    },
+    {
+      "path": "sim/tb_choice3_attitude_osd.sv",
+      "bytes": 2024,
+      "sha256": "814800d1b40343383cc6e25f3818c1ede6984e595cb5279cb9bb0b984a7c3c7d",
+      "last_write_utc": "2026-08-28T18:11:29.0173133Z"
+    },
+    {
+      "path": "sim/tb_choice3_control_core.sv",
+      "bytes": 11099,
+      "sha256": "a85a20ab635f078858b7153075f01042945eb42dfa3b5cfc6875dc610ed3bb5d",
+      "last_write_utc": "2026-08-28T17:03:15.6808969Z"
+    },
+    {
+      "path": "sim/tb_choice3_demo_system.sv",
+      "bytes": 6247,
+      "sha256": "fa546eb7e86dedfb50a5f243a9e74a3531ecc1041e46fdeafe446ab6a78c3a55",
+      "last_write_utc": "2026-08-28T17:05:16.5554462Z"
+    },
+    {
+      "path": "sim/tb_choice3_sensor_guards.sv",
+      "bytes": 2093,
+      "sha256": "10229da26a86b58c889d8862d73116d4279d11ae22ee381ff500e5d334bf02d6",
+      "last_write_utc": "2026-08-26T20:39:05.9312825Z"
+    },
+    {
+      "path": "sim/tb_choice3_uart_console.sv",
+      "bytes": 5263,
+      "sha256": "6f50921e5090f1b092e581da21390be50a065028f13ba52a2c3ce15d15700345",
+      "last_write_utc": "2026-08-26T20:47:41.1305043Z"
+    },
+    {
+      "path": "sim/tb_choice3_video_pipeline.sv",
+      "bytes": 9446,
+      "sha256": "ee19568a870f80c7b226b0757c834b7d91c5d70dee28f2d7ff192e62d9dcc75f",
+      "last_write_utc": "2026-08-28T17:01:07.0707446Z"
+    },
+    {
+      "path": "src/bringup_uart_rx.v",
+      "bytes": 2135,
+      "sha256": "fe42d06bdd9fa7aa1b2fefae465a9e9142b4343bfac8a7db29007d85269f0f95",
+      "last_write_utc": "2026-08-28T18:11:29.0208702Z"
+    },
+    {
+      "path": "src/bringup_uart_tx.v",
+      "bytes": 1249,
+      "sha256": "97c483af61315b7ed8f9817e4662e441b19aad719c21065d46cf00b75e7fa630",
+      "last_write_utc": "2026-08-28T18:11:29.0208702Z"
+    },
+    {
+      "path": "src/choice3_attitude_cdc.v",
+      "bytes": 2383,
+      "sha256": "2afe0f6e54b80e3b2fbbd8a79740f6ec761db694d678c40c6a4bf578e3ec16cc",
+      "last_write_utc": "2026-08-28T16:55:05.5302494Z"
+    },
+    {
+      "path": "src/choice3_attitude_degrees.v",
+      "bytes": 1557,
+      "sha256": "75282bcebac8cd0925df112ef6261a42c0e4405bf41f4137867e83a9d2f5b2b9",
+      "last_write_utc": "2026-08-28T18:11:29.0153674Z"
+    },
+    {
+      "path": "src/choice3_attitude_osd.v",
+      "bytes": 6090,
+      "sha256": "ab4a25b4f73a818121fdaba7e7e837817d18f72967c04cca575d1236c424a015",
+      "last_write_utc": "2026-08-28T18:11:29.0159782Z"
+    },
+    {
+      "path": "src/choice3_attitude_tilt_proxy.v",
+      "bytes": 1793,
+      "sha256": "5fea59ef1491e7930e06386dc5eadd8824c677855cc6803d0e30194a54e30e9c",
+      "last_write_utc": "2026-08-26T20:15:56.5728013Z"
+    },
+    {
+      "path": "src/choice3_camera_double_buffer.v",
+      "bytes": 5728,
+      "sha256": "88ea388b4f4966c1b89eb868023e79e8dd8d9dd7563411b416b545e9cca7c738",
+      "last_write_utc": "2026-08-26T20:50:58.1249527Z"
+    },
+    {
+      "path": "src/choice3_control_core.v",
+      "bytes": 10597,
+      "sha256": "1639401f0cce92535df5d47bacb05e76c73d83398ff99f83c64c6935a791bcc6",
+      "last_write_utc": "2026-08-28T16:54:25.7210600Z"
+    },
+    {
+      "path": "src/choice3_demo_stimulus.v",
+      "bytes": 4653,
+      "sha256": "338d9e86c26106a4b89f8d41fdc87aa5ffa410dc06755e027b33c82e6507ec5c",
+      "last_write_utc": "2026-08-28T17:23:08.5932346Z"
+    },
+    {
+      "path": "src/choice3_encoder_health.v",
+      "bytes": 2654,
+      "sha256": "612b2f5a5d0dee24522fdd4ad6457f22f86895f54c5ab401248e4446ad26e673",
+      "last_write_utc": "2026-08-26T19:55:39.3664661Z"
+    },
+    {
+      "path": "src/choice3_event_freshness.v",
+      "bytes": 1239,
+      "sha256": "861e0d86425aaaf6cb615d6ca968bd4308ea2e011867febf5d231d5124cd16b6",
+      "last_write_utc": "2026-08-26T20:15:56.5718048Z"
+    },
+    {
+      "path": "src/choice3_hdmi_phy.v",
+      "bytes": 2590,
+      "sha256": "c0e78482b8099552d0447f7593f0d7bb7fc017b4c270acfcdd3eaf735c73e81c",
+      "last_write_utc": "2026-08-26T20:47:04.8461236Z"
+    },
+    {
+      "path": "src/choice3_imu_sample_guard.v",
+      "bytes": 1201,
+      "sha256": "b11828bb2c206107b6dce76d1d70fac0f576f51473e0ec40b06a5c76c5d5bd7f",
+      "last_write_utc": "2026-08-26T20:39:05.9302853Z"
+    },
+    {
+      "path": "src/choice3_navigation_fsm.v",
+      "bytes": 6525,
+      "sha256": "151d3619c9b143a77a4a3185bfda6ab712653344c9af2254a46ecf45f73f47c2",
+      "last_write_utc": "2026-08-26T20:55:47.3266675Z"
+    },
+    {
+      "path": "src/choice3_quadrature_decoder.v",
+      "bytes": 1908,
+      "sha256": "7c7e24515fa20716357e7f5b570cfb09fa5b3049aa421682e8ac40f838b0dff8",
+      "last_write_utc": "2026-08-28T16:53:34.4603299Z"
+    },
+    {
+      "path": "src/choice3_range_fusion.v",
+      "bytes": 3462,
+      "sha256": "1a67580557f7bd118a6d0ee54fd8a59aacdcfea5ed6a75c962eea53ba2766173",
+      "last_write_utc": "2026-08-28T16:54:25.7210600Z"
+    },
+    {
+      "path": "src/choice3_reset_sync.v",
+      "bytes": 392,
+      "sha256": "42bfdb1dc2593420c141a71710714103c37ad897b9af330ddec80020fc1eb400",
+      "last_write_utc": "2026-08-26T20:09:13.5357902Z"
+    },
+    {
+      "path": "src/choice3_robot_25k_demo_top.v",
+      "bytes": 1189,
+      "sha256": "aee1e4d499c7eb1066578ea1a88ebb3562085c50adb693b8e09a95e74eebe075",
+      "last_write_utc": "2026-08-28T16:57:31.1329206Z"
+    },
+    {
+      "path": "src/choice3_robot_25k_top.v",
+      "bytes": 16028,
+      "sha256": "ab0aaf72bcf2addc327a203db7fb62975f43c281b4dcb8225b0c9e86d76e106a",
+      "last_write_utc": "2026-08-28T17:00:12.3465442Z"
+    },
+    {
+      "path": "src/choice3_safety_supervisor.v",
+      "bytes": 2662,
+      "sha256": "234b6d0448c00ba08b0cb2d0bd1a99db240e089ba2e1ce5975e903403048729c",
+      "last_write_utc": "2026-08-26T20:47:04.8469293Z"
+    },
+    {
+      "path": "src/choice3_tb6612_quad_bridge.v",
+      "bytes": 2721,
+      "sha256": "f493ce3276c4799f641631fa267f5310ff291d0e754470009ba6c6dbd70dc7ef",
+      "last_write_utc": "2026-08-26T19:55:39.3664661Z"
+    },
+    {
+      "path": "src/choice3_tmds_encoder.v",
+      "bytes": 1764,
+      "sha256": "b561d6d689527b8c3d76d313a3f76f08abfc5df6279a3ce98f37645af6ccb78f",
+      "last_write_utc": "2026-08-26T20:07:54.9182237Z"
+    },
+    {
+      "path": "src/choice3_uart_console.v",
+      "bytes": 9559,
+      "sha256": "aa27bc7f4fb31804e462fae8740a64dca964f15adc619ffc5352afd6b3dba7a1",
+      "last_write_utc": "2026-08-26T20:47:41.1295074Z"
+    },
+    {
+      "path": "src/choice3_vga_640x480.v",
+      "bytes": 3760,
+      "sha256": "f5d5e5e40d5bd4284f808816827b1c3b9a6e5f9f2d3830326512921fdd25620f",
+      "last_write_utc": "2026-08-28T18:11:29.0166905Z"
+    },
+    {
+      "path": "src/choice3_video_clocks.v",
+      "bytes": 1804,
+      "sha256": "29fca9e83067b3f6eca6a9b6a1a880ee1726d2e00742b6a0627f46513b8aee66",
+      "last_write_utc": "2026-08-26T20:13:16.9077316Z"
+    },
+    {
+      "path": "src/INVENTORY.md",
+      "bytes": 975,
+      "sha256": "223ec10f6e59d06c70d34fd53fb97632c28e8278d106da0bb67533a31e1388b7",
+      "last_write_utc": "2026-08-28T18:29:31.0430095Z"
+    },
+    {
+      "path": "src/sensors/encoder_velocity_estimator.v",
+      "bytes": 2736,
+      "sha256": "a840e1fc806839915d6f5a250d062abb77bd23c4f1f8caeda8ff6b57ff063c19",
+      "last_write_utc": "2026-08-26T20:46:15.7434406Z"
+    },
+    {
+      "path": "src/sensors/hc_sr04_controller.v",
+      "bytes": 7751,
+      "sha256": "9c894a8f85112bf2a82bceb4caaf8c15f9b4561c9bad0fceb4d66c93fc259ec7",
+      "last_write_utc": "2026-08-26T16:28:11.5738815Z"
+    },
+    {
+      "path": "src/sensors/i2c_register16_master.v",
+      "bytes": 4804,
+      "sha256": "61495a8df01dacd9e9218aa5666df7c87e4e7c08798c1779c43ac51343db7f1f",
+      "last_write_utc": "2026-08-26T18:32:43.2394814Z"
+    },
+    {
+      "path": "src/sensors/i2c_register8_master.v",
+      "bytes": 17227,
+      "sha256": "9627dcee573bb9fd1bb142b68edc31ba2bdd98d79065fea73e43635ba3d6dca3",
+      "last_write_utc": "2026-08-26T18:43:00.4184067Z"
+    },
+    {
+      "path": "src/sensors/icm42688p_spi.v",
+      "bytes": 16450,
+      "sha256": "98cfa2abe5092f9412637793ba0805f22c43e16da1f451fbe76de54cf1de3e70",
+      "last_write_utc": "2026-08-26T17:02:48.9740253Z"
+    },
+    {
+      "path": "src/sensors/jy61p_uart.v",
+      "bytes": 4418,
+      "sha256": "7b8b6eed4adc6c0e37b637aea580711626b333eee63976fd49a7aa0ad70c1ad5",
+      "last_write_utc": "2026-08-26T18:01:43.4565182Z"
+    },
+    {
+      "path": "src/sensors/multi_ir_array.v",
+      "bytes": 1305,
+      "sha256": "9fcd28d5af6c486541a9925149ce48d92e26c6da9b7a5006e8f9b8dc255cedea",
+      "last_write_utc": "2026-08-26T18:03:00.6083317Z"
+    },
+    {
+      "path": "src/sensors/ov5640_dvp_capture.v",
+      "bytes": 2568,
+      "sha256": "bd7c84e4a6c5843746fd16cfc3b10dafa4b1355d695229933a03afa8bd8e753e",
+      "last_write_utc": "2026-08-26T18:29:53.5227979Z"
+    },
+    {
+      "path": "src/sensors/ov5640_sccb_init.v",
+      "bytes": 10215,
+      "sha256": "3119d8ca9c8c70a41be94030c4e8d4b6abe7d3f23d04691e764510f5dd605de3",
+      "last_write_utc": "2026-08-26T18:37:40.2353169Z"
+    },
+    {
+      "path": "src/sensors/tf_luna_uart.v",
+      "bytes": 9257,
+      "sha256": "c17249b953eb2484303903a4086d82a0fd0e9ed4e3a24f4e6495ed1779abefaf",
+      "last_write_utc": "2026-08-26T16:28:11.5728850Z"
+    },
+    {
+      "path": "src/sensors/vl53l0x_i2c.v",
+      "bytes": 18793,
+      "sha256": "25c46c2602a51474bcaf66df0a7b93a57a10d4152fcbdea64e20134e6dec56c7",
+      "last_write_utc": "2026-08-26T19:02:19.4553348Z"
+    },
+    {
+      "path": "src/sensors/wheel_speed_controller.v",
+      "bytes": 4058,
+      "sha256": "fcb71c0be5472973f69664bc9cfb6b958b2032d51a57d38ac1c6a1014e380bee",
+      "last_write_utc": "2026-08-26T20:35:00.9738022Z"
+    },
+    {
+      "path": "src/softcore/choice3_robot_service_regs.v",
+      "bytes": 6969,
+      "sha256": "5174ec878c9589e6a871244b2541989e8be5c271d06707f8684abc36a8385b8c",
+      "last_write_utc": "2026-08-28T16:55:30.2713769Z"
+    },
+    {
+      "path": "src/softcore/softcore_service_watchdog.v",
+      "bytes": 2321,
+      "sha256": "a8c611e50596695032a746dba5c752ccaff06be156cafd7ab2c656a92745411e",
+      "last_write_utc": "2026-08-26T17:28:37.0659125Z"
+    },
+    {
+      "path": "src/vendor/Gowin_PicoRV32/advspi_config.vh",
+      "bytes": 2496,
+      "sha256": "34fb2a6399be45f9a8436686a310641b1b5485af900df66274ba2212cc9d8a0f",
+      "last_write_utc": "2026-06-16T12:06:58.0000000Z"
+    },
+    {
+      "path": "src/vendor/Gowin_PicoRV32/advspi_const.vh",
+      "bytes": 1763,
+      "sha256": "96b74d6e706c5b9c9f4c4a44117f37a5600311500d33677088ce7c0a28df18d4",
+      "last_write_utc": "2026-06-16T12:06:58.0000000Z"
+    },
+    {
+      "path": "src/vendor/Gowin_PicoRV32/pico_config.vh",
+      "bytes": 1376,
+      "sha256": "ab5fdff53b1e8822667f79d908bd3d8f59796ff01d5a28f5994a25c3ff63f8af",
+      "last_write_utc": "2026-06-16T12:06:58.0000000Z"
+    },
+    {
+      "path": "src/vendor/Gowin_PicoRV32/pico_csr_define.vh",
+      "bytes": 1167,
+      "sha256": "b56eb29ac152bcd7dfe44808b883d5edc3ed8a8e72f0b60696fb76e64db4236b",
+      "last_write_utc": "2026-06-16T12:06:58.0000000Z"
+    },
+    {
+      "path": "src/vendor/Gowin_PicoRV32/pico_define.vh",
+      "bytes": 1214,
+      "sha256": "f0746e718103be9d5a8c818541030fcfc7804f054837ba9fb5434c6e670e4ae1",
+      "last_write_utc": "2026-08-28T16:57:55.1336695Z"
+    },
+    {
+      "path": "src/vendor/Gowin_PicoRV32/picorv32.v",
+      "bytes": 156480,
+      "sha256": "2f880905b4e62b8da2102380acc0de53a7f4a8a33e4802200635040ecc99e2b5",
+      "last_write_utc": "2026-06-16T12:06:58.0000000Z"
+    },
+    {
+      "path": "src/vendor/Gowin_PicoRV32/picosoc_dtcm.v",
+      "bytes": 2454,
+      "sha256": "86f4e977c46dbcac9675094e992fb1059009a3823997b28550ee9e0001ff8d28",
+      "last_write_utc": "2026-06-16T12:06:58.0000000Z"
+    },
+    {
+      "path": "src/vendor/Gowin_PicoRV32/picosoc_itcm.v",
+      "bytes": 3277,
+      "sha256": "ba8fa18801e90e12553c9a080ead0ca384ad765d565726c719c76eaeaa3c1515",
+      "last_write_utc": "2026-06-16T12:06:58.0000000Z"
+    },
+    {
+      "path": "src/vendor/Gowin_PicoRV32/picosoc.v",
+      "bytes": 27707,
+      "sha256": "6ffaf7aaeba895b9e73d71fb3d42b3b39540cf1a8177d549d4e0f4bdbba552f0",
+      "last_write_utc": "2026-08-26T17:32:15.7404069Z"
+    },
+    {
+      "path": "src/vendor/Gowin_PicoRV32/simpleuart.v",
+      "bytes": 6345,
+      "sha256": "429d20f56bdce0cd55966a9549b9ba1c767c1192f9d6b4c7ff6bef94e560d1ac",
+      "last_write_utc": "2026-06-16T12:06:58.0000000Z"
+    },
+    {
+      "path": "src/vendor/Gowin_PicoRV32/wb_brancher.v",
+      "bytes": 12938,
+      "sha256": "592807f4d24857e1f815596e02da0c24c319cc4d59ed615be2f9fd4c56316361",
+      "last_write_utc": "2026-06-16T12:06:58.0000000Z"
+    },
+    {
+      "path": "src/vendor/Gowin_PicoRV32/wb_bus.v",
+      "bytes": 3342,
+      "sha256": "9269b1020f4c3d6e90d52f6bdb380fdbb95cc898e90b45894cbbc69b59f9e79e",
+      "last_write_utc": "2026-06-16T12:06:58.0000000Z"
+    }
+  ],
+  "evidence": [
+    {
+      "path": "firmware/picorv32_selftest.json",
+      "bytes": 718,
+      "sha256": "7e9c8342e7457239f12e8ae74878a043717e0c98a833dfebe2b552b9eec07bc3",
+      "last_write_utc": "2026-08-28T18:29:54.0457003Z"
+    },
+    {
+      "path": "firmware/picorv32_selftest.lst",
+      "bytes": 14766,
+      "sha256": "b66fb14d666042899ce5daf2319aab823499e3ccdc6859f78517444f354f0843",
+      "last_write_utc": "2026-08-28T18:29:54.0457003Z"
+    },
+    {
+      "path": "impl/gwsynthesis/choice3_robot_25k_demo_syn_rsc.xml",
+      "bytes": 3384,
+      "sha256": "d912940ebbc0e14b320d94d49287dde98a67c8090b6075bd32505959ede21688",
+      "last_write_utc": "2026-08-28T18:14:21.7489551Z"
+    },
+    {
+      "path": "impl/gwsynthesis/choice3_robot_25k_demo_syn.rpt.html",
+      "bytes": 305953,
+      "sha256": "2a991dcc2bda9d92aa22276d68ab67cc545a5fff3b81a6a81cee254276860d6b",
+      "last_write_utc": "2026-08-28T18:14:21.6723095Z"
+    },
+    {
+      "path": "impl/gwsynthesis/choice3_robot_25k_demo.log",
+      "bytes": 30992,
+      "sha256": "564e636d6a90a43bcfa507b905e303e66bd8a856e77f32dbcbe6f2316cd62544",
+      "last_write_utc": "2026-08-28T18:14:21.7489551Z"
+    },
+    {
+      "path": "impl/gwsynthesis/choice3_robot_25k_syn_rsc.xml",
+      "bytes": 5350,
+      "sha256": "e99eba9d9cec4404dcefd671b594a2301759772b1e3ef75ed43be95eb3570ec9",
+      "last_write_utc": "2026-08-28T18:20:53.1906586Z"
+    },
+    {
+      "path": "impl/gwsynthesis/choice3_robot_25k_syn.rpt.html",
+      "bytes": 246880,
+      "sha256": "08fbe4c0fd37ba4d9f7838b1d692569e000610520ab2736427572a592c968914",
+      "last_write_utc": "2026-08-28T18:20:53.1075045Z"
+    },
+    {
+      "path": "impl/gwsynthesis/choice3_robot_25k.log",
+      "bytes": 26283,
+      "sha256": "1d561704bd7d109163b8e210cf71833dfc3524637c715b3f522f560ff09e1a34",
+      "last_write_utc": "2026-08-28T18:20:53.1916587Z"
+    },
+    {
+      "path": "impl/pnr/choice3_robot_25k_demo_tr_content.html",
+      "bytes": 707961,
+      "sha256": "7e0f61858770d360ac7523fc2bae0c7b97e98ea1bb38d99c406340f403718285",
+      "last_write_utc": "2026-08-28T18:14:49.4607735Z"
+    },
+    {
+      "path": "impl/pnr/choice3_robot_25k_demo.fs",
+      "bytes": 6336096,
+      "sha256": "dd16de46e2a30d428ff2626e161a5e5248966bf833f7f25def39158d81a8a9b8",
+      "last_write_utc": "2026-08-28T18:14:49.0708093Z"
+    },
+    {
+      "path": "impl/pnr/choice3_robot_25k_demo.rpt.txt",
+      "bytes": 31475,
+      "sha256": "96f961134d7b391219a4800f14e82b06517822bee5cb7581a4793454b6c837b1",
+      "last_write_utc": "2026-08-28T18:14:49.1878720Z"
+    },
+    {
+      "path": "impl/pnr/choice3_robot_25k_tr_content.html",
+      "bytes": 506051,
+      "sha256": "0ab192b2ae1045ce7e088d7e5ddf4f0f4b517c06be876bd091ee7b8be7272111",
+      "last_write_utc": "2026-08-28T18:21:29.8939958Z"
+    },
+    {
+      "path": "impl/pnr/choice3_robot_25k.fs",
+      "bytes": 7464976,
+      "sha256": "00e625ce3c4801c9aece1d34efb6ad429e1b89c713058805f4d68e34a0fb3b4e",
+      "last_write_utc": "2026-08-28T18:21:29.3289159Z"
+    },
+    {
+      "path": "impl/pnr/choice3_robot_25k.rpt.txt",
+      "bytes": 48012,
+      "sha256": "6a101622775a43b4b801868d3739c1c76fe98f86023d657f63aa2f3cb1a04674",
+      "last_write_utc": "2026-08-28T18:21:29.5444471Z"
+    },
+    {
+      "path": "reports/board_program_demo.log",
+      "bytes": 7183,
+      "sha256": "433efbaf5b376015d905f821c2721134d25da2fa3e78aede6547ab01138a89c6",
+      "last_write_utc": "2026-08-28T18:16:06.1730859Z"
+    },
+    {
+      "path": "reports/board_uart_demo.log",
+      "bytes": 370,
+      "sha256": "372be0a3ef4d917862d3524817864f9eceac20f423597cf4d4001095ff087433",
+      "last_write_utc": "2026-08-28T18:29:55.8021912Z"
+    },
+    {
+      "path": "reports/choice3_robot_25k_demo.gowin.log",
+      "bytes": 32834,
+      "sha256": "703b7c9eb9e0f52c75e9eee09944f4314a4842b98d68edc3e7a7754507a06922",
+      "last_write_utc": "2026-08-28T18:14:49.8831242Z"
+    },
+    {
+      "path": "reports/choice3_robot_25k.gowin.log",
+      "bytes": 27954,
+      "sha256": "7e958c9cc1ce62c38ed6f540849e7e1626fd9452b768ff759dd6a9aecba8b763",
+      "last_write_utc": "2026-08-28T18:21:30.3767427Z"
+    },
+    {
+      "path": "reports/simulation.log",
+      "bytes": 1921,
+      "sha256": "777e2c86c93f19caad93a22def371fd6daf540d376552fb0048a51e2c0f19b8f",
+      "last_write_utc": "2026-08-28T18:29:54.0528602Z"
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+D:/work/waresoft/Gowin1.9.11/workspace/led_flash/src/led_flash_tb.v {2 {vlog -work work -vopt -stats=none D:/work/waresoft/Gowin1.9.11/workspace/led_flash/src/led_flash_tb.v
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module led_flash_tb
+** Warning: D:/work/waresoft/Gowin1.9.11/workspace/led_flash/src/led_flash_tb.v(22): (vlog-2597) '3000000000' is being treated as 32-bit signed integer and will overflow.
+
+Top level modules:
+	led_flash_tb
+
+} {} {}}

@@ -1,0 +1,71 @@
+D:/work/waresoft/Gowin2/workspace/720-138K/ch35_uart_eeprom2/src/uart_eeprom.v {1 {vlog -work work -vopt -stats=none D:/work/waresoft/Gowin2/workspace/720-138K/ch35_uart_eeprom2/src/uart_eeprom.v
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module uart_eeprom
+
+Top level modules:
+	uart_eeprom
+
+} {} {}} D:/work/waresoft/Gowin2/workspace/720-138K/ch35_uart_eeprom2/src/uart_cmd.v {1 {vlog -work work -vopt -stats=none D:/work/waresoft/Gowin2/workspace/720-138K/ch35_uart_eeprom2/src/uart_cmd.v
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module uart_cmd
+
+Top level modules:
+	uart_cmd
+
+} {} {}} D:/work/waresoft/Gowin2/workspace/720-138K/ch35_uart_eeprom2/src/uart_data_tx.v {1 {vlog -work work -vopt -stats=none D:/work/waresoft/Gowin2/workspace/720-138K/ch35_uart_eeprom2/src/uart_data_tx.v
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module uart_data_tx
+
+Top level modules:
+	uart_data_tx
+
+} {} {}} D:/work/waresoft/Gowin2/workspace/720-138K/ch35_uart_eeprom2/src/uart_byte_rx.v {1 {vlog -work work -vopt -stats=none D:/work/waresoft/Gowin2/workspace/720-138K/ch35_uart_eeprom2/src/uart_byte_rx.v
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module uart_byte_rx
+
+Top level modules:
+	uart_byte_rx
+
+} {} {}} D:/work/waresoft/Gowin2/workspace/720-138K/ch35_uart_eeprom2/src/M24LC64.v {1 {vlog -work work -vopt -stats=none D:/work/waresoft/Gowin2/workspace/720-138K/ch35_uart_eeprom2/src/M24LC64.v
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module M24LC64
+
+Top level modules:
+	M24LC64
+
+} {} {}} D:/work/waresoft/Gowin2/workspace/720-138K/ch35_uart_eeprom2/src/tb/uart_eeprom_tb.v {1 {vlog -work work -vopt -stats=none D:/work/waresoft/Gowin2/workspace/720-138K/ch35_uart_eeprom2/src/tb/uart_eeprom_tb.v
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module uart_eeprom_tb
+
+Top level modules:
+	uart_eeprom_tb
+
+} {} {}} D:/work/waresoft/Gowin2/workspace/720-138K/ch35_uart_eeprom2/src/i2c_bit_shift.v {1 {vlog -work work -vopt -stats=none D:/work/waresoft/Gowin2/workspace/720-138K/ch35_uart_eeprom2/src/i2c_bit_shift.v
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module i2c_bit_shift
+
+Top level modules:
+	i2c_bit_shift
+
+} {} {}} D:/work/waresoft/Gowin2/workspace/720-138K/ch35_uart_eeprom2/src/convert.v {1 {vlog -work work -vopt -stats=none D:/work/waresoft/Gowin2/workspace/720-138K/ch35_uart_eeprom2/src/convert.v
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module convert
+
+Top level modules:
+	convert
+
+} {} {}} D:/work/waresoft/Gowin2/workspace/720-138K/ch35_uart_eeprom2/src/uart_byte_tx.v {1 {vlog -work work -vopt -stats=none D:/work/waresoft/Gowin2/workspace/720-138K/ch35_uart_eeprom2/src/uart_byte_tx.v
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module uart_byte_tx
+
+Top level modules:
+	uart_byte_tx
+
+} {} {}} D:/work/waresoft/Gowin2/workspace/720-138K/ch35_uart_eeprom2/src/i2c_control.v {1 {vlog -work work -vopt -stats=none D:/work/waresoft/Gowin2/workspace/720-138K/ch35_uart_eeprom2/src/i2c_control.v
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module i2c_control
+
+Top level modules:
+	i2c_control
+
+} {} {}}

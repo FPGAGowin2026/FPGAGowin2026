@@ -1,0 +1,29 @@
+D:/work/waresoft/Gowin2/workspace/720138K/ch43_uart_ddr3_tft_hdmi_mean_filter/src/mean_filter/mean_filter.v {1 {vlog -work work -vopt -stats=none D:/work/waresoft/Gowin2/workspace/720138K/ch43_uart_ddr3_tft_hdmi_mean_filter/src/mean_filter/mean_filter.v
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module mean_filter
+
+Top level modules:
+	mean_filter
+
+} {} {}} D:/work/waresoft/Gowin2/workspace/720138K/ch43_uart_ddr3_tft_hdmi_mean_filter/src/mean_filter/mean_filter_tb.v {1 {vlog -work work -vopt -stats=none D:/work/waresoft/Gowin2/workspace/720138K/ch43_uart_ddr3_tft_hdmi_mean_filter/src/mean_filter/mean_filter_tb.v
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module mean_filter_tb
+
+Top level modules:
+	mean_filter_tb
+
+} {} {}} D:/work/waresoft/Gowin2/workspace/720138K/ch43_uart_ddr3_tft_hdmi_mean_filter/src/mean_filter/shift_register_2taps/shift_register_2taps.v {1 {vlog -work work -vopt -stats=none D:/work/waresoft/Gowin2/workspace/720138K/ch43_uart_ddr3_tft_hdmi_mean_filter/src/mean_filter/shift_register_2taps/shift_register_2taps.v
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module shift_register_2taps
+
+Top level modules:
+	shift_register_2taps
+
+} {} {}} D:/work/waresoft/Gowin2/workspace/720138K/ch43_uart_ddr3_tft_hdmi_mean_filter/src/shift_reg_ram/shift_reg_ram.vo {1 {vlog -work work -vopt -stats=none D:/work/waresoft/Gowin2/workspace/720138K/ch43_uart_ddr3_tft_hdmi_mean_filter/src/shift_reg_ram/shift_reg_ram.vo
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module shift_reg_ram
+
+Top level modules:
+	shift_reg_ram
+
+} {} {}}

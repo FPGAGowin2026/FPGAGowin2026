@@ -1,0 +1,349 @@
+                 小梅哥 FPGA 团队                  武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                开发板 培训 项目研发三位一体
+
+
+
+         47 OV5640 摄像头采集 HDMI 显示屏显示
+                 |----02_设计实例
+ 工程源码
+                 |----ch47_ov5640_ddr3_hdmi
+ 相关视频课程
+ 说明
+
+      章节导读
+
+      通过前面章节，我们已经完成了 ACX720 开发板上的 OV5640 采集系统的 TFT
+显示以及 VGA 显示。除了这两种显示方式之外，开发板还支持 HDMI 显示，板上
+自带有两个完全一样的 HDMI 接口，本章将带大家通过这两个接口完成 OV5640 图
+像采集的 HDMI 显示设计。
+
+
+47.1VGA 与 HDMI 显示对比
+      虽然使用 VGA 显示器已经能够实现较高分辨率的图像显示，但是 VGA 显
+示有个致命缺点，那就是在显示高分辨率的图像时，可能会出现失真、图像出
+现虚影的现象。而 HDMI 显示同样能够支持较高分辨率，甚至所能支持的最大
+分辨率要高于 VGA，但是 HDMI 在进行高分辨率显示时，极少甚至不会出现失
+真、虚影等现象。而这一切则是因为这两种显示设备接口在传输数据时，使用
+的是不同类型数据。如下图 47-1 为现今常见的 VGA 显示器和 HDMI 显示器与
+显卡传输图像数据的数据流变换示意图。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                      官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/               技术群组：
+                          小梅哥 FPGA 团队           武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                  开发板 培训 项目研发三位一体
+
+                  HSYNC                                     HSYNC
+                                                                                    HDMI
+                                                                                    接口
+                  VSYNC                                     VSYNC
+                                       VGA接口
+                DATA[23:0]                                DATA[23:0]
+      图形处理器                                     图形处理器                  数据发送器
+                   DE                                         DE
+                              数模转换器
+                  PCLK                                       PCLK
+
+
+                   显卡                                       显卡
+
+
+
+                                        VGA电缆                                      HDMI电缆
+
+
+
+
+                 TFT像素点阵面板                                TFT像素点阵面板
+
+
+
+
+                               LCD液晶                                     LCD液晶
+                                显示器                                       显示器
+                    HSYNC                                  HSYNC
+                                                                                   HDMI
+                    VSYNC
+                                       VGA接口               VSYNC                   接口
+                 DATA[23:0]                              DATA[23:0]
+       TFT驱动器                                   TFT驱动器                 数据接收器
+                     DE                                     DE
+                              模数转换器
+                    PCLK                                   PCLK
+
+
+
+
+                               图 47-1 VGA 和 HDMI 接口与显卡传输图像数据流变换图
+
+
+     现今常见的无论是 VGA 接口显示器还是 HDMI 接口显示器，大多使用的液
+晶屏，这类屏幕采用的是液晶材质，通过将众多细小的液晶颗粒按照矩阵的形
+式排布在一起，实现显示面板。这些液晶会根据加载其两端的电压大小而改变
+透光性，进而实现被动的颜色显示。
+     对于一个液晶屏而言，其所能显示的物理像素数量是确定的，每个像素点
+的颜色都可以对应一个图像数据， 而这个数据是数字信号，所以液晶显示屏从
+原理上讲可以认为是数字显示屏（虽然最终控制单颗液晶的透光程度时也会将
+这个数字信号转换为模拟电压信号，但是这已经是像素点级别的成像原理了，
+而非液晶显示器显示整幅图案的成像原理）。显示时，只需要得到对应像素点的
+颜色数据即可， 所以这类显示屏接收的是数字信号。
+     而 VGA 接口传输的是模拟信号，因此显卡输出的数字图像信号必须转换成
+模拟信号后才能通过 VGA 接口输出到 VGA 显示器。而图像信号在送到 VGA 显
+示器的 VGA 接口后还需要再经过模数转换，转换为数字信号后才能驱动液晶显
+示。
+     数据在模数转换和数模转换的过程容易发生变化，从而导致显示的图像存
+在一些细微的差别。如果在转化时数据变化速度过快，就可能造成拖影现象。
+并且由于 VGA 线缆传输的是模拟信号，模拟信号在传输过程中容易受到噪声的
+干扰，导致显示的图像中会出现很多杂点。因此在较高分辨率的图像显示时，
+VGA 模拟信号传输的这些缺点就越发的明显了。
+店铺：https://xiaomeige.taobao.com                                        官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                                 技术群组：
+                  小梅哥 FPGA 团队                               武汉芯路恒科技
+              专注于培养您的 FPGA 独立开发能力                           开发板 培训 项目研发三位一体
+
+
+     而 HDMI 接口，使用的是数字信号，显卡输出的数字图像信号全程不需要
+任何转变就能直接用于 HDMI 显示器的显示，减少了信号转换过程，能够有效
+消除拖影现象。同时，HDMI 显示使用的是差分传输，其抵抗干扰的能力也比
+模拟信号高很多，一般不会受到干扰，因此即使是进行高分辨率的图像显示，
+HDMI 显示也能保证最终显示的图像质量，相较于 VGA 显示更具优势。
+     而本章也将基于“OV5640 摄像头采集 VGA 显示屏显示”实验，通过实现
+1280*720@60Hz 图像的 HDMI 显示，带领大家学习如何将 OV5640 采集到的图
+像数据通过 HDMI 接口显示到 HDMI 显示器上。
+
+47.2基于 OV5640 的 HDMI 显示屏显示系统
+     下图 47-2 为本次设计的系统框图。
+
+
+                      camera_pll                Gowin_PLL
+
+                                                                                           H
+          D
+  OV5640摄         DVP_                                      disp_                          D   HDMI
+          V                        ddr3_ctrl_2port                   dvi_encoder    HDMI
+                                                                                               显示器
+    像头           Capture                                    driver                         M
+          P
+                                                                                           I
+    SCCB
+                 camera
+                  _init
+
+
+
+
+                                        DDR3
+
+
+
+                                                     图 47-2 系统框图
+
+
+     本次设计基于“OV5640 摄像头采集 VGA 显示屏显示”实验，对于设计来
+说，要想实现 HDMI 显示，只需要对 disp_driver 模块输出的 1280*720@30Hz 图
+像数字信号以及对应行场同步信号进行编码，转换为符合 HDMI 接口的编码格
+式即可。因此在设计中添加了以下模块：
+
+               1.新增加一个 PLL IP 核，用于产生 dvi 编码模块工作所需的时钟。
+
+               2.dvi 编码模块（dvi_encoder），用于将 disp_driver 模块输出的图像
+           数据与时序，转换为符合 HDMI 接口发送时序的编码格式。
+
+     ACX720-GW5A138 开发板自带 HDMI 接口，对于 HDMI 显示来说，从
+disp_driver 模块输出的图像数据以及时序信号需要经由 dvi_encoder 核进行
+TMDS 编码，并转换为串行信号后才能通过 HDMI 接口输出。输出的信号在通
+过 HDMI 线缆传输给 HDMI 显示器的 HDMI 接口后，显示器内部的 TMDS 解码
+模块会对信号解码，然后进行串并转换，将信号转变为并行信号后依据时序信
+
+店铺：https://xiaomeige.taobao.com                                            官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                                     技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+
+号，将图像显示出来，实现 1280*720@60Hz 的 HDMI 显示。
+
+47.3产生 DVI 驱动时钟
+     对于 dvi_encoder 模块来说，所需的时钟有两个，一个是进行 TMDS 编码的
+时钟，一个是编码后对信号进行并串转换的时钟。
+     dvi_encoder 模块会对接收的 RGB888 数据和行场同步信号进行 TMDS 编码，
+这些信号会被分成三组，每组由两位控制信号和对应的 8 位颜色分量组成（其
+中两组的控制信号为空）也就是每组一共 10 位数据。在设计中这些信号由
+disp_driver 提供，因此 TMDS 编码时使用的也是 disp_driver 输出的工作时钟，
+即 74.25MHz。
+     而在进行并串转换时，dvi_encoder 模块会在每个时钟的上升沿和下降沿对
+每组信号进行并行到串行的转换，为了能够将编码完成的数据立马转换，就需
+要一个 5 倍于 TMDS 编码时的工作时钟，也就是 74.25x5=371.25MHz 的时钟。
+     实际使用的时候，无法准确生成 371.25MHz 的时钟，在实验中我们将通过
+PLL 生成 375MHz 的时钟，然后通过时钟分频源码，进行 5 分频，生成 75MHz
+的时钟，给到 disp_driver 模块使用，最终 PLL 模块的例化代码和时钟分频代码
+如下所示：
+ wire             loc_clk24m;
+ wire             clk_vga;//75m
+ wire             clk_vgax5;//375m
+ wire             clk_200M;
+ wire             pll_lock;
+ wire             loc_clk50m;
+
+ camera_pll camera_pll(
+     .clkout0(clk_vgax5), //output clkout0
+     .clkout1(loc_clk24m), //output clkout1
+     .clkin(loc_clk50m) //input clkin
+ );
+
+ Gowin_PLL Gowin_PLL(
+     .lock(pll_lock), //output lock
+     .clkout0(clk_200M), //output clkout0
+     .clkout1(loc_clk50m), //output clkout1
+     .clkin(clk50M), //input clkin
+     .reset(~reset_n) //input reset
+ );
+
+ CLKDIV u_clkdiv
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                  小梅哥 FPGA 团队                     武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                开发板 培训 项目研发三位一体
+
+ (.RESETN(pll_lock)
+ ,.HCLKIN(clk_vgax5) //clk x5
+ ,.CLKOUT(clk_vga)    //clk x1
+ ,.CALIB (1'b1)
+ );
+ defparam u_clkdiv.DIV_MODE="5";
+     例化完成后，我们便完成了 dvi_encoder 模块时钟的生成，接下来就是
+dvi_encoder 模块的设计和例化工作了。
+
+47.4DVI 编码模块
+     DVI 编码模块负责对信号进行 TMDS 编码以及并行到串行的转换，对于该
+模块的详细描述，可以参考“基于 FPGA 的 HDMI/DVI 显示”章节。这里我们
+直接使用设计好的模块即可，使用时只需将该模块以及相关子模块（可以直接
+从例程中提取）添加进工程中，在顶层中添加相关输出接口并例化 DVI 编码模
+块。
+     顶层中对 dvi_encoder 模块接口的添加以及模块例化代码如下：
+ output             tmds_clk_p ,
+ output             tmds_clk_n ,
+ output   [2:0]     tmds_data_p,         //rgb
+ output   [2:0]     tmds_data_n,          //rgb
+
+ dvi_encoder u_dvi_encoder(
+     .pixelclk(clk_vga),// system clock
+     .pixelclk5x(clk_vgax5),// system clock x5
+     .rst_n(reset_n),// reset
+     .blue_din(video_b),// Blue data in
+     .green_din(video_g),// Green data in
+     .red_din(video_r),// Red data in
+     .hsync(video_hs),// hsync data
+     .vsync(video_vs),// vsync data
+     .de(video_de),// data enable
+     .tmds_clk_p(tmds_clk_p),
+     .tmds_clk_n(tmds_clk_n),
+     .tmds_data_p(tmds_data_p),//rgb
+     .tmds_data_n(tmds_data_n) //rgb
+     );
+     至此，我们便完成了所有相关模块的设计，由于涉及中我们在顶层中添加
+了 HDMI 相关接口，因此还需要为这些引脚进行分配与电平约束。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                       官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                技术群组：
+                 小梅哥 FPGA 团队                       武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                    开发板 培训 项目研发三位一体
+
+
+47.5引脚分配
+     本次涉及 HDMI 相关引脚分配表如下表 47-1 所示。
+                                 表 47-1 HDMI 接口引脚分配表
+
+                       Pin Name          Signial Name     Pin NO.
+                       HDMI1_CLK_P       tmds_clk_p       K4
+                       HDMI1_CLK_N       tmds_clk_n       J4
+                       HDMI1_D0_P        tmds_dat_p[0]}   L3
+                       HDMI1_D0_N        tmds_dat_n[0]}   K3
+                       HDMI1_D1_P        tmds_dat_p[1]    L5
+                       HDMI1_D1_N        tmds_dat_n[1]    L4
+                       HDMI1_D2_P        tmds_dat_p[2]    M3
+                       HDMI1_D2_N        tmds_dat_n[2]    M2
+
+     根据上述表中的内容，对 HDMI 进行引脚分配和时钟约束之后，HDMI 接
+口便能够被正常驱动并工作，我们也完成了对整个系统的设计工作。从
+disp_driver 输出的信号会送到 dvi_encoder 模块中，在经过了编码和串并转换后，
+被送到 HDMI 接口输出。为了验证整个系统设计能否正常工作，接下来就可以
+生成系统设计的 fs 文件并将其烧录到开发板中进行验证。
+
+47.6板级验证
+     本节介绍在 ACX720-GW5A138 开发板上使用 OV5640 摄像头模块和 HDMI
+显示器进行“OV5640 摄像头采集 HDMI 显示屏显示”实验的验证。
+
+47.6.1所需硬件
+              1.ACX720-GW5A138 开发板 x1
+
+              2.OV5640 摄像头 x1
+
+              3.高云下载器 x1
+
+              4.HDMI 显示器 x1
+
+              5.电源线 x1
+
+              6.HDMI 线缆
+
+47.6.2硬件连接
+     将 OV5640、下载器、电源线依次连接开发板，将 HDMI 线缆一端连接开发
+板上的 HDMI1 接口，另一端连接到 HDMI 显示器，如下图 47-3 所示。
+
+店铺：https://xiaomeige.taobao.com                                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                          技术群组：
+                 小梅哥 FPGA 团队                   武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                开发板 培训 项目研发三位一体
+
+
+
+
+                                         图 47-3 硬件连接
+
+
+     在连接 HDMI 接口时，需要注意：HDMI 线缆必须一端连接 FPGA 的 HDMI
+接口，另一端连接显示器或电视机的 HDMI 接口。不可以将线缆一端连接开发
+板 HDMI 接口，另一端连接到笔记本或者主机的 HDMI 接口上。因为笔记本和
+主机的 HDMI 接口为输出接口，而开发板的 HDMI 接口大多数在硬件上只支持
+输出，这些输出接口互相连接无法实现图像的显示。而显示器和电视机上的
+HDMI 接口为输入接口，FPGA 的 HDMI 输出接口只有与这些输入接口相连，才
+能实现图像的显示。
+     连接完毕后，给开发板上电，将生成好的 fs 文件烧录到开发板中，系统开
+始工作，显示效果如下图 47-4 所示。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                        官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                 技术群组：
+                 小梅哥 FPGA 团队                 武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力              开发板 培训 项目研发三位一体
+
+
+
+
+                                    图 47-4 HDMI 显示效果
+
+
+     从上图中可以看到图像显示正常，没有出现任何撕裂重叠现象，颜色层次
+清晰，说明设计成功。
+
+47.7总结
+     本章带大家实现了 OV5640 摄像头采集 HDMI 显示屏显示系统的设计与验
+证，设计整体上只是在“OV5640 摄像头采集 VGA 显示屏显示”系统的基础上
+对信号进行了 TMDS 编码和并串转换，从而以符合 HDMI 编码的格式输出。至
+于 TMDS 编码以及并串转换的具体实现，大家可以参考“基于 FPGA 的
+HDMI/DVI 显示”章节。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                        官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                 技术群组：
+

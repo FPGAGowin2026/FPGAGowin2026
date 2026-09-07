@@ -1,0 +1,14 @@
+<?xml version="1" encoding="UTF-8"?>
+<!DOCTYPE gowin-fpga-project>
+<Project>
+    <Template>FPGA</Template>
+    <Version>5</Version>
+    <Device name="GW5AT-138B" pn="GW5AT-LV138PG484AC1/I0">gw5at138b-012</Device>
+    <FileList>
+        <File path="src/gowin_pll/gowin_pll.v" type="file.verilog" enable="1"/>
+        <File path="src/led_flip_ctrl.v" type="file.verilog" enable="1"/>
+        <File path="src/pll_led.v" type="file.verilog" enable="1"/>
+        <File path="src/pll_led_tb.v" type="file.verilog" enable="1"/>
+        <File path="src/pll_ip.cst" type="file.cst" enable="1"/>
+    </FileList>
+</Project>

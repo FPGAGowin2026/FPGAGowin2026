@@ -1,0 +1,572 @@
+                 小梅哥 FPGA 团队                    武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                 开发板 培训 项目研发三位一体
+
+
+
+                         Gowin 软件基本开发流程
+                      |----02_设计实例
+      工程源码
+                      |----ch2_led_flash
+      相关视频
+ 课程
+      说明
+
+      章节导读
+
+      本章实验将带领用户熟悉一下 Gowin 开发软件的基本开发流程，整个流程
+包括建立工程、分析综合、物理约束、布局布线、板级验证及程序固化。
+
+
+2.1 启动 Gowin 软件
+      Gowin 软件安装完毕之后会在你桌面建立快捷方式，如下图 2-1 所示。双击
+Gowin 图标即可启动 Gowin 软件。
+
+
+
+
+                                      图 2-1 Gowin 桌面快捷方式
+
+
+2.2 创建工程
+      创建设计工程的步骤主要包括如下步骤：
+
+              1.启动 Gowin 集成开发环境，并进入到 Gowin 启动界面，如下所
+         示。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                            官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                     技术群组：
+                 小梅哥 FPGA 团队               武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力            开发板 培训 项目研发三位一体
+
+
+
+
+                              图 2-2 Gowin 集成开发环境的启动界面
+
+
+     在 Gowin 的启动界面分为 4 个板块，如下所示：
+
+              （1）Recent Projects：近期打开过的过程。
+
+              （2）Quick Start：快速开始，其中包括 New Project（创建一个新
+         工程）、Open Project（打开已有工程）、Open Example Project（打开实
+         例工程）
+
+              （3）Tools：工具，其中包括 FloorPlanner（物理约束编辑器）、
+         Timing Constrains Editor（时序约束编辑器）、Programmer（数据流配置
+         或下载）
+
+              （4）User Manuals：用户手册，点击可进入高云官网的产品介绍。
+
+     通过点击 Quick Start 中的 New Project 来新建一个 Gowin 设计工程。
+
+              2.接着会打开创建新工程的向导，出现 New 对话框，如下图 2-3 所
+         示，点击 OK 按钮。
+
+
+
+
+                                图 2-3 Gowin 创建工程导航界面
+
+
+店铺：https://xiaomeige.taobao.com                        官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                 技术群组：
+                 小梅哥 FPGA 团队                 武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力              开发板 培训 项目研发三位一体
+
+              3.进入 Project Name 对话框，如下图所示。填入工程名称以及工程
+         路径，需要注意的是，工程命名不能有中文字符和空格，否则在后续
+         流程中会出现错误，文件路径也不能过长，windows 系统路径长度限制
+         260 个字符，Linx 系统限制 4096 个字符。根据实际情况确定是否勾选
+         Use as default project location（用作默认项目位置），勾选之后，下一次
+         建立工程的时候，将会默认为此次设置的工程路径。设置完成之后，
+         点击 next。
+
+
+
+
+                            图 2-4 Gowin 创建功能 Project Name 界面
+
+              4.随后出现 Select Device 对话框，如下图 2-5/图 2-6 所示。在这里
+         我们需要选择设计所用的具体 FPGA 芯片型号，根据板卡所用 FPGA 的
+         系列、封装、速度等级等来进行判断，用户也可以根据 FPGA 芯片上的
+         字来进行判断。这里根据自己的开发板选择，如果是 AC720-138K 选择
+         “GW5AT-LV138PG484AC1/10” ，AC720-60K                   选 择 “GW5AT-
+         LV60PG484AC1/10”，之后教程以 AC720-138K 为主，选择完成之后，
+         点击 Next。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                          官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                   技术群组：
+                 小梅哥 FPGA 团队                武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力             开发板 培训 项目研发三位一体
+
+                        图 2-5 Gowin 选择 AC720-138K 对应 FPGA 器件类型
+
+
+
+
+                        图 2-6 Gowin 选择 AC720-60K 对应 FPGA 器件类型
+
+              5.最后出现 Summary 界面，如下图 2-7 所示，点击 Finish，完成工
+         程的创建。
+
+
+
+
+                                   图 2-7 工程创建完成界面
+
+              6.接下来我们会进入 Gowin 工程设计界面，如下图 2-8 所示。设计
+         主界面主要包括 Design、Process、Hierarchy、Console 等模块。下面将
+         带领大家熟悉 Gowin 工具设计界面。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                        官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                 技术群组：
+                 小梅哥 FPGA 团队                  武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力               开发板 培训 项目研发三位一体
+
+
+
+
+                                  图 2-8 Gowin 工程设计界面
+
+
+2.3 添加源文件
+     在使用 Gowin 工具完成工程创建之后，我们可以在 Gowin 中为工程添加源
+文件。接下来我们将通过创建一个 Verilog 源文件来演示该流程。
+
+              1.通过点击工具栏的                 或者依次点击菜单栏的 File->New…，点击
+         之后如下所示，出现选择文件类型界面，这里我们选择 Verilog File 类
+         型，然后点击 OK。
+
+
+
+
+                                   图 2-9 添加 Verilog 源文件
+
+              2.随后出现 New Verilog file 界面，在该对话框下给文件命名，并选
+店铺：https://xiaomeige.taobao.com                           官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                    技术群组：
+                 小梅哥 FPGA 团队                   武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                开发板 培训 项目研发三位一体
+
+         择文件保存路径，默认保存在工程目录文件夹的 src 文件夹中，然后勾
+         选 Add to current project（添加到当前的工程目录中），如下图 2-10 所示。
+         最后点击 OK。
+
+
+
+
+                                图 2-10 New Verilog file 配置界面
+
+
+     源文件添加完成之后，我们就可以看到在 Design 框中出现了新的文件夹
+Verilog Files，该文件夹下就是我们刚刚新建的 Verilog 源文件，如下图 2-11 所
+示。
+
+
+
+
+                                 图 2-11 源文件添加完成示意图
+
+              3.点击 led_flash.v 文件，编写本次实验工程代码，本次实验实现的
+         功能就是翻转 LED 灯的状态，通过设计一个计数器来实现，如下：
+
+ module led_flash(
+     input clk,
+     input rst_n,
+     output reg led
+ );
+     reg [25:0] cnt;
+     always @ (posedge clk or negedge rst_n)
+     begin
+         if (!rst_n)
+             cnt <= 26'd0;
+         else if (cnt < 26'd49_999_999)
+             cnt <= cnt + 1'b1;
+         else
+             cnt <= 26'd0;
+
+店铺：https://xiaomeige.taobao.com                                官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                         技术群组：
+                 小梅哥 FPGA 团队                武汉芯路恒科技
+            专注于培养您的 FPGA 独立开发能力            开发板 培训 项目研发三位一体
+
+      end
+
+     always @ (posedge clk or negedge rst_n)
+     begin
+         if (!rst_n)
+             led <= 1'b0;
+         else if (cnt == 26'd49_999_999)
+             led <= ~led;
+         else
+         led <= led;
+     end
+ endmodule
+
+              4.编辑完成之后，Ctrl+S 保存源文件。至此源文件添加成功。
+
+     通过上述描述，完成了一个新的源文件建立，如果已经有编写好的 Verilog
+
+源文件，可以通过点击工具栏中的                          进行添加，点击之后，会弹 Open File 对
+话框，随后选择需要添加的文件，需要注意的是，这里需要添加的文件应该在
+该工程目录下。
+
+
+
+
+                                    图 2-12 添加已有源文件
+
+
+2.4 RTL 描述与分析
+              1.RTL 描述与分析功能简介
+
+     当我们用 Verilog 语言去描述一定电路的时候，可能存在语法或者逻辑上的
+错误。语法错误在编译的时候，Gowin 软件会提示出来，然而逻辑上的错误
+Gowin 软件是无法检测出来的，比如说模块之间的连线错误等。RTL 描述与分
+店铺：https://xiaomeige.taobao.com                      官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/               技术群组：
+                 小梅哥 FPGA 团队                 武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力              开发板 培训 项目研发三位一体
+
+
+析功能可以对工程的 RTL 结构、语法进行查看，进而可以分析并修正逻辑上的
+错误。
+
+              2.RTL 描述和分析过程
+
+     在 Gowin 软件中给用户提供了查看 RTL 设计分析的功能，依次点击
+Tools->Schematic Viewer->RTL Design Viewer，便可以看到 RTL 描述与分析阶段
+后的原理图网表，如下图 2-13 所示，网表是由与 FPGA 底层部件无关的逻辑符
+号来体现的。读者可在后续过程中看到综合阶段后的原理图，在综合阶段后的
+原理图中的逻辑原件便是由 FPGA 中的底层部件来构建的了。
+
+
+
+
+                                    图 2-13 查看 RTL 网表
+
+
+2.5 分析综合
+     我们可以依次点击 Process->Synthesize 进行分析综合，也可以直接点击工具
+
+栏中的          进行分析综合，通过分析综合后，生成基于 FPGA 底层资源的电路
+网表，如下图 2-14 所示，没有出现任何错误，则说明生成成功，如果出现错误，
+用户应该根据提示进行修改。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                        官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                 技术群组：
+                 小梅哥 FPGA 团队                   武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                开发板 培训 项目研发三位一体
+
+
+
+
+                                         图 2-14 分析综合
+
+
+     综合完成之后，Hierarchy 窗口会自动显示当前工程设计中的资源信息，如
+下图 2-15 所示。
+
+
+
+
+                                   图 2-15 资源信息显示窗口
+
+
+     在 Hierarchy 窗口，我们将鼠标放置 led_flash.v 文件中，右击该文件，可以
+将该文件设置为顶层文件，如下图 2-16 所示。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                        官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                 技术群组：
+                 小梅哥 FPGA 团队                武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力             开发板 培训 项目研发三位一体
+
+
+
+
+                                     图 2-16 设置顶层文件
+
+
+     设置完成之后，该文件名称将会变成粗体，随后重新分析综合，便可以看
+到 Hierarchy 窗口如下图 2-17 所示。
+
+
+
+
+                                   图 2-17 顶层模块设置成功
+
+
+2.6 物理约束
+     我们可以通过点击 Process->FloorPanner 进行物理约束，也可以直接点击工
+
+具栏中的          ，如下图 2-18 所示。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                      官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/               技术群组：
+                 小梅哥 FPGA 团队               武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力            开发板 培训 项目研发三位一体
+
+
+
+
+                                   图 2-18 物理约束操作方式
+
+
+     随后弹出如下图 2-19 所示的对话框，由于我们没有新建一个.cst 文件用于存
+放物理约束，所以会弹出一个对话框，询问我们是否需要创建.cst 文件，这里直
+接点击 OK 即可。
+
+
+
+
+                            图 2-19 弹出是否新建物理约束文件对话框
+
+
+     进入 FloorPlanner 界面，点击 I/O Constraints，进行 I/O 约束，然后根据自己
+的板卡分配引脚和电平标准，如下图 2-20 所示。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                      官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/               技术群组：
+                 小梅哥 FPGA 团队                 武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力               开发板 培训 项目研发三位一体
+
+
+
+
+                                     图 2-20 I/O 约束界面
+
+
+     约束完成之后，保存文件，如下图 2-21 所示。
+
+
+
+
+                                     图 2-21 保存约束文件
+
+
+     约束完成之后，我们可以点击 Design->led_flash.cst 查看文件内容，如下图
+2-22 所示。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                        官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                 技术群组：
+                 小梅哥 FPGA 团队                武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力             开发板 培训 项目研发三位一体
+
+
+
+
+                                 图 2-22 查看物理约束文件内容
+
+
+     从上图可以看出，文件中的内容和我们在 FloorPlanner 中设置的一致，说明
+我们物理约束成功。
+
+2.7 布局布线
+     我们通过点击 Process->Place&Route 进行布局布线，布局布线成功之后我们
+便可以看到“Bitstream generation completed”，此时代表 fs 文件生成成功，如下
+图 2-23 所示，如果失败，请用户根据 Console 中给的提示信息进行修改
+
+
+
+
+                                     图 2-23 布局布线成功
+
+
+店铺：https://xiaomeige.taobao.com                      官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/               技术群组：
+                 小梅哥 FPGA 团队               武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力            开发板 培训 项目研发三位一体
+
+
+2.8 专用管脚报错
+     完成管脚绑定后，直接将工程进行全编译，编译的时候会提示如下错误，
+如所示。
+
+
+
+
+                                图 2-24 编译提示报错信息
+
+
+     出现上述所示的错误，是因为 led 分配的引脚是一个专用引脚，是给 SSPI
+使用的，解决方式就是将该管脚设置为通用管脚，操作方式如下所示：
+
+     1. 在 Gowin 工具栏打开 project，选择 Configuration，进入设置界面，如下
+        所示。
+
+
+
+
+                                  图 2-25 进入设置界面
+
+
+     2. 然后点击 Dual-Puroose Pin，根据错误提示信息，选择“Use SSPI as
+     regular IO”和“Use CPU as regular IO”，将其设置为通用管脚，如下所
+     示。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                   官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/            技术群组：
+                 小梅哥 FPGA 团队                    武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                 开发板 培训 项目研发三位一体
+
+
+
+
+                            图 2-26 将专用引脚设置为通用引脚
+
+
+     设置完成之后，重新布局布线，可以看到报错消失，如下所示，成功生成
+了 fs 文件，可以进行下一步操作。
+
+2.9 板级验证
+     我们通过前面的步骤生成了实验所需的 fs 文件，接下来就需要将 fs 文件下
+载到 FPGA 芯片中，用于完成对 FPGA 的配置。
+
+              1.依次将下载器、电源连接至开发板上，如下图 2-27 所示。
+
+
+
+
+                                         图 2-27 硬件连接图
+
+
+店铺：https://xiaomeige.taobao.com                         官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                  技术群组：
+                 小梅哥 FPGA 团队                 武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力               开发板 培训 项目研发三位一体
+
+              2.然后给开发板上电，点击 Process->Program Device，弹出如下图
+         2-28 界面，说明检测到了设备，然后点击 save。如果显示 No USB Cable
+         Connection，请检查自己的硬件连接。
+
+
+
+
+                                    图 2-28 检测到设配提示
+
+
+              3.点击 Gowin Programmer 中的             ，将 fs 文件下载至 FPGA 芯片
+         中，如下图 2-29 所示。下载成功之后，会打印出信息，如下图 2-30 所
+         示。
+
+
+
+
+                                     图 2-29 下载 fs 文件
+
+
+
+
+店铺：https://xiaomeige.taobao.com                        官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                 技术群组：
+                 小梅哥 FPGA 团队              武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+
+
+
+                                 图 2-30 文件下载成功提示信息
+
+              4.观察现象：此时我们可以看到开发板上对应的 LED0 灯在闪烁，
+         说明我们本次实验成功。这个时候我们可以看到，程序下载之后 4 个
+         LED 灯都亮了，但是我们只控制其中一个灯，这是因为在 Gowin 软件
+         中默认没控制的引脚加了上拉，也就是会输出高电平，导致没控制的
+         LED 灯亮，这个可以在软件里面设置，如下所示。
+
+
+
+
+                                图 2-31 修改未使用引脚默认电平
+
+
+     注：这里笔者将其修改为接地，输出低电平后，烧录后，会导致串口灯爆
+亮，开发板发热异常；建议大家后续使用时，还是使用引脚加上拉选项。
+
+店铺：https://xiaomeige.taobao.com                      官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/               技术群组：
+                 小梅哥 FPGA 团队                   武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                 开发板 培训 项目研发三位一体
+
+
+2.10程序固化
+     我们通过前一小节下载的程序，在开发板重新上电之后，程序会丢失，为
+了实现掉电不丢失，接下来将教大家如何进行高云 FPGA 芯片的固化。
+
+              1.点 击 Program Device， 进 入 Gowin Programmer 界 面 ， 双 击
+         Operation 一栏中的 SRAM Program，进入 Device configuration 界面，如
+         下图 2-32 所示。
+
+
+
+
+                          图 2-32 进入 Device configuration 界面操作示意
+
+              2.在 Device configuration 界面，将 Access Mode 配置为 External Flash
+         Mode 5AT，Operation 配置为 exFlash Erase,Program 5AT，然后点击 Save，
+         如下图 2-33 所示。
+
+
+
+
+                              图 2-33 配置 Device configuration 界面
+
+
+
+店铺：https://xiaomeige.taobao.com                              官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                       技术群组：
+                 小梅哥 FPGA 团队                武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力             开发板 培训 项目研发三位一体
+
+
+              3.点击       进行程序下载，下载成功之后，会打印出一下信息，如
+         下图 2-34 所示。
+
+
+
+
+                                    图 2-34 下载成功示意图
+
+              4.然后重新给开发板上电，便可以看到开发板上运行的就是本次实
+         验固化的程序。
+
+2.11思考与总结
+     本章实验带领大家熟悉了 Gowin 软件的基本开发流程，对于每个流程所应
+注意的细节，本章进行了一定的描述，对于一些遗漏的地方将会在后续章节使
+用到时补充说明。作为开始实验的第一个章节，本章手把手对整个设计流程进
+行了介绍，用户务必照着流程动手操作并熟悉整个过程，清楚每一步的目的和
+作用，避免因为步骤的缺失而导致工程报错，甚至是整个工程推倒重来。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                      官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/               技术群组：
+

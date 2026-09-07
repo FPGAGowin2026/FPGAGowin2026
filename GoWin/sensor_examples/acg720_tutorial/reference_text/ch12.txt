@@ -1,0 +1,432 @@
+                 小梅哥 FPGA 团队              武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力            开发板 培训 项目研发三位一体
+
+
+
+              12 模块化设计基础之加减法计数器
+                      |----02_设计实例
+      工程源码
+                      |----ch12_key_led
+      相关视频
+ 课程
+      说明
+
+      章节导读
+
+      在相对大一点的工程设计过程中，设计内容通常不会只写在一个设计文件
+中，而是会针对不同的功能设计出不同的子文件，最后在顶层文件中再进行例
+化调用。
+
+      在上面设计并验证了独立按键的消抖，这里基于上一讲的按键消抖模块来
+实现一个加减法、移位计数器，实现每次按下按键 S1， 8 个 LED 显示状态以
+二进制加法格式加 1，每次按下按键 S2， 8 个 LED 显示状态以二进制加法格
+式减 1，每次按下按键 S3， 8 个 LED 显示状态以二进制格式左移 1 位，每
+次按下按键 S4， 8 个 LED 显示状态以二进制格式右移 1 位，并以此学习模块
+化的设计方式。 在后面章节中将利用第四章编写好的独立模块，组合起来设计
+一些应用性较强的项目，进一步理解模块化设计方式的优点。
+
+
+12.1模块功能划分
+      为了实现四个按键控制 LED 灯按照二进制计数方式的加减、移位，可以将
+本讲模块划分为四个按键消抖模块以及一个 LED 控制模块， 其模块间的连线如
+下图所示，这里的 key_in0~3 对应原理图上的 S1~S4， S0 作为复位信号使用。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                  官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/           技术群组：
+                 小梅哥 FPGA 团队                武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力              开发板 培训 项目研发三位一体
+
+
+
+
+                                    图 12-1 顶层模块端口图
+
+
+12.1.1模块功能设计
+     这里的 key_filter 在前面章节中已经编写完成，只需在 key_led 中调用即可。
+现编写 led_ctrl，从下图中可得出其端口列表如下。
+      input clk;      //模块工作时钟输入，50M
+      input reset_n;     //复位信号输入，低有效
+      input key_add;     //自加按键
+      input key_sub;     //自减按键
+      input key_shift_l; //左移按键
+      input key_shift_r; //右移按键
+
+      output [7:0]led;           //led 显示
+     本模块需要根据两个按键的状态来进行计数器的加减和移位，通过不同控
+制信号实现不同操作，具体代码如下。
+  always@(posedge clk or posedge reset)
+  if(reset)
+     led <= 8'b0000_0000;
+  else if(key_add)
+       led <= led + 1'b1;
+  else if(key_sub)
+       led <= led - 1'b1;
+  else if(key_shift_l)
+       led <= (led << 1);
+  else if(key_shift_r)
+       led <= (led >> 1);
+  else
+店铺：https://xiaomeige.taobao.com                      官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/               技术群组：
+                 小梅哥 FPGA 团队                 武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力               开发板 培训 项目研发三位一体
+
+            led <= led;
+     计数器的 led 初值为 8`b0000_0000，由开发板上的 led 灯电路图可知，led 灯
+为高电平点亮，初始状态下，led 灯为全灭状态，这里当按键 0 按下即计数器加
+1，计数器变为 8`b0000_0001，此时就会出现 led0 变亮，以此类推，当按下其他
+按键时会有对应的变化。
+
+
+
+
+                                     图 12-2 LED 灯电路图
+
+
+     这样各个独立的模块即编写完成，下面开始顶层文件的设计，添加并新建
+key_led_top.v，将其设置为顶层设计，根据前面设计的顶层结构图对相应模块
+进行例化，led_ctrl 模块的控制信号使用按键消抖后的信号，在按键状态为低电
+平并且按键标志为高电平的情况下表示按键按下一次，用代码表示为 key_flag
+&& (~key_state)，内部连接信号类型设置为 wire。
+    module key_led_top(
+         clk,
+         reset_n,
+         key_in0,
+         key_in1,
+         key_in2,
+         key_in3,
+         led
+    );
+
+店铺：https://xiaomeige.taobao.com                        官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                 技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+
+           input clk;   //系统时钟输入，50M
+           input reset_n; //复位信号输入，低有效
+           input key_in0; //按键 0 输入,自加
+           input key_in1; //按键 1 输入，自减
+           input key_in2; //按键 0 输入，左移
+           input key_in3; //按键 1 输入，右移
+
+           output [7:0]led;//led 数据显示
+
+           wire key_flag0, key_state0;
+           wire key_flag1, key_state1;
+           wire key_flag2, key_state2;
+           wire key_flag3, key_state3;
+           wire key_add;
+           wire key_sub;
+           wire key_shift_l;
+           wire key_shift_r;
+
+           assign key_add = key_flag0 && (~key_state0);
+           assign key_sub = key_flag1 && (~key_state1);
+           assign key_shift_l = key_flag2 && (~key_state2);
+           assign key_shift_r = key_flag3 && (~key_state3);
+
+           key_filter key_filter0(
+               .clk(clk),
+               .reset_n(reset_n),
+               .key_in(key_in0),
+               .key_flag(key_flag0),
+               .key_state(key_state0)
+           );
+
+           key_filter key_filter1(
+               .clk(clk),
+               .reset_n(reset_n),
+               .key_in(key_in1),
+               .key_flag(key_flag1),
+               .key_state (key_state1)
+           );
+
+         key_filter key_filter2(
+               .clk(clk),
+               .reset_n(reset_n),
+               .key_in(key_in2),
+               .key_flag(key_flag2),
+               .key_state(key_state2)
+           );
+
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+
+
+         key_filter key_filter3(
+               .clk(clk),
+               .reset_n(reset_n),
+               .key_in(key_in3),
+               .key_flag(key_flag3),
+               .key_state(key_state3)
+           );
+
+           led_ctrl led_ctrl0(
+               .clk(clk),
+               .reset_n(reset_n),
+               .key_add(key_add),
+               .key_sub(key_sub),
+               .key_shift_l(key_shift_l),
+               .key_shift_r(key_shift_r),
+               .led(led)
+           );
+
+ endmodule
+     进行分析和综合直至没有错误以及警告。
+
+12.2激励创建及仿真测试
+     为了测试仿真编写测试激励文件，这里直接调用四个按键模型进行仿真即
+可方便的完成仿真 testbench 的设计，添加并新建仿真文件 key_led_tb.v，具体代
+码如下，仿真设计除了生成了时钟以及复位信号，还产生了四个按键依次的按
+下和释放的过程。仿真过程分别对每个按键进行两次按下操作。这样整体的代
+码就如下所示。
+  `timescale 1ns/1ns
+  `define CLK_PERIOD 20
+
+      module key_led_tb;
+
+           reg clk;
+           reg reset_n;
+
+           reg press0;
+           reg press1;
+           reg press2;
+           reg press3;
+           wire key_in0;
+           wire key_in1;
+           wire key_in2;
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+           wire key_in3;
+
+           wire [7:0]led;
+
+           key_model key_model_inst0(
+               .key_press(press0),
+               .key_out(key_in0)
+           );
+
+           key_model key_model_inst1(
+               .key_press(press1),
+               .key_out(key_in1)
+           );
+
+           key_model key_model_inst2(
+               .key_press(press2),
+               .key_out(key_in2)
+           );
+
+           key_model key_model_inst3(
+               .key_press(press3),
+               .key_out(key_in3)
+           );
+
+           key_led key_led0(
+               .clk(clk),
+               .reset_n(reset_n),
+               .key_in0(key_in0),
+               .key_in1(key_in1),
+               .key_in2(key_in2),
+               .key_in3(key_in3),
+               .led(led)
+           );
+
+           initial clk= 1;
+           always#(`CLK_PERIOD/2) clk = ~clk;
+
+           initial begin
+               reset_n = 1'b0;
+               press0 = 0;
+               press1 = 0;
+               press2 = 0;
+               press3 = 0;
+               #(`CLK_PERIOD*10);
+               reset_n = 1'b1;
+               #(`CLK_PERIOD*10 + 1);
+
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+                 press0 = 1;
+                 #(`CLK_PERIOD)
+                 press0 = 0;
+
+                 #80_000_000;
+
+                 press0 = 1;
+                 #(`CLK_PERIOD)
+                 press0 = 0;
+
+                 #80_000_000;
+
+                 press2 = 1;
+                 #(`CLK_PERIOD)
+                 press2 = 0;
+
+                 #80_000_000;
+
+                 press2 = 1;
+                 #(`CLK_PERIOD)
+                 press2 = 0;
+
+                 #80_000_000;
+
+                 press3 = 1;
+                 #(`CLK_PERIOD)
+                 press3 = 0;
+
+                 #80_000_000;
+
+                 press3 = 1;
+                 #(`CLK_PERIOD)
+                 press3 = 0;
+
+                 #80_000_000;
+
+                 press1 = 1;
+                 #(`CLK_PERIOD)
+                 press1 = 0;
+
+                 #80_000_000;
+
+                 press1 = 1;
+                 #(`CLK_PERIOD)
+                 press1 = 0;
+
+                 #80_000_000;
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                 小梅哥 FPGA 团队               武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力             开发板 培训 项目研发三位一体
+
+                 $stop;
+           end
+
+ endmodule
+     设计好仿真文件后，点击 Run Simulation 选择 Run Behavioral Simulation 进
+行功能仿真，得到如下图所示的波形文件。当按键 0 按下时，计数器 led 则会加
+1；按键 1 按下后计数器 led 则会减 1；按下按键 2，led 数值会二进制形式左移 1
+位；按下按键 3，led 数值会二进制形式右移 1 位，波形与我们设计预期完全一
+致。
+
+
+
+
+                                    图 12-3 功能仿真波形图
+
+
+     至此，功能仿真验证工作就完成了。
+
+12.3板级验证
+     本实验的板级验证环节，主要验证以下目标：
+
+              1.能否正确烧写和下载程序。
+
+              2.在 ACX720-GW5A138 开发板上，相应按键按下后，led 能否按设
+         计意图点亮。
+
+     系统所需硬件如下：
+
+              1.ACX720-GW5A138 开发板。
+
+              2.高云下载器一个
+
+              3.电源电缆一根
+
+              4.硬件条件符合实验要求，具有完全开发功能的 PC 机一台
+
+12.3.1I/O 约束
+     我们需要点击 FloorPlanner 进行 I/O 约束，具体约束如下图所示。
+
+
+
+店铺：https://xiaomeige.taobao.com                      官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/               技术群组：
+                 小梅哥 FPGA 团队                 武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力               开发板 培训 项目研发三位一体
+
+
+
+
+                                   图 12-4 管脚绑定后效果图
+
+
+12.3.2布局布线
+     重新点击“Place & Route”，报错消失，成功生成 fs 文件，如下图 12-5 所
+示。
+
+
+
+
+                                    图 12-5 成功生成 fs 文件
+
+
+12.3.3下载 fs 文件并观察现象
+     点击“Program Device”进入下载界面，弹出“Cable Setting”界面，如下
+图 12-6 所示，点击 Save。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                         官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                  技术群组：
+                 小梅哥 FPGA 团队               武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力            开发板 培训 项目研发三位一体
+
+
+
+
+                                   图 12-6 检测到器件示意图
+
+
+
+     然后点击           下载 fs 文件，Programming 之后，进行如下图 12-7 按键测试
+后符合设计思想，即为设计无误。
+
+
+
+
+                                 图 12-7 加减法计数器板级验证
+
+
+
+
+店铺：https://xiaomeige.taobao.com                      官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/               技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+
+
+
+                              图 12-8 加减法计数器板级验证
+
+
+     看到与之前描述对应的现象，即为设计无误。至此，通过仿真以及板级验
+证说明该加减法计数器设计正确。
+
+12.4总结
+     本章通过模块化设计实现了加减法和移位操作的设计并进行了行为仿真与
+板级验证。模块化的设计方式在后面章节中的使用尤为广泛，特别是在综合实
+验中，更能体会到这种设计方式的优点。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                   官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/            技术群组：
+

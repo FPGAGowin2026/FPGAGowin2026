@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE gowin-fpga-project>
+<Project>
+    <Template>FPGA</Template>
+    <Version>5</Version>
+    <Device name="GW5A-25B" pn="GW5A-LV25MG121NC1/I0">gw5a25b-003</Device>
+    <FileList>
+        <File path="src/bringup_uart_rx.v" type="file.verilog" enable="1"/>
+        <File path="src/bringup_uart_tx.v" type="file.verilog" enable="1"/>
+        <File path="src/bringup_console.v" type="file.verilog" enable="1"/>
+        <File path="src/tang_primer_25k_bringup_top.v" type="file.verilog" enable="1"/>
+        <File path="constraints/tang_primer_25k_bringup.cst" type="file.cst" enable="1"/>
+        <File path="constraints/tang_primer_25k_bringup.sdc" type="file.sdc" enable="1"/>
+    </FileList>
+</Project>

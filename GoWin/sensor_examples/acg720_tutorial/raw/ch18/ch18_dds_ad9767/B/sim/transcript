@@ -1,0 +1,129 @@
+# Reading G:/Modelsim/tcl/vsim/pref.tcl
+# //  ModelSim SE-64 10.7 Dec  7 2017
+# //
+# //  Copyright 1991-2017 Mentor Graphics Corporation
+# //  All Rights Reserved.
+# //
+# //  ModelSim SE-64 and its associated documentation contain trade
+# //  secrets and commercial or financial information that are the property of
+# //  Mentor Graphics Corporation and are privileged, confidential,
+# //  and exempt from disclosure under the Freedom of Information Act,
+# //  5 U.S.C. Section 552. Furthermore, this information
+# //  is prohibited from disclosure under the Trade Secrets Act,
+# //  18 U.S.C. Section 1905.
+# //
+# OpenFile H:/01_gaoyun/gao_project/19_dds_ad9767/dds_ad9767/sim/dds_ad9767.mpf
+# Loading project dds_ad9767
+# Compile of dds_ad9767.v was successful.
+# Compile of DDS_Module.v was successful.
+# Compile of key_filter.v was successful.
+# Compile of rom_triangular.v was successful.
+# Compile of rom_square.v was successful.
+# Compile of rom_sine.v was successful.
+# Compile of gowin_pll.v was successful.
+# Compile of DDS_AD9767_tb.v was successful.
+# Compile of hc595_driver.v was successful.
+# Compile of hex8.v was successful.
+# Compile of key_control.v was successful.
+# 11 compiles, 0 failed with no errors.
+vsim -L gw5a -Lf gw5a work.DDS_AD9767_tb -voptargs=+acc
+# vsim -L gw5a -Lf gw5a work.DDS_AD9767_tb -voptargs="+acc" 
+# Start time: 15:16:18 on Sep 13,2023
+# ** Note: (vsim-3813) Design is being optimized due to module recompilation...
+# ** Warning: H:/0_gaoyun_p/1.9.9Beta-1/Gowin/Gowin_V1.9.9Beta-1/IDE/simlib/gw5a/prim_sim.v(3116): (vopt-2697) MSB of part-select into 'mem_t' is out of bounds.
+# ** Warning: H:/0_gaoyun_p/1.9.9Beta-1/Gowin/Gowin_V1.9.9Beta-1/IDE/simlib/gw5a/prim_sim.v(3120): (vopt-2697) MSB of part-select into 'mem_t' is out of bounds.
+# ** Warning: H:/0_gaoyun_p/1.9.9Beta-1/Gowin/Gowin_V1.9.9Beta-1/IDE/simlib/gw5a/prim_sim.v(3124): (vopt-2697) MSB of part-select into 'mem_t' is out of bounds.
+# ** Warning: H:/0_gaoyun_p/1.9.9Beta-1/Gowin/Gowin_V1.9.9Beta-1/IDE/simlib/gw5a/prim_sim.v(3116): (vopt-2697) MSB of part-select into 'mem_t' is out of bounds.
+# ** Warning: H:/0_gaoyun_p/1.9.9Beta-1/Gowin/Gowin_V1.9.9Beta-1/IDE/simlib/gw5a/prim_sim.v(3120): (vopt-2697) MSB of part-select into 'mem_t' is out of bounds.
+# ** Warning: H:/0_gaoyun_p/1.9.9Beta-1/Gowin/Gowin_V1.9.9Beta-1/IDE/simlib/gw5a/prim_sim.v(3124): (vopt-2697) MSB of part-select into 'mem_t' is out of bounds.
+# ** Warning: H:/0_gaoyun_p/1.9.9Beta-1/Gowin/Gowin_V1.9.9Beta-1/IDE/simlib/gw5a/prim_sim.v(3112): (vopt-2697) MSB of part-select into 'mem_t' is out of bounds.
+# ** Warning: H:/0_gaoyun_p/1.9.9Beta-1/Gowin/Gowin_V1.9.9Beta-1/IDE/simlib/gw5a/prim_sim.v(3116): (vopt-2697) MSB of part-select into 'mem_t' is out of bounds.
+# ** Warning: H:/0_gaoyun_p/1.9.9Beta-1/Gowin/Gowin_V1.9.9Beta-1/IDE/simlib/gw5a/prim_sim.v(3120): (vopt-2697) MSB of part-select into 'mem_t' is out of bounds.
+# ** Warning: H:/0_gaoyun_p/1.9.9Beta-1/Gowin/Gowin_V1.9.9Beta-1/IDE/simlib/gw5a/prim_sim.v(3124): (vopt-2697) MSB of part-select into 'mem_t' is out of bounds.
+# ** Warning: H:/0_gaoyun_p/1.9.9Beta-1/Gowin/Gowin_V1.9.9Beta-1/IDE/simlib/gw5a/prim_sim.v(3116): (vopt-2697) MSB of part-select into 'mem_t' is out of bounds.
+# ** Warning: H:/0_gaoyun_p/1.9.9Beta-1/Gowin/Gowin_V1.9.9Beta-1/IDE/simlib/gw5a/prim_sim.v(3120): (vopt-2697) MSB of part-select into 'mem_t' is out of bounds.
+# ** Warning: H:/0_gaoyun_p/1.9.9Beta-1/Gowin/Gowin_V1.9.9Beta-1/IDE/simlib/gw5a/prim_sim.v(3124): (vopt-2697) MSB of part-select into 'mem_t' is out of bounds.
+# ** Warning: H:/01_gaoyun/gao_project/19_dds_ad9767/dds_ad9767/src/dds_ad9767.v(83): (vopt-2685) [TFMPC] - Too few port connections for 'key_control'.  Expected 11, found 6.
+# ** Warning: H:/01_gaoyun/gao_project/19_dds_ad9767/dds_ad9767/src/dds_ad9767.v(83): (vopt-2718) [TFMPC] - Missing connection for port 'Mode_Sel_B'.
+# ** Warning: H:/01_gaoyun/gao_project/19_dds_ad9767/dds_ad9767/src/dds_ad9767.v(83): (vopt-2718) [TFMPC] - Missing connection for port 'Mode_Sel_A'.
+# ** Warning: H:/01_gaoyun/gao_project/19_dds_ad9767/dds_ad9767/src/dds_ad9767.v(83): (vopt-2718) [TFMPC] - Missing connection for port 'CH_Fword_Sel_B'.
+# ** Warning: H:/01_gaoyun/gao_project/19_dds_ad9767/dds_ad9767/src/dds_ad9767.v(83): (vopt-2718) [TFMPC] - Missing connection for port 'CH_Fword_Sel_A'.
+# ** Warning: H:/01_gaoyun/gao_project/19_dds_ad9767/dds_ad9767/src/dds_ad9767.v(83): (vopt-2718) [TFMPC] - Missing connection for port 'channel'.
+# ** Note: (vopt-143) Recognized 1 FSM in module "key_filter(fast)".
+# Loading work.DDS_AD9767_tb(fast)
+# Loading gw5a.GSR(fast)
+# Loading work.dds_ad9767(fast)
+# Loading work.Gowin_PLL(fast)
+# Loading gw5a.PLLA(fast)
+# Loading work.DDS_Module(fast)
+# Loading work.rom_sine(fast)
+# Loading gw5a.pROM(fast)
+# Loading gw5a.pROM(fast__1)
+# Loading gw5a.pROM(fast__2)
+# Loading gw5a.pROM(fast__3)
+# Loading work.rom_square(fast)
+# Loading gw5a.pROM(fast__4)
+# Loading gw5a.pROM(fast__5)
+# Loading work.rom_triangular(fast)
+# Loading gw5a.pROM(fast__6)
+# Loading gw5a.pROM(fast__7)
+# Loading gw5a.pROM(fast__8)
+# Loading gw5a.pROM(fast__9)
+# Loading work.key_control(fast)
+# Loading work.key_filter(fast)
+# Loading work.hc595_driver(fast)
+# Loading work.hex8(fast)
+add wave -position insertpoint sim:/DDS_AD9767_tb/dds_ad9767/*
+run -all
+# ** Note: $stop    : H:/01_gaoyun/gao_project/19_dds_ad9767/dds_ad9767/src/DDS_AD9767_tb.v(49)
+#    Time: 1 ms  Iteration: 0  Instance: /DDS_AD9767_tb
+# Break in Module DDS_AD9767_tb at H:/01_gaoyun/gao_project/19_dds_ad9767/dds_ad9767/src/DDS_AD9767_tb.v line 49
+# Compile of dds_ad9767.v was successful.
+# Compile of DDS_Module.v was successful.
+# Compile of key_filter.v was successful.
+# Compile of rom_triangular.v was successful.
+# Compile of rom_square.v was successful.
+# Compile of rom_sine.v was successful.
+# Compile of gowin_pll.v was successful.
+# Compile of DDS_AD9767_tb.v was successful.
+# Compile of hc595_driver.v was successful.
+# Compile of hex8.v was successful.
+# Compile of key_control.v was successful.
+# 11 compiles, 0 failed with no errors.
+restart
+# ** Note: (vsim-3813) Design is being optimized due to module recompilation...
+# ** Warning: H:/01_gaoyun/gao_project/19_dds_ad9767/dds_ad9767/src/dds_ad9767.v(83): (vopt-2685) [TFMPC] - Too few port connections for 'key_control'.  Expected 11, found 6.
+# ** Warning: H:/01_gaoyun/gao_project/19_dds_ad9767/dds_ad9767/src/dds_ad9767.v(83): (vopt-2718) [TFMPC] - Missing connection for port 'Mode_Sel_B'.
+# ** Warning: H:/01_gaoyun/gao_project/19_dds_ad9767/dds_ad9767/src/dds_ad9767.v(83): (vopt-2718) [TFMPC] - Missing connection for port 'Mode_Sel_A'.
+# ** Warning: H:/01_gaoyun/gao_project/19_dds_ad9767/dds_ad9767/src/dds_ad9767.v(83): (vopt-2718) [TFMPC] - Missing connection for port 'CH_Fword_Sel_B'.
+# ** Warning: H:/01_gaoyun/gao_project/19_dds_ad9767/dds_ad9767/src/dds_ad9767.v(83): (vopt-2718) [TFMPC] - Missing connection for port 'CH_Fword_Sel_A'.
+# ** Warning: H:/01_gaoyun/gao_project/19_dds_ad9767/dds_ad9767/src/dds_ad9767.v(83): (vopt-2718) [TFMPC] - Missing connection for port 'channel'.
+# Loading work.DDS_AD9767_tb(fast)
+# Loading gw5a.GSR(fast)
+# Loading work.dds_ad9767(fast)
+# Loading work.Gowin_PLL(fast)
+# Loading gw5a.PLLA(fast)
+# Loading work.DDS_Module(fast)
+# Loading work.rom_sine(fast)
+# Loading gw5a.pROM(fast)
+# Loading gw5a.pROM(fast__1)
+# Loading gw5a.pROM(fast__2)
+# Loading gw5a.pROM(fast__3)
+# Loading work.rom_square(fast)
+# Loading gw5a.pROM(fast__4)
+# Loading gw5a.pROM(fast__5)
+# Loading work.rom_triangular(fast)
+# Loading gw5a.pROM(fast__6)
+# Loading gw5a.pROM(fast__7)
+# Loading gw5a.pROM(fast__8)
+# Loading gw5a.pROM(fast__9)
+# Loading work.key_control(fast)
+# Loading work.key_filter(fast)
+# Loading work.hc595_driver(fast)
+# Loading work.hex8(fast)
+run -all
+# ** Note: $stop    : H:/01_gaoyun/gao_project/19_dds_ad9767/dds_ad9767/src/DDS_AD9767_tb.v(49)
+#    Time: 1 ms  Iteration: 0  Instance: /DDS_AD9767_tb
+# Break in Module DDS_AD9767_tb at H:/01_gaoyun/gao_project/19_dds_ad9767/dds_ad9767/src/DDS_AD9767_tb.v line 49
+# End time: 15:52:03 on Sep 13,2023, Elapsed time: 0:35:45
+# Errors: 0, Warnings: 0

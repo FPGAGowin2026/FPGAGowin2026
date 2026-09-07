@@ -1,0 +1,1158 @@
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+
+
+           33 基于 I2C 接口的串口读写 EEPROM
+                 |----02_设计实例
+ 工程源码
+                 |----ch33_uart_eeprom
+ 相关视频课程
+ 说明
+
+      章节导读
+
+      EEPROM (Electrically Erasable Programmable read only memory)，即
+带电可擦可编程只读存储器，是一种掉电后数据不丢失的存储芯片。用户可以
+通过高于普通电压的作用来擦除和重编程（重写）。
+
+      在 ACX720-GW5A138 开发板上设计有一个型号为 24LC64 的 EEPROM 芯片，该
+芯片是合泰公司推出的一款 64k 存储大小的非易失性 I2C 存储器设备。本章将使
+用上一章节设计的 I2C 控制器，结合前面设计的串口收发模块实现串口对
+EEPROM 存储器的读写功能，并进行相应的板级验证。
+
+
+33.124LC64 功能描述
+      24LC64 是一种两线制串行读/写非易失性 I2C 存储器设备，器件名称中的 64
+代表了其存储大小为 64Kbit。在器件内部中，每个存储单元能存储 8 位，因此
+器件内部共有 8k 个存储单元。要想为这 8K 个寄存器分配地址，就需要使用 13
+位数据表示，因此该器件为 2 字节地址段器件。
+      器件内部将每 32 个字节划分为一页，数据在进行连续多字节读写时无法超
+出当前页地址。因此在使用 IIC 的连续多字节读写时，一次最多只能读写 32 个
+字节数据，而这种读写方式在器件中又被称为页写入和页读取。
+      要了解这种读写方式，首先需要了解 24LC64 的内部结构，其结构框图如图
+33-1 所示。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                 小梅哥 FPGA 团队                 武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力              开发板 培训 项目研发三位一体
+
+
+
+
+                                   图 33-1 24LC64 结构框图
+
+
+     该器件使用 I2C 接口，用户通过 SCL 与 SDA 总线对器件进行读写。其中的
+寄存器控制逻辑（Memory Control Logic）负责将数据写入/读出 EEPROM，待
+写入的数据通过 HV Pump 的高压作用写入 EEPROM 阵列的指定存储单元。为
+了实现页读写功能，内部的 Page Buffer 会对存储器地址的高 8 位进行缓存，用
+以确定当前操作所读写的页。器件内部的地址计数器（Address Counter）会记
+录上一次操作的地址，用以在页读写模式下的地址自加等操作。当页读写地址
+超过当前页时，由于 Page Buffer 中的数据不会变化，地址只能在当前页范围内
+变化，因此读写操作会从当前页的起始地址继续执行。为了降低读出延时，读
+操作由锁存型读出放大器读/写控制逻辑（Sense AMP R/W Control）负责，在数
+据读出后送给寄存器控制逻辑最后通过 I2C 总线输出。
+
+33.2器件地址
+     每个 I2C 器件都有自己的器件地址，对于 24LC64 这样一颗 EEPROM 器件，
+其器件地址由 1010 +3 位片选信号（对应图 33-1 中 A0~A2）组成，如图 33-2 所
+示：
+
+
+
+
+                                   图 33-2 24LC64 器件地址
+
+
+     这三位片选信号由硬件上 A2、A1、A0 三个引脚的连接设定，也就是可以
+
+店铺：https://xiaomeige.taobao.com                         官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                  技术群组：
+                 小梅哥 FPGA 团队                 武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力              开发板 培训 项目研发三位一体
+
+
+通过对 A2、 A1、 A0 三个引脚物理接地或者上拉控制器件地址。在 ACX720-
+GW5A138 开发板上，24LC64 的相关电路如图 33-3 所示：
+
+
+
+
+                                   图 33-3 24LC64 硬件电路
+
+
+     可以看到， A2、A1、A0 引脚物理接地，因此开发板上 EEPROM 芯片的器
+件地址为 7 位的 1010000。但是在大多数情况下我们习惯加上一个读写位 0 来表
+示器件地址，也就是 8 位的 10100000，即 0xA0。
+
+33.3串口读写 EEPROM 系统设计
+     在了解了 24LC64 的器件地址以及结构原理后，接下来我们就可以针对
+24LC64 进行本次的串口读写 EEPROM 设计了。要达成设计目的，我们就需要
+使用到串口，利用 PC 机的串口向 FPGA 开发板发送读或写指令来对 EEPROM
+器件进行数据的读或写。首先，我们规定读写 EEPROM 的串口指令如图 33-4 所
+示：
+
+                    起始地址           功能码      数据0     ......   数据15
+
+
+                                图 33-4 读写 EEPROM 器件指令
+
+
+     指令各部分所代表的功能含义如下：
+
+              1.起始地址：读写数据的第一个地址。
+
+              2.功能码：控制读写操作以及读写字节数。功能码的 bit[7]用于区
+         分是写数据操作还是读数据操作，当值为 0 时代表写操作，值为 1 时代
+         表读操作；bit[3:0]用于控制读写操作时，写入\读出 EEPROM 的有效字
+店铺：https://xiaomeige.taobao.com                         官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                  技术群组：
+                         小梅哥 FPGA 团队                                                   武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                                                        开发板 培训 项目研发三位一体
+
+         节数。
+
+                    3.数据 0~15：写操作时待写入数据，写操作时该部分必须填充 16
+         字节数据，但是用户可以通过功能码的 bit[3:0]控制实际写入 EEPROM
+         的字节数。读操作时该部分可以填充任意值。
+
+     如图 33-5 为本次设计的整体框图。
+      clk_50M
+                            Clk                                           Clk                     address[15:0]
+                                                                        Reset_n                   data[127:0]                  CLK
+        rst_n              Reset_n                 Data[7:0]        rx_data[7:0]      uart_cmd    cmdvalid                     Rst_n
+                        Baud_Set[7:0] uart_byte_rx Rx_Done            rx_done                    num_cmd[7:0]        dly_cnt_max[31:0]
+                    3'd4
+          uart_rx                                                                                                                             device_id                    i2c_sclk
+
+
+
+
+                                                                                                                     249999
+                                                                                                                                             addr_mode
+
+
+
+
+                                                                                                                              8'b1010_0000
+                                                                                                 num_cmd[7:0]
+                                                                                                    cmdvalid                                               i2c_control
+
+
+
+
+                                                                                                                                             1'b1
+                                                                         clk50M
+                                                                                                 cmd_data[127:0]
+                                                                          rst_n
+                                                                                                  address[15:0]
+                                                                                                   wrdata[7:0]                               wrdata[7:0]
+                                                                                                    wrreg_req                                 wrreg_req    i2c_bit_shift
+                                                                                      convert       rdreg_req                                 rdreg_req
+                           Clk                                                                      addr[15:0]                                addr[15:0]
+                          Rst_n
+                                              Tx_Done
+                                                                                                   rddata[7:0]                               rddata[7:0]                   i2c_sdat
+                                uart_data_tx uart_state
+          uart_tx                                                                                   RW_Done                                  RW_Done
+                                              data[127:0]      eeprom_rddata[127:0]
+                                                                                                       ack                                       ack
+                                 uart_byte_tx send_en          eeprom_rd_done
+                  Baud_Set[2:0]                                                                  eeprom_wr_done
+                3'd4
+
+
+
+
+                                               图 33-5 串口读写 EEPROM 整体设计框图
+
+
+     在 前 面 章 节 中 我 们 已 经 带 大 家 完 成 过 uart_byte_rx、i2c_control、
+uart_byte_tx 模块的设计，因此这里主要介绍 uart_cmd、convert、uart_data_tx 三
+个模块，它们的功能如下:
+
+                    1.uart_cmd：串口指令模块。该模块会判断从串口接收模块中接收
+         的数据。当数据满足串口指令时，模块会从中提取出对应的起始地址、
+         功能码以及数据指令，并传输给 convert 模块。
+
+                    2.convert：指令转读写操作模块。该模块会接收从 uart_cmd 传输来
+         的指令，并根据指令中的功能码判断当前的读/写操作类型以及实际读/
+         写字节数。随后通过内部状态机产生相关读写请求信号，与起始地址
+         和数据一起传输给 i2c_control 模块，实现对 EEPROM 的读/写操作。
+
+                    3.uart_data_tx：多字节串口发送模块。在前面章节中，我们设计的
+         串口发送模块单次只支持 1 字节的数据发送，而本次设计中我们一次可
+         能需要发送至多 16 字节数据，为此我们为串口发送模块设计了一个上
+         层封装模块，通过状态机使得串口发送能够实现 1~16 字节数据的发送、
+         大小端选择等等。
+
+     系统在工作时，串口接收模块（uart_byte_rx）会接收用户传输的数据，并
+交由串口指令模块（uart_cmd）。串口指令模块会根据我们定义的串口指令对内
+容进行提取，得到对应的起始地址、功能码和 26 字节数据，随后将它们送到指
+店铺：https://xiaomeige.taobao.com                                                                                   官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                                                                            技术群组：
+                 小梅哥 FPGA 团队                武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力             开发板 培训 项目研发三位一体
+
+
+令转读写操作模块（convert）进行解析判断，依据判断得到的操作模式，产生
+对应的读写请求信号，并将地址与数据等信息交由 I2C 控制器（i2c_control），
+实现对指定地址的读写操作。如果是读操作，读出的数据会被交给多字节串口
+发送模块（uart_data_tx），该模块能够支持最多一次传输 16 字节的数据，最终
+将读出的数据发送给电脑的串口。
+     接下来就对各个模块进行详细介绍，并带大家完成对应模块的设计。
+
+33.3.1uart_cmd 模块
+     该模块负责串口指令的解析，依据前面我们定义的串口指令，正确的格式
+是起始地址+功能码+16 字节数据。而在前面介绍 24LC64 时我们分析过，该器
+件为 2 字节地址器件，因此起始地址需要占 2 字节，功能占 1 字节，数据占 16
+字节。所以，正确的串口指令需要占 19 字节。为了保证所接收到的 19 字节内
+容就是串口指令，我们可以再为其加上 2 字节的帧头 0x55 和 0xA5，以及 1 字节
+的帧尾 0xF0，作为我们的串口指令协议。因此，协议的完整组成如下图 33-6 所
+示。
+
+            0x55       0xA5        起始地址       功能码 数据0~15         0xF0
+
+                                     图 33-6 串口指令协议
+
+
+     串口指令协议的长度为 22 字节，我们所需做的就是对串口接收的数据进行
+22 字节的缓存（打拍），随后对这 22 字节数据进行判断。只要满足串口指令协
+议要求（即帧头 0x55+帧头 0xA5+19 字节内容+帧尾 0xF0），便代表是正确的串
+口指令。随后从指令中提取出对应的起始地址、功能码、数据，并产生 cmd 有
+效信号，一起发送给指令转读写操作模块。因此，uart_cmd 的设计代码如下：
+ `timescale 1ns/1ns
+
+ module uart_cmd(
+     Clk,
+     Reset_n,
+     rx_data,
+     rx_done,
+     address,
+     data,
+     num_cmd,
+     cmdvalid
+ );
+
+店铺：https://xiaomeige.taobao.com                      官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/               技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+
+
+      input Clk;
+      input Reset_n;
+      input [7:0]rx_data;
+      input rx_done;
+      output reg[7:0]address;
+      output reg[127:0]data;
+      output reg cmdvalid;
+      output reg [7:0]num_cmd;
+
+      reg [7:0] data_str [20:0];
+      always@(posedge Clk)
+      if(rx_done)begin
+          data_str[20] <= #1 rx_data;
+          data_str[19] <= #1 data_str[20];
+          data_str[18] <= #1 data_str[19];
+          data_str[17] <= #1 data_str[18];
+          data_str[16] <= #1 data_str[17];
+          data_str[15] <= #1 data_str[16];
+          data_str[14] <= #1 data_str[15];
+          data_str[13] <= #1 data_str[14];
+          data_str[12] <= #1 data_str[13];
+          data_str[11] <= #1 data_str[12];
+          data_str[10] <= #1 data_str[11];
+          data_str[9] <= #1 data_str[10];
+          data_str[8] <= #1 data_str[9];
+          data_str[7] <= #1 data_str[8];
+          data_str[6] <= #1 data_str[7];
+          data_str[5] <= #1 data_str[6];
+          data_str[4] <= #1 data_str[5];
+          data_str[3] <= #1 data_str[4];
+          data_str[2] <= #1 data_str[3];
+          data_str[1] <= #1 data_str[2];
+          data_str[0] <= #1 data_str[1];
+      end
+
+      reg r_rx_done;
+      always@(posedge Clk)
+          r_rx_done <= rx_done;
+
+      always@(posedge Clk or negedge Reset_n)
+      if(!Reset_n) begin
+          address <= #1 0;
+          data <= #1 0;
+          cmdvalid <= #1 0;
+          num_cmd <= #1 0;
+      end else if(r_rx_done)begin
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+         if((data_str[0] == 8'h55) && (data_str[1] == 8'hA5) &&
+ (data_str[20] == 8'hF0))begin
+             data <= #1
+ {data_str[4],data_str[5],data_str[6],data_str[7],data_str[8],
+ data_str[9],data_str[10],data_str[11],data_str[12],data_str[13],
+ data_str[14],data_str[15],data_str[16],data_str[17],data_str[18],
+                         data_str[19]};
+             num_cmd <= #1 data_str[3];
+             address <= #1 data_str[2];
+             cmdvalid <= #1 1;
+         end
+     end
+     else
+         cmdvalid <= #1 0;
+
+ endmodule
+
+33.3.2convert 模块
+     convert 模块负责指令到读写操作的转换，当来自 uart_cmd 的 cmdvalid 信号
+有效的时候，convert 模块会根据功能码判断当前的操作模式以及实际读写的数
+据量。如果是写操作，则将地址和待写入数据发送给前面章节中我们设计好的
+I2C 控制器。
+     为了让数据能够成功被 I2C 控制器接收，需要在传输每字节数据时，产生一
+个写请求信号给 I2C 控制器。同时，因为 I2C 控制器每次只支持单个字节的收发，
+所以我们需要在每写完 1 字节数据后等待 I2C 控制器的应答信号，以确保数据成
+功写入。
+     如果是读操作，除了将地址传输给 I2C 控制器外，在读取每 1 字节数据之
+前，都需要产生一次读请求信号。在 I2C 控制器对读请求信号进行响应后才能读
+去这 1 字节的数据，如此循环，直到读取完所需的数据量，并最终输出给多字
+节串口发送模块。
+     很显然，要实现以上这些功能，最适合的方式无疑是状态机。这里我们可
+以定义 IDLE、DO_WR、WAIT_WR_DONE、DO_RD、WAIT_RD_DONE 五个
+状态。让 IDLE 态等待 cmdvalid 信号，判断读写操作； DO_WR 态产生写请求信
+号、数据和地址； WAIT_WR_DONE 态判断写传输是否完成； DO_RD 态产生
+读请求信号与地址； WAIT_RD_DONE 态读取数据，并判断当前读操作是否成
+功。来实现以上设计目的。因此，convert 模块的完整代码如下：
+ module convert(
+     clk50M,
+店铺：https://xiaomeige.taobao.com                   官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/            技术群组：
+                  小梅哥 FPGA 团队            武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+      rst_n,
+      rddata,
+      RW_Done,
+      ack,
+      address,
+      cmd_data,
+      num_cmd,
+      cmdvalid,
+
+      eeprom_rddata,
+      wrdata,
+      wrreg_req,
+      rdreg_req,
+      addr,
+      eeprom_rd_done,
+      eeprom_wr_done
+      );
+
+       input clk50M;
+       input rst_n;
+       input [7:0]rddata;
+       input RW_Done;
+       input ack;
+       input [15:0]address;
+       input [127:0]cmd_data;
+       input [7:0]num_cmd;
+       input cmdvalid;
+
+       output reg[127:0]eeprom_rddata;
+       output reg[7:0]wrdata;
+       output reg wrreg_req;
+       output reg rdreg_req;
+       output reg[15:0]addr;
+       output reg eeprom_rd_done;
+       output reg eeprom_wr_done;
+
+      reg eeprom_rd_err,eeprom_wr_err;
+
+       reg [2:0]state;
+      reg [6:0]data_cnt;
+
+      localparam
+          IDLE = 0,
+          DO_WR = 1,
+          WAIT_WR_DONE = 2,
+          DO_RD = 3,
+          WAIT_RD_DONE = 4;
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+
+
+      always@(posedge clk50M or negedge rst_n)
+      if(!rst_n)begin
+          state <= IDLE;
+          wrreg_req <= 1'd0;
+          addr <= 16'd0;
+          wrdata <= 8'd0;
+          data_cnt <= 7'd0;
+          eeprom_wr_err <= 1'd0;
+          eeprom_wr_done <= 1'd0;
+          eeprom_rd_done <= 1'd0;
+          eeprom_rd_err <= 1'd0;
+          rdreg_req <= 1'd0;
+          eeprom_rddata <= 128'd0;
+      end
+      else begin
+      case(state)
+          IDLE:
+              begin
+                  wrreg_req <= 1'd0;
+                  addr <= 16'd0;
+                  wrdata <= 8'd0;
+                  data_cnt <= 7'd0;
+                  eeprom_wr_err <= 1'd0;
+                  eeprom_rd_done <= 1'd0;
+                  eeprom_rd_err <= 1'd0;
+                  rdreg_req <= 1'd0;
+                  if(cmdvalid && !num_cmd[7])
+                      state <= DO_WR;
+                  else if(cmdvalid && num_cmd[7])begin
+                      state <= DO_RD;
+                      eeprom_rddata <= 128'd0;
+                  end
+                  else
+                      state <= IDLE;
+              end
+
+          DO_WR:
+              begin
+                  wrreg_req <= 1'd1;
+                  addr <= data_cnt + address;
+                  state <= WAIT_WR_DONE;
+                  case(data_cnt)
+                      0:wrdata <= cmd_data[127:120];
+                      1:wrdata <= cmd_data[119:112];
+                      2:wrdata <= cmd_data[111:104];
+                      3:wrdata <= cmd_data[103:96];
+店铺：https://xiaomeige.taobao.com                    官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/             技术群组：
+                 小梅哥 FPGA 团队               武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力            开发板 培训 项目研发三位一体
+
+                         4:wrdata <= cmd_data[95:88];
+                         5:wrdata <= cmd_data[87:80];
+                         6:wrdata <= cmd_data[79:72];
+                         7:wrdata <= cmd_data[71:64];
+                         8:wrdata <= cmd_data[63:56];
+                         9:wrdata <= cmd_data[55:48];
+                         10:wrdata <= cmd_data[47:40];
+                         11:wrdata <= cmd_data[39:32];
+                         12:wrdata <= cmd_data[31:24];
+                         13:wrdata <= cmd_data[23:16];
+                         14:wrdata <= cmd_data[15:8];
+                         15:wrdata <= cmd_data[7:0];
+                         default:wrdata <= 0;
+                     endcase
+               end
+
+          WAIT_WR_DONE:
+              begin
+                  wrreg_req <= 1'd0;
+                  if(RW_Done)begin
+                      if(!ack)begin   //ACK 为 0 表示有正常应答
+                          if(data_cnt >= num_cmd - 1)begin
+                              state <= IDLE;
+                              eeprom_wr_done <= 1'd1;
+                              data_cnt <= 0;
+                          end
+                          else begin
+                              state <= DO_WR;
+                              data_cnt <= data_cnt + 1'd1;
+                          end
+                      end
+                      else begin //ACK 为 1 表示无应答
+                          state <= IDLE;
+                          eeprom_wr_err <= 1'd1;
+                      end
+                  end
+                  else begin
+                      state <= WAIT_WR_DONE;
+                      data_cnt <= data_cnt;
+                  end
+              end
+
+          DO_RD:
+              begin
+                  rdreg_req <= 1'd1;
+                  state <= WAIT_RD_DONE;
+                  addr <= data_cnt + address;
+店铺：https://xiaomeige.taobao.com                          官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                   技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+               end
+
+          WAIT_RD_DONE:
+              begin
+                  rdreg_req <= 1'd0;
+                  if(RW_Done)begin
+                      if(!ack)begin   //ACK 为 0 表示有正常应答
+                          case(data_cnt)
+                              0:eeprom_rddata[127:120] <= rddata;
+                              1:eeprom_rddata[119:112] <= rddata;
+                              2:eeprom_rddata[111:104] <= rddata;
+                              3:eeprom_rddata[103:96] <= rddata;
+                              4:eeprom_rddata[95:88] <= rddata;
+                              5:eeprom_rddata[87:80] <= rddata;
+                              6:eeprom_rddata[79:72] <= rddata;
+                              7:eeprom_rddata[71:64] <= rddata;
+                              8:eeprom_rddata[63:56] <= rddata;
+                              9:eeprom_rddata[55:48] <= rddata;
+                              10:eeprom_rddata[47:40] <= rddata;
+                              11:eeprom_rddata[39:32] <= rddata;
+                              12:eeprom_rddata[31:24] <= rddata;
+                              13:eeprom_rddata[23:16] <= rddata;
+                              14:eeprom_rddata[15:8] <= rddata;
+                              15:eeprom_rddata[7:0] <= rddata;
+                              default:;
+                          endcase
+                          if(data_cnt >= (num_cmd & 8'h7F) - 1)begin
+                              state <= IDLE;
+                              eeprom_rd_done <= 1'd1;
+                              data_cnt <= 0;
+                          end
+                          else begin
+                              state <= DO_RD;
+                              data_cnt <= data_cnt + 1'd1;
+                          end
+                      end
+                      else begin //ACK 为 1 表示无应答
+                          state <= IDLE;
+                          eeprom_rd_err <= 1'd1;
+                      end
+                  end
+                  else begin
+                      state <= WAIT_RD_DONE;
+                      data_cnt <= data_cnt;
+                  end
+              end
+
+
+店铺：https://xiaomeige.taobao.com                    官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/             技术群组：
+                  小梅哥 FPGA 团队            武汉芯路恒科技
+            专注于培养您的 FPGA 独立开发能力          开发板 培训 项目研发三位一体
+
+                default:state <= IDLE;
+            endcase
+      end
+
+ endmodule
+
+33.3.3uart_data_tx 模块
+      uart_data_tx 模块是单字节串口发送模块（uart_byte_tx）的上层封装模块，
+用以实现多字节的串口收发。对于设计来说，我们所需要做的就是将来自
+convert 模块的多字节数据，单个字节地传输给单字节串口发送模块即可，因此，
+该模块的代码如下：
+ module uart_data_tx(
+     Clk,
+     Rst_n,
+
+      data,
+      send_en,
+      Baud_Set,
+
+      uart_tx,
+      Tx_Done,
+      uart_state
+ );
+
+      parameter DATA_WIDTH = 8;
+      parameter MSB_FIRST = 1;
+
+      input Clk;
+      input Rst_n;
+
+      input [DATA_WIDTH - 1 : 0]data;
+      input send_en;
+      input [2:0]Baud_Set;
+      output uart_tx;
+      output reg Tx_Done;
+      output uart_state;
+
+      reg [DATA_WIDTH - 1 : 0]data_r;
+
+      reg [7:0] data_byte;
+      reg byte_send_en;
+      wire byte_tx_done;
+
+      uart_byte_tx uart_byte_tx(
+
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                 小梅哥 FPGA 团队               武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力            开发板 培训 项目研发三位一体
+
+           .Clk(Clk),
+           .Rst_n(Rst_n),
+           .data_byte(data_byte),
+           .send_en(byte_send_en),
+           .Baud_Set(Baud_Set),
+           .uart_tx(uart_tx),
+           .Tx_Done(byte_tx_done),
+           .uart_state(uart_state)
+      );
+
+      reg [8:0]cnt;
+      reg [1:0]state;
+
+      localparam S0 = 0;      //等待发送请求
+      localparam S1 = 1;      //发起单字节数据发送
+      localparam S2 = 2;      //等待单字节数据发送完成
+      localparam S3 = 3;      //检查所有数据是否发送完成
+
+      always@(posedge Clk or negedge Rst_n)
+      if(!Rst_n)begin
+          data_byte <= 0;
+          byte_send_en <= 0;
+          state <= S0;
+          cnt <= 0;
+      end
+      else begin
+          case(state)
+              S0:
+                  begin
+                       data_byte <= 0;
+                       cnt <= 0;
+                       Tx_Done <= 0;
+                       if(send_en)begin
+                           state <= S1;
+                           data_r <= data;
+                       end
+                       else begin
+                           state <= S0;
+                           data_r <= data_r;
+                       end
+                  end
+
+               S1:
+                     begin
+                         byte_send_en <= 1;
+                         if(MSB_FIRST == 1)begin
+                             data_byte<= data_r[DATA_WIDTH-1:DATA_WIDTH-8];
+店铺：https://xiaomeige.taobao.com                       官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                技术群组：
+                 小梅哥 FPGA 团队                 武汉芯路恒科技
+            专注于培养您的 FPGA 独立开发能力             开发板 培训 项目研发三位一体
+
+                               data_r <= data_r << 8;
+                           end
+                           else begin
+                               data_byte <= data_r[7:0];
+                               data_r <= data_r >> 8;
+                           end
+                           state <= S2;
+                     end
+
+               S2:
+                     begin
+                         byte_send_en <= 0;
+                         if(byte_tx_done)begin
+                             state <= S3;
+                             cnt <= cnt + 9'd8;
+                         end
+                         else
+                             state <= S2;
+                     end
+
+               S3:
+                    if(cnt >= DATA_WIDTH)begin
+                        state <= S0;
+                        cnt <= 0;
+                        Tx_Done <= 1;
+                    end
+                    else begin
+                        state <= S1;
+                        Tx_Done <= 0;
+                    end
+                default:state <= S0;
+            endcase
+      end
+
+ endmodule
+     代码中例化了前面章节设计的单字节发送模块，通过状态机将数据单字节
+地传输给单字节发送模块，实现多字节的串口发送。除此之外，模块还支持自
+定义位接口位宽以满足不同位宽大小的数据输入、支持大小端转换。
+
+33.3.4顶层封装设计
+     在设计完各个模块后，最后一步便是顶层封装。在对各个模块进行例化时，
+对于部分端口，我们可以直接赋定值。例如，串口收发模块的波特率设置端口，
+可 以 设 置 为 常 用 的 115200；I2C 控 制 器 的 器 件 id 端 口 ， 可 以 直 接 设 置 为
+
+店铺：https://xiaomeige.taobao.com                            官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                     技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+
+EEPROM 的器件地址 8’b10100000。
+     以下便是本次设计的顶层封装设计：
+ //板级运行时请将下属代码注释以屏蔽，仿真时将下属代码取消注释以生效
+ `define DO_SIM 1
+ module uart_eeprom(
+     clk50M,
+     rst_n,
+     i2c_sclk,
+     i2c_sdat,
+     uart_rx,
+     uart_tx
+ );
+     input clk50M;
+     input rst_n;
+     inout i2c_sdat;
+     output i2c_sclk;
+     input uart_rx;
+     output uart_tx;
+
+      wire [15:0] addr;
+      wire ack;
+      wire RW_Done;
+
+      wire eeprom_rd_done;
+      wire eeprom_wr_done;
+
+      wire [127:0]eeprom_rddata;
+      wire wrreg_req;
+      wire rdreg_req;
+      wire [7:0]wrdata;
+      wire [7:0]rddata;
+
+      wire [15:0]address;
+      wire [127:0]cmd_data;
+      wire [7:0]num_cmd;
+      wire cmdvalid;
+
+
+
+       convert convert(
+            .clk50M(clk50M),
+            .rst_n(rst_n),
+            .rddata(rddata),
+            .RW_Done(RW_Done),
+            .ack(ack),
+            .address(address),
+            .cmd_data(cmd_data),
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+            专注于培养您的 FPGA 独立开发能力          开发板 培训 项目研发三位一体
+
+             .num_cmd(num_cmd),
+             .cmdvalid(cmdvalid),
+             .eeprom_rddata(eeprom_rddata),
+             .wrdata(wrdata),
+             .wrreg_req(wrreg_req),
+             .rdreg_req(rdreg_req),
+             .addr(addr),
+             .eeprom_rd_done(eeprom_rd_done),
+             .eeprom_wr_done(eeprom_wr_done)
+       );
+
+
+
+      i2c_control i2c_control(
+          .Clk(clk50M),
+          .Rst_n(rst_n),
+
+          .wrreg_req(wrreg_req),
+          .rdreg_req(rdreg_req),
+          .addr(addr),
+          .addr_mode(1'b1),
+          .wrdata(wrdata),
+          .rddata(rddata),
+          .device_id(8'b1010_0000),
+          .RW_Done(RW_Done),
+          .ack(ack),
+      `ifdef DO_SIM
+          .dly_cnt_max(250-1),
+      `else
+          .dly_cnt_max(250000-1),
+      `endif
+          .i2c_sclk(i2c_sclk),
+          .i2c_sdat(i2c_sdat)
+      );
+
+      wire rx_done;
+      wire [7:0]rx_data;
+      uart_byte_rx uart_byte_rx(
+          .Clk(clk50M),
+          .Reset_n(rst_n),
+          .Baud_Set(3'd4),
+          .uart_rx(uart_rx),
+          .Data(rx_data),
+          .Rx_Done(rx_done)
+      );
+
+      uart_cmd uart_cmd(
+          .Clk(clk50M),
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+           .Reset_n(rst_n),
+           .rx_data(rx_data),
+           .rx_done(rx_done),
+           .address(address),
+           .data(cmd_data),
+           .num_cmd(num_cmd),
+           .cmdvalid(cmdvalid)
+      );
+
+     uart_data_tx
+     #(
+         .DATA_WIDTH(128),
+         .MSB_FIRST(1)
+     )
+     uart_data_tx(
+         .Clk(clk50M),
+         .Rst_n(rst_n),
+         .data(eeprom_rddata),
+         .send_en(eeprom_rd_done),
+         .Baud_Set(3'd4),
+         .uart_tx(uart_tx),
+         .Tx_Done(),
+         .uart_state()
+     );
+ endmodule
+     考虑到串口最多一次需要发送 16 字节数据，在例化多字节串口发送模块时，
+数据位宽被设置为了 128（16*8）。即无论用户输入的功能码中无论读操作的有
+效位是多少，多字节串口发送模块都会发送 16 字节数据，多余的字节将会以 00
+表示。
+     同时，需要注意的是，一般情况下 eeprom 存储硬件在两次操作间都需要有
+5ms 的间隔（这也是为什么在 I2C 控制器模块的状态机中会有一个 5ms 的延时状
+态）。顶层中该值通过 I2C 控制器的 dly_cnt_max 端口设置，而为了节省仿真所
+消耗的时间，代码中通过条件编译 DO_SIM，为仿真专门设置了一个较小的值。
+实际使用时，用户需要根据具体应用场景考虑是否注释 DO_SIM。
+
+33.4串口读写 EEPROM 仿真验证
+     在完成了串口读写 EEPROM 系统设计后，接下来编写 testbench 测试文件对
+设计的整个系统进行仿真验证， 整个仿真主要是通过串口发送模块模拟对该系
+统发送指令进行仿真验证，这里就只选用 M24LC64（与开发板的 EEPROM 器
+件相对应）这个仿真模型进行仿真， M24LC04 的仿真模型类似（读者可尝试对
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+
+该模型进行仿真），编写的 testbench 文件具体代码如下：
+ `timescale 1ns/1ns
+ module uart_eeprom_tb();
+
+      wire i2c_sclk;
+      wire i2c_sdat;
+      reg clk50M;
+      reg rst_n;
+      wire uart_tx;
+      wire uart_rx;
+      wire Tx_Done;
+      wire uart_tx_t;
+      assign uart_rx = uart_tx_t;
+
+      reg send_en;
+
+      pullup PUP(i2c_sdat);
+
+      uart_eeprom uart_eeprom(
+          .clk50M(clk50M),
+          .rst_n(rst_n),
+          .i2c_sclk(i2c_sclk),
+          .i2c_sdat(i2c_sdat),
+          .uart_rx(uart_rx),
+          .uart_tx(uart_tx)
+      );
+      M24LC64 M24LC64(
+          .A0(0),
+          .A1(0),
+          .A2(0),
+          .WP(0),
+          .SDA(i2c_sdat),
+          .SCL(i2c_sclk),
+          .RESET(~rst_n)
+      );
+
+      initial clk50M = 1;
+      always #10 clk50M = ~clk50M;
+
+      reg [175:0] test_data;
+
+
+
+      initial begin
+         rst_n = 0;
+         #201;
+         rst_n = 1;
+         #200;
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+        test_data=176'h55_A5_00_03_04_12_34_56_78_9A_BC_DE_F0_23_45_67_
+ 89_AB_CD_EF_34_F0;
+        send_en = 1;
+        #20;
+        send_en = 0;
+        #200;
+        @(posedge uart_eeprom.eeprom_wr_done);
+
+        #201;
+        test_data=176'h55_A5_00_04_83_12_34_56_78_9A_BC_DE_F0_23_45_67_
+ 89_AB_CD_EF_34_F0;
+        send_en = 1;
+        #20;
+        send_en = 0;
+        #200;
+        @(posedge uart_eeprom.eeprom_rd_done);
+        #2000;
+        @(posedge uart_eeprom.uart_data_tx.Tx_Done);
+        #100000;
+        $stop;
+     end
+
+      uart_data_tx
+      #(
+          .DATA_WIDTH(176),
+          .MSB_FIRST(1)
+      )
+      uart_data_tx(
+          .Clk(clk50M),
+          .Rst_n(rst_n),
+          .data(test_data),
+          .send_en(send_en),
+          .Baud_Set(3'd4),
+          .uart_tx(uart_tx_t),
+          .Tx_Done(Tx_Done),
+          .uart_state()
+      );
+
+ endmodule
+     仿真过程主要是通过串口发送模块模拟对该系统发送读写指令进行仿真验
+证，依次进行了 1 次写和读指令的发送。写数据指令中，起始地址为 0x0003，
+功能码为 0x04，因此虽然输入了 16 个写数据，但是有效写入的只有前四个数据，
+即 0x12、0x34、0x56、0x78。
+     读数据指令中，起始地址为 0x0004，功能码为 0x83，因此只会从 EEPROM
+
+店铺：https://xiaomeige.taobao.com                   官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/            技术群组：
+                 小梅哥 FPGA 团队               武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力             开发板 培训 项目研发三位一体
+
+
+中读取 3 字节数据，即 0x34、0x56、0x78。串口一共会输出 16 字节数据，因此
+其余位全部发 0。
+     图 33-7 为系统仿真波形时序图，为了方便观察，添加了源设计工程中，
+uart_byte_tx 模块、uart_byte_rx 模块和 convert 模块的部分中间信号
+
+
+
+
+                                    图 33-7 仿真总体波形图
+
+
+     接下来我们将波形放大，第一条指令的仿真波形如下图 33-8 所示。
+
+
+
+
+                                    图 33-8 写指令仿真波形
+
+
+     从上述两幅图中可以看出，写指令被窜口完全接收，在进行帧头帧尾检验
+正确后，指令被拆分为起始地址、功能码以及用户数据。功能码 bit[6:0]的值为
+4，因此写入的字节数为四个，最终写入的是 0x12、0x34、0x56、0x78，与预计
+中的一致，说明写指令功能成功。
+     第二条指令的仿真波形时序如下图 33-9、图 33-10 所示。
+
+
+
+
+                       图 33-9 读指令仿真时序（串口接收到写入 EEPROM）
+
+
+
+
+                    图 33-10 读指令仿真时序（数据读出 EEPROM 到串口发出）
+
+
+     同样的，我们可以看到第二条指令被成功识别，并根据功能码识别为读操
+作。功能码的 bit[6:0]值为 3，因此从地址 0x004 开始连续读取 3 字节数据，即
+店铺：https://xiaomeige.taobao.com                      官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/               技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+
+0x34、0x56、0x78。这些数据会被送到多字节串口发送模块，最终发送的数据
+是 0x34、0x56、0x78 以及 13 字节的 0 。可以看到与预期中的一致，说明读指令
+功能也成功。
+     综上所述，整个设计的仿真功能验证成功，设计在仿真中能够很好的实现
+预期的各个功能。在仿真验证确定串口读写 EEPROM 系统没有问题后，接下来
+就是进行板级验证了。
+
+33.5串口读写 EEPROM 板级验证
+     本 节 介 绍 在 ACX720-GW5A138 开 发 板 上 使 用 串 口 进 行 “ 串 口 读 写
+EEPROM”实验的验证。在进行该验证之前请先确保顶层设计中条件编译
+DO_SIM 已被注释。
+
+33.5.1引脚分配与电平约束
+     本次实验板级验证平台是 ACX720-GW5A138 开发板，这里我们再来看看
+开发板上 EEPROM 部分的硬件原理图，如图 33-11 所示：
+
+
+
+
+                           图 33-11 开发板 EEPROM 部分的硬件原理图
+
+
+     细心的读者会发现， I2C 时钟线 SCL 和 I2C 数据线没有进行硬件上拉处理，
+与前面讲解的需要上拉处理不一样，可能会猜想是硬件设计的问题。这里说明
+一下，硬件设计是没有问题的，因为对于 FPGA 是可以通过软件对引脚进行上
+拉处理的，这个也是本实验包含的一个知识点。我们在前面矩阵键盘的实验中，
+也曾提到过：通过 Gowin 的管脚分配界面就可以将管脚设置为上拉电阻（弱上
+
+店铺：https://xiaomeige.taobao.com                    官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/             技术群组：
+                 小梅哥 FPGA 团队                    武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                 开发板 培训 项目研发三位一体
+
+
+拉），如下图 33-12 所示。
+
+
+
+
+                                   图 33-12 设置管脚弱上拉
+
+
+     设置完毕后再为本次设计添加电平约束与管脚分配，本次设计管脚分配表
+如表 33-1 所示：
+                                         表 33-1 引脚分配表
+
+                   Signial Name     Pin NO.      Signial Name       Pin NO.
+                   clk50M           Y18          rst_n              B21
+                   i2c_sclk         M13          uart_rx            J21
+                   i2c_sdat         M16          uart_tx            M15
+
+     分配并约束完成后，引脚信息如下图 33-13 所示。
+
+
+
+
+                                  图 33-13 管脚分配并约束完成
+
+
+     上述工作完成后，接下来对我们的设计生成 fs 文件，然后便可以开始连接
+硬件，准备烧录 fs 文件到 ACX720-GW5A138 开发板上进行板级验证了。
+
+33.5.2系统所需硬件
+              1.ACX720-GW5A138 开发板 x1
+
+              2.高云下载器 x1
+
+              3.串口线 x1
+
+              4.电源线 x1
+
+33.5.3硬件连接
+     将下载器、电源线依次连接至开发板上，将串口一端连接开发板，一端连
+店铺：https://xiaomeige.taobao.com                                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                          技术群组：
+                 小梅哥 FPGA 团队                武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力             开发板 培训 项目研发三位一体
+
+
+接主机，连接串口之后，可以用 USB 直接给开发板供电也可以用电源供电，本
+次实验采用电源供电，如下图 33-14 所示。
+
+
+
+
+                                     图 33-14 硬件连接图
+
+
+     连接完毕后拨动开关为开发板上电（拨到 DC 侧），接下来将生成好的 fs 文
+件烧录到开发板中开始板级验证。
+
+33.5.4板级验证
+     板级验证需要用到串口软件工具，这里使用的是名叫串口猎人的串口工具
+（该工具软件在开发板资料的常用软件中有提供，用户也可自行选择其他串口
+软件）。
+     首先在设备管理器中找到串口对应的端口号，然后在串口软件中选择对应
+端口号，并设置波特率为 115200（该值可以在设计的顶层中修改），如图 33-15
+所示。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                      官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/               技术群组：
+                 小梅哥 FPGA 团队                    武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                 开发板 培训 项目研发三位一体
+
+
+
+
+                                         图 33-15 连接串口
+
+
+     连接完成后，我们分别发送串口写指令和串口读指令，对串口写入 16 字节
+数据并读出，观察读写数据是否一致，对应结果如图 33-16 和图 33-17 所示：
+55 A5 00 03 10 12 34 56 78 9A BC DE F0 23 45 67 89 AB CD EF 34 F0
+
+
+
+
+                                     图 33-16 串口写指令
+
+
+
+
+店铺：https://xiaomeige.taobao.com                         官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                  技术群组：
+                 小梅哥 FPGA 团队                武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力             开发板 培训 项目研发三位一体
+
+ 55 A5 00 03 90 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 F0
+
+
+
+
+                                     图 33-17 串口读指令
+
+
+     可以看到，读出的数据与写入数据一致，说明设计成功。如果这里串口接
+收到的数据仅第一个字节正确，用户请确认设计的顶层文件中是否注释掉了条
+件编译信号 DO_SIM。
+
+33.6总结
+     本节基于设计好的 I2C 控制器，结合前面设计的串口收发模块设计了一个
+简易应用，实现了串口对 EEPROM 存储器的读写功能，并进行相应的板级验证。
+读者可以在此基础上进行一定的优化和拓展，实验开发板上还有音频模块和时
+钟模块挂载在 I2C 总线上，资源比较丰富，读者可以利用这些模块实现更丰富
+的应用。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                         官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                  技术群组：
+

@@ -1,0 +1,2127 @@
+                 小梅哥 FPGA 团队                                  武汉芯路恒科技
+            专注于培养您的 FPGA 独立开发能力                               开发板 培训 项目研发三位一体
+
+
+
+                55 实用性 UDP 发送逻辑设计与实现
+                 |----02_设计实例
+ 工程源码
+                 |----ch55_udp_send
+ 相关视频课程
+ 说明
+
+      章节导读
+
+      本章将延续前面几章讲解的以太网各层级数据字段的内容，给出两种基于
+FPGA 的以太网发送逻辑设计方案，同时重点对第二种以太网发送逻辑设计方案
+的状态机进行分析。通过发送模块的设计状态机与数据字段的对应关系，让读
+者对数据字段和 FPGA 状态机的关联有更加深层次的认识。
+
+
+55.1以太网报文发送模块实现（第一种设计方案）
+      本小节的内容，适配于工程 eth_udp_tx_gmii。
+
+55.1.1以太网发送整体设计
+      在讲解完以太网层层打包的主体知识点后，我们就可以开始尝试设计以太
+网发送控制器。
+      以太网 UDP 帧的格式在前面已经做了详解，并且帧内各种校验字段的产生
+也做了实现，接下来是对整个以太网 UDP 帧的发送进行实现。UDP 帧格式包括
+前导码+帧界定符、以太网头部数据、IP 头部数据、UDP 头部数据、UDP 数据、
+FCS 数据。根据格式对 UDP 帧发送的设计的状态机转移图如下图 55-1 所示。
+
+                                                                              TX_FILL_DATA
+
+
+
+
+                                TX_ETH_HEADE                   TX_UDP_HEADE
+         IDLE     TX_PREAMBLE                  TX_IP_HEADER                     TX_DATA      TX_CRC    TX_DLY
+                                      R                             R
+
+
+
+
+                                     图 55-1 以太网报文发送模块状态机
+
+                IDLE：空闲状态
+
+                TX_PREAMBLE：发送以太网的 7 个字节的前导码和 1 字节的帧
+         首界定符状态
+
+                TX_ETH_HEADER：发送以太网头部数据状态
+
+店铺：https://xiaomeige.taobao.com                                               官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                                        技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+              TX_IP_HEADER：发送 IP 头部数据状态
+
+              TX_UDP_HEADER：发送 UDP 头部数据状态
+
+              TX_UDP_DATA：发送 UDP 数据状态
+
+              TX_FILL_DATA：发送填充数据状态，当需要发送的有效数据的
+         长度比较小的时候，导致以太网帧的数据段小于 46 字节就需要用 0 来
+         填充到 46 字节，该状态就是用来应对这种情况下，发送填充 0 相应个
+         数的 0 来满足以太网帧数据段长度要求。
+
+              TX_CRC：发送 FCS 校验数据状态
+
+              TX_DLY：以太网帧间隙，千兆以太网每一帧之间都需要间隔至
+         少 96ns 的时间。
+
+     在上面的各个状态中只需要按照协议在各个状态发送指定的数据即可。状
+态机使用 2 段式状态机实现。FPGA 上电后进入 IDLE 状态，在输入 tx_en_pulse
+为 1 时就进入到以太网 UDP 帧的发送，根据以太网 UDP 帧的协议，首先进入到
+发送前导码和帧首界定符的状态 TX_PREAMBLE。在 7 个字节前导码和 1 个字
+节帧首定界符发送完成后（通过计数器 cnt_preamble 对发送数据字节数进行计
+数，即 cnt_preamble 计数达到 7）进入到 TX_ETH_HEADER 状态。该状态下发
+送 以 太 网 头 部 数 据 ， 当 以 太 网 头 部 的 14 个 字 节 数 据 发 送 完 成 后 进 入 到
+TX_IP_HEADER 状态。依次类推，在不同的状态下发送指定个数字节的数据。
+发送完成后就进入到下一状态。这里需要说明的是，考虑到发送的有效数据字
+节个数可能会小于 46 字节（以太网帧数据个数最小值），在状态机设计上增加
+了 TX_FILL_DATA 状态。当发送的以太网帧数据段字节个数小于 46（对应以太
+网 UDP 帧数据段个数为 46-20 个 IP 头部数据-8 个 UDP 头部数据 = 18）时，就
+进入到 TX_FILL_DATA 状态继续发送无效数据 0 凑足到以太网数据段最小字节
+个数。状态机实现的代码如下。
+ always@(posedge clk125m or posedge reset_p)
+ if(reset_p)
+     curr_state <= IDLE;
+ else
+     curr_state <= next_state;
+
+ always@(*)
+ begin
+     case(curr_state)
+     IDLE:
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+          if(tx_en_pulse)
+          next_state = TX_PREAMBLE;
+          else
+          next_state = IDLE;
+
+      TX_PREAMBLE:
+          if(cnt_preamble == 4'd7)
+          next_state = TX_ETH_HEADER;
+          else
+          next_state = TX_PREAMBLE;
+
+      TX_ETH_HEADER:
+          if(cnt_eth_header == 4'd13)
+          next_state = TX_IP_HEADER;
+          else
+          next_state = TX_ETH_HEADER;
+
+      TX_IP_HEADER:
+          if(cnt_ip_header == 5'd19)
+          next_state = TX_UDP_HEADER;
+          else
+          next_state = TX_IP_HEADER;
+
+      TX_UDP_HEADER:
+          if(cnt_udp_header == 4'd7)
+          next_state = TX_DATA;
+          else
+          next_state = TX_UDP_HEADER;
+
+      TX_DATA:
+          if(data_length_reg<5'd18&&cnt_data == data_length_reg - 1'b1)
+          next_state = TX_FILL_DATA;
+          else if(cnt_data == data_length_reg - 1'b1)
+          next_state = TX_CRC;
+          else
+          next_state = TX_DATA;
+
+      TX_FILL_DATA:
+          if(cnt_fill_data == 5'd17 - data_length_reg)
+          next_state = TX_CRC;
+          else
+          next_state = TX_FILL_DATA;
+
+      TX_CRC:
+店铺：https://xiaomeige.taobao.com                    官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/             技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+          if(cnt_crc == 2'd3)
+          next_state = TX_DLY;
+          else
+          next_state = TX_CRC;
+
+       TX_DLY:
+           if(dly_cnt == 4'd11)
+           next_state = IDLE;
+           else
+           next_state = TX_DLY;
+
+       default:next_state = IDLE;
+
+       endcase
+ end
+       上面各状态的跳转均是在各状态发送字节计数器的控制下进行跳转，每个
+状态均有一个单独的计数器对本状态发送的数据字节数进行计数。计数达到本
+状态需要发送字节个数时，状态进行跳转，各状态发送数据字节的计数器代码
+如下：
+ //cnt_preamble
+ always@(posedge clk125m or posedge reset_p)
+ if(reset_p)
+     cnt_preamble <= 4'd0;
+ else if(curr_state == TX_PREAMBLE)
+     cnt_preamble <= cnt_preamble + 1'b1;
+ else
+     cnt_preamble <= 4'd0;
+
+ //cnt_eth_header
+ always@(posedge clk125m or posedge reset_p)
+ if(reset_p)
+     cnt_eth_header <= 4'd0;
+ else if(curr_state == TX_ETH_HEADER)
+     cnt_eth_header <= cnt_eth_header + 1'b1;
+ else
+     cnt_eth_header <= 4'd0;
+
+ //cnt_ip_header
+ always@(posedge clk125m or posedge reset_p)
+ if(reset_p)
+     cnt_ip_header <= 5'd0;
+ else if(curr_state == TX_IP_HEADER)
+
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+     cnt_ip_header <= cnt_ip_header + 1'b1;
+ else
+     cnt_ip_header <= 5'd0;
+
+ //cnt_udp_header
+ always@(posedge clk125m or posedge reset_p)
+ if(reset_p)
+     cnt_udp_header <= 4'd0;
+ else if(curr_state == TX_UDP_HEADER)
+     cnt_udp_header <= cnt_udp_header + 1'b1;
+ else
+     cnt_udp_header <= 4'd0;
+
+ //cnt_data
+ always@(posedge clk125m or posedge reset_p)
+ if(reset_p)
+     cnt_data <= 16'd0;
+ else if(curr_state == TX_DATA)
+     cnt_data <= cnt_data + 1'b1;
+ else
+     cnt_data <= 16'd0;
+
+ //cnt_fill_data
+ always@(posedge clk125m or posedge reset_p)
+ if(reset_p)
+     cnt_fill_data <= 5'd0;
+ else if(curr_state == TX_FILL_DATA)
+     cnt_fill_data <= cnt_fill_data + 1'b1;
+ else
+     cnt_fill_data <= 5'd0;
+
+ //cnt_crc
+ always@(posedge clk125m or posedge reset_p)
+ if(reset_p)
+     cnt_crc <= 5'd0;
+ else if(curr_state == TX_CRC)
+     cnt_crc <= cnt_crc + 1'b1;
+ else
+     cnt_crc <= 5'd0;
+
+ //dly_cnt
+ always@(posedge clk125m or posedge reset_p)
+ if(reset_p)
+     dly_cnt <= 5'd0;
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+ else if(curr_state == TX_DLY)
+     dly_cnt <= dly_cnt + 1'b1;
+ else
+  dly_cnt <= 5'd0;
+     状态机的设计就基本完成了，接下来就需要在各个状态发送指定的以太网
+帧的数据。为了防止在一次以太网数据发送过程中，发送以太网报文源/目的
+MAC、IP 和端口号以及报文中各种长度字段发送变化，在一次报文开始发送就
+将这些数据进行寄存。具体代码如下：
+ //将以太网报文源/目的参数寄存
+ always@(posedge clk125m or posedge reset_p)
+ if(reset_p)
+ begin
+     dst_mac_reg <= 48'd0;
+     src_mac_reg <= 48'd0;
+     dst_ip_reg   <= 32'd0;
+     src_ip_reg   <= 32'd0;
+     dst_port_reg <= 16'd0;
+     src_port_reg <= 16'd0;
+ end
+ else if(tx_en_pulse)
+ begin
+     dst_mac_reg <= dst_mac;
+     src_mac_reg <= src_mac;
+     dst_port_reg <= dst_port;
+     src_port_reg <= src_port;
+     dst_ip_reg   <= dst_ip;
+     src_ip_reg   <= src_ip;
+ end
+
+      //将以太网报文数据部分长度参数寄存
+ always@(posedge clk125m or posedge reset_p)
+ if(reset_p)
+ begin
+     data_length_reg <= 16'h0;
+     IP_total_len_reg <= 16'h0;
+     udp_length_reg   <= 16'h0;
+ end
+ else if(tx_en_pulse)
+ begin
+     data_length_reg <= data_length;
+     IP_total_len_reg <= IP_total_len;
+     udp_length_reg   <= udp_length;
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+ end
+       上面 data_length 表示的是以太网中 UDP 帧中数据段的个数，根据以太网
+UDP 帧协议可知，UDP 头部长度字段的数据等于 data_length + 8'd8，IP 头部长
+度字段的数据就为 data_length + 8'd8 + 8'd20，这 3 个长度数据之间的关系用代码
+表示如下。
+ assign udp_length = data_length + 8'd8;   //udp_header: 8byte
+ assign IP_total_len = udp_length + 8'd20; //ip_header: 20byte
+       以太网 UDP 帧数据的发送只需要在对应的状态发送对应的数据即可。具体
+代码如下：
+ always@(posedge clk125m or posedge reset_p)
+ if(reset_p)
+ begin
+     tx_en   <= 1'b0;
+     tx_data <= 8'h00;
+ end
+ else
+ begin
+     case(curr_state)
+     IDLE:
+     begin
+         tx_en   <= 1'b0;
+         tx_data <= 8'h00;
+     end
+
+       TX_PREAMBLE:
+       begin
+           tx_en <= 1'b1;
+           if(cnt_preamble <= 4'd6)
+           tx_data <= 8'h55;
+           else
+           tx_data <= 8'hd5;
+       end
+
+       TX_ETH_HEADER:
+       begin
+           tx_en <= 1'b1;
+           case(cnt_eth_header)
+           4'd0:   tx_data <= dst_mac_reg[47:40];
+           4'd1:   tx_data <= dst_mac_reg[39:32];
+           4'd2:   tx_data <= dst_mac_reg[31:24];
+           4'd3:   tx_data <= dst_mac_reg[23:16];
+
+店铺：https://xiaomeige.taobao.com                     官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/              技术群组：
+                 小梅哥 FPGA 团队              武汉芯路恒科技
+            专注于培养您的 FPGA 独立开发能力          开发板 培训 项目研发三位一体
+
+            4'd4:   tx_data <= dst_mac_reg[15:8];
+            4'd5:   tx_data <= dst_mac_reg[7:0];
+            4'd6:   tx_data <= src_mac_reg[47:40];
+            4'd7:   tx_data <= src_mac_reg[39:32];
+            4'd8:   tx_data <= src_mac_reg[31:24];
+            4'd9:   tx_data <= src_mac_reg[23:16];
+            4'd10: tx_data <= src_mac_reg[15:8];
+            4'd11: tx_data <= src_mac_reg[7:0];
+            4'd12: tx_data <= ETH_type[15:8];
+            4'd13: tx_data <= ETH_type[7:0];
+            default:tx_data <= 8'h00;
+            endcase
+      end
+
+      TX_IP_HEADER:
+      begin
+          tx_en <= 1'b1;
+          case(cnt_ip_header)
+          5'd0:   tx_data <= {IP_ver,IP_hdr_len};
+          5'd1:   tx_data <= IP_tos;
+          5'd2:   tx_data <= IP_total_len_reg[15:8];
+          5'd3:   tx_data <= IP_total_len_reg[7:0];
+          5'd4:   tx_data <= IP_id[15:8];
+          5'd5:   tx_data <= IP_id[7:0];
+          5'd6:   tx_data <= {IP_rsv,IP_df,IP_mf,IP_frag_offset[12:8]};
+          5'd7:   tx_data <= IP_frag_offset[7:0];
+          5'd8:   tx_data <= IP_ttl;
+          5'd9:   tx_data <= IP_protocol;
+          5'd10: tx_data <= IP_check_sum[15:8];
+          5'd11: tx_data <= IP_check_sum[7:0];
+          5'd12: tx_data <= src_ip_reg[31:24];
+          5'd13: tx_data <= src_ip_reg[23:16];
+          5'd14: tx_data <= src_ip_reg[15:8];
+          5'd15: tx_data <= src_ip_reg[7:0];
+          5'd16: tx_data <= dst_ip_reg[31:24];
+          5'd17: tx_data <= dst_ip_reg[23:16];
+          5'd18: tx_data <= dst_ip_reg[15:8];
+          5'd19: tx_data <= dst_ip_reg[7:0];
+          default:tx_data <= 8'h00;
+          endcase
+      end
+
+      TX_UDP_HEADER:
+      begin
+店铺：https://xiaomeige.taobao.com                      官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/               技术群组：
+                  小梅哥 FPGA 团队              武汉芯路恒科技
+             专注于培养您的 FPGA 独立开发能力          开发板 培训 项目研发三位一体
+
+             tx_en <= 1'b1;
+             case(cnt_udp_header)
+             4'd0:   tx_data <= src_port_reg[15:8];
+             4'd1:   tx_data <= src_port_reg[7:0];
+             4'd2:   tx_data <= dst_port_reg[15:8];
+             4'd3:   tx_data <= dst_port_reg[7:0];
+             4'd4:   tx_data <= udp_length_reg[15:8];
+             4'd5:   tx_data <= udp_length_reg[7:0];
+             4'd6:   tx_data <= udp_check_sum[15:8];
+             4'd7:   tx_data <= udp_check_sum[7:0];
+             default:tx_data <= 8'h00;
+             endcase
+       end
+
+       TX_DATA:
+       begin
+           tx_en <= 1'b1;
+           tx_data <= payload_dat_i;
+       end
+
+       TX_FILL_DATA:
+       begin
+           tx_en <= 1'b1;
+           tx_data <= 8'h00;
+       end
+
+       TX_CRC:
+       begin
+           tx_en <= 1'b1;
+           tx_data <= 8'h00;
+       end
+
+       default:
+       begin
+           tx_en   <= 1'b0;
+           tx_data <= 8'h00;
+       end
+       endcase
+ end
+       从代码中可以看到，在发送 UDP 报文数据段数据（也就是需要通过以太网
+发送数据的有效的数据）时，是需要从外部模块（可以看作是从外部 FIFO 中获
+取数据）获取数据的（需要满足数据已经提前存放在外部模块中，并且在获取
+
+店铺：https://xiaomeige.taobao.com                         官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                  技术群组：
+                                       小梅哥 FPGA 团队                                                                                                         武汉芯路恒科技
+               专注于培养您的 FPGA 独立开发能力                                                                                                                     开发板 培训 项目研发三位一体
+
+
+这些数据时，数据是提前一拍出来的，类似与 FIFO 的读数据模式是 First Word
+Fall Through 模式）。这样产生一个获取数据的请求信号 payload_req_o 输出，外
+部模块根据这个请求信号提供数据给以太网发送模块。产生 payload_req_o 的代
+码如下所示：
+ assign payload_req_o = (curr_state == TX_DATA) ? 1'b1 : 1'b0;
+     需要注意的是上面数据发送的代码中在 CRC 数据发送状态 TX_CRC 发送的
+数据是 0。因为 CRC 的计算是通过 tx_data 计算得出，这个时候 CRC 还未计算
+出来，先用 0 代替，并且代码中 tx_data 也并非是立马就要由管脚发送出去的数
+据。需要将 tx_data 延迟几个时钟周期，使得在发送 CRC 数据的时候 CRC 已经
+计算出结果。下图 55-2 是 CRC 计算的时序波形图。
+                    1   2    3     4   5   6   7   8    9   10   11   12   13   14   15   16   17   18   19   20   21   22   23   24   25   26   27   28   29   30   31   32   33   34   35   36   37   38   39   40   41   42   43   44   45   46   47   48   49   50   51   52   53   54   55   56   57   58   59   60   61   62   63   64   65
+
+         clk
+
+         tx_go
+
+       curr_state           IDLE                       TX_PREAMBLE                                  TX_ETH_HEADER                                     TX_IP_HEADER                             TX_UDP_HEADER                                         TX_DATA                            TX_CRC                             IDLE
+
+
+         tx_en
+
+     crc_en_temp
+
+        crc_en
+
+        crc_init
+
+       crc_result                                                                                                                                                                                                                                                                                            crc_result
+
+
+
+
+                                                                                                    图 55-2 CRC 计算时序波形图
+
+ always@(posedge clk125m or posedge reset_p)
+ if(reset_p)
+     crc_init <= 1'b0;
+ else if (tx_en_pulse && (curr_state == IDLE))
+     crc_init <= 1'b1;
+ else
+     crc_init <= 1'b0;
+
+ always@(posedge clk125m or posedge reset_p)
+ if(reset_p)
+     rc_en_temp <= 1'b0;
+ else if (curr_state == TX_ETH_HEADER || curr_state == TX_IP_HEADER ||
+      curr_state == TX_UDP_HEADER || curr_state == TX_FILL_DATA ||
+ curr_state == TX_DATA)
+     crc_en_temp <= 1'b1;
+ else
+     crc_en_temp <= 1'b0;
+
+ always@(posedge clk125m or posedge reset_p)
+ if(reset_p)
+     crc_en <= 1'b0;
+
+店铺：https://xiaomeige.taobao.com                                                                                                                                                                                   官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                                                                                                                                                                            技术群组：
+                           小梅哥 FPGA 团队                武汉芯路恒科技
+             专注于培养您的 FPGA 独立开发能力                     开发板 培训 项目研发三位一体
+
+ else if (crc_en_temp)
+     crc_en <= 1'b1;
+ else
+     crc_en <= 1'b0;
+
+ always@(posedge clk125m or posedge reset_p)
+ if(reset_p)
+     crc_in <= 8'h00;
+ else if(crc_en_temp)
+     crc_in <= tx_data;
+ else
+     crc_in <= crc_in;
+
+ crc32_d8 crc32_d8
+ (
+     .clk         (clk125m                   ),
+     .reset_p     (reset_p                   ),
+
+      .data                      (crc_in     ),
+      .crc_init                  (crc_init   ),
+      .crc_en                    (crc_en     ),
+      .crc_result                (crc_result )//latency=1
+ );
+      直接将数据 tx_data 作为以太网报文发送出去是不行的，因为该数据包中
+CRC 字段全是 0，还未将里面 CRC 字段更新成计算后的 CRC 数据。由于计算的
+CRC 结果可被使用的时刻相对 tx_data 延迟 2 个时钟周期，在更新发送数据包中
+CRC 数据的时序波形图如下所示。
+                           clk
+                    tx_en
+
+                    tx_data                                                  crc
+                 tx_en_dly1
+
+               tx_data_dly1                                                   crc
+               crc_en_temp
+                   crc_en
+                                                                               crc_result
+      gmii_txen_renewcrc
+      gmii_txen_renewcrc
+
+
+
+                                    图 55-3 更新发送数据包中 CRC 数据时序波形图
+
+
+      实现代码如下：
+
+ assign crc_state = curr_state == TX_CRC;
+
+ always@(posedge clk125m or posedge reset_p)
+店铺：https://xiaomeige.taobao.com                             官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                      技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+ if(reset_p)
+ begin
+     tx_en_dly1   <= 1'b0;
+     tx_data_dly1 <= 8'h00;
+ end
+ else
+ begin
+     tx_en_dly1   <= tx_en;
+     tx_data_dly1 <= tx_data;
+ end
+
+ always@(posedge clk125m or posedge reset_p)
+ if(reset_p)
+ begin
+     crc_state_dly1 <= 1'b0;
+     crc_state_dly2 <= 1'b0;
+     cnt_crc_dly1   <= 2'd0;
+     cnt_crc_dly2   <= 2'd0;
+ end
+ else
+ begin
+     crc_state_dly1 <= crc_state;
+     crc_state_dly2 <= crc_state_dly1;
+     cnt_crc_dly1   <= cnt_crc;
+     cnt_crc_dly2   <= cnt_crc_dly1;
+ end
+
+ always@(posedge clk125m or posedge reset_p)
+ if(reset_p)
+     gmii_txd_renewcrc <= 8'h00;
+ else if(crc_state_dly2)
+ begin
+     case(cnt_crc_dly2)
+     2'd0:gmii_txd_renewcrc <= crc_result[7:0];
+     2'd1:gmii_txd_renewcrc <= crc_result[15:8];
+     2'd2:gmii_txd_renewcrc <= crc_result[23:16];
+     2'd3:gmii_txd_renewcrc <= crc_result[31:24];
+     endcase
+ end
+ else
+     gmii_txd_renewcrc <= tx_data_dly1;
+
+ always@(posedge clk125m or posedge reset_p)
+ if(reset_p)
+店铺：https://xiaomeige.taobao.com                     官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/              技术群组：
+                  小梅哥 FPGA 团队            武汉芯路恒科技
+             专注于培养您的 FPGA 独立开发能力         开发板 培训 项目研发三位一体
+
+     gmii_txen_renewcrc <= 1'b0;
+ else if(tx_en_dly1)
+     gmii_txen_renewcrc <= 1'b1;
+ else
+ gmii_txen_renewcrc <= 1'b0;
+     gmii_txen_renewcrc 和 gmii_txd_renewcrc 分别打一拍作为输出信号 gmii_txen
+和 gmii_txd。具体代码如下：
+ always@(posedge clk125m or posedge reset_p)
+ if(reset_p)
+ begin
+     gmii_txen <= 1'b0;
+     gmii_txd <= 8'h00;
+ end
+ else
+ begin
+     gmii_txen <= gmii_txen_renewcrc;
+ gmii_txd <= gmii_txd_renewcrc;
+ end
+     至此，以太网 UDP 帧发包接口的设计就完成了，接下来是进行设计模块的
+仿真验证。仿真验证发送的数据模拟发送 23 个字节数据报“Hello, welcome to
+FPGA!”。仿真代码设计如下。仿真中设置的源/目的 MAC、IP 和端口均与前面
+使用通过“小兵以太网测试仪”软件封装报文一致。
+ `timescale 1ns / 1ps
+ `define CLK_PERIOD 8
+
+ module eth_udp_tx_gmii_tb();
+     reg        clk125M;
+     reg        reset_n;
+
+      reg          tx_en_pulse;
+      wire         tx_done;
+
+      wire         payload_req_o;
+      reg [7:0]    payload_dat_i;
+
+      wire       gmii_tx_clk;
+      wire       gmii_txen;
+      wire[7:0] gmii_txd;
+      reg [15:0] tx_byte_cnt;
+
+      eth_udp_tx_gmii eth_udp_tx_gmii
+
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                  小梅哥 FPGA 团队              武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力            开发板 培训 项目研发三位一体
+
+      (
+      .clk125m          (clk125M              ),
+      .reset_p          (~reset_n              ),
+
+      .tx_en_pulse      (tx_en_pulse          ),
+      .tx_done          (tx_done              ),
+
+      .dst_mac          (48'hC8_5B_76_DD_0B_38 ),
+      .src_mac          (48'h00_0a_35_01_fe_c0 ),
+      .dst_ip           (32'hc0_a8_00_03       ),
+      .src_ip           (32'hc0_a8_00_02       ),
+      .dst_port         (16'd6000              ),
+      .src_port         (16'd5000              ),
+
+      .data_length      (23                   ),
+
+      .payload_req_o (payload_req_o           ),
+      .payload_dat_i (payload_dat_i           ),
+
+      .gmii_tx_clk      (gmii_tx_clk          ),
+      .gmii_txen        (gmii_txen            ),
+      .gmii_txd         (gmii_txd             )
+      );
+
+      //clock generate
+      initial clk125M = 1'b1;
+      always #(`CLK_PERIOD/2)clk125M = ~clk125M;
+
+      always@(posedge clk125M or negedge reset_n)
+      if(!reset_n)
+          tx_byte_cnt <= 16'd0;
+      else if(payload_req_o)
+          tx_byte_cnt <= tx_byte_cnt + 1'b1;
+      else
+          tx_byte_cnt <= 16'd0;
+
+      always@(*)
+      begin
+          case(tx_byte_cnt)
+          16'd0 : payload_dat_i = "H";
+          16'd1 : payload_dat_i = "e";
+          16'd2 : payload_dat_i = "l";
+          16'd3 : payload_dat_i = "l";
+          16'd4 : payload_dat_i = "o";
+店铺：https://xiaomeige.taobao.com                     官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/              技术群组：
+                 小梅哥 FPGA 团队               武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+          16'd5 : payload_dat_i = ",";
+          16'd6 : payload_dat_i = " ";
+          16'd7 : payload_dat_i = "w";
+          16'd8 : payload_dat_i = "e";
+          16'd9 : payload_dat_i = "l";
+          16'd10 : payload_dat_i = "c";
+          16'd11 : payload_dat_i = "o";
+          16'd12 : payload_dat_i = "m";
+          16'd13 : payload_dat_i = "e";
+          16'd14 : payload_dat_i = " ";
+          16'd15 : payload_dat_i = "t";
+          16'd16 : payload_dat_i = "o";
+          16'd17 : payload_dat_i = " ";
+          16'd18 : payload_dat_i = "F";
+          16'd19 : payload_dat_i = "P";
+          16'd20 : payload_dat_i = "G";
+          16'd21 : payload_dat_i = "A";
+          16'd22 : payload_dat_i = "!";
+          default: payload_dat_i = 8'd0;
+
+     endcase
+   end
+
+   initial
+     begin
+     reset_n = 0;
+     tx_en_pulse = 0;
+     #201;
+     reset_n = 1;
+     #200;
+
+     tx_en_pulse = 1;
+     #(`CLK_PERIOD);
+     tx_en_pulse = 0;
+     @(posedge tx_done);
+     #200;
+     $stop;
+   end
+
+ endmodule
+     仿真波形如下图 55-4 所示。
+
+
+
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                 小梅哥 FPGA 团队                    武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                 开发板 培训 项目研发三位一体
+
+
+
+
+                                         图 55-4 仿真波形图
+
+
+     对仿真波形中信号 payload_dat_i 和 gmii_txd 数据显示类型设置为 ASCII。
+可以看到发送的数据已经在报文中指定字段出现，如下图 55-5 所示。
+
+
+
+
+                                    图 55-5 发送的数据字段
+
+
+     对仿真报文中数据与前面使用“小兵以太网测试仪”软件封装报文进行对
+比，可以看到除了 UDP 头部校验字段数据（仿真波形中是 0x0000，小兵以太网
+测试仪上是 0x9a85）不一样，其余数据完全一致。UDP 头部校验字段数据在设
+计中采用的是将其忽略（该字段可忽略，填全零表示忽略），与期望完全匹配的。
+
+
+
+
+                           图 55-6“小兵以太网测试仪”软件封装报文
+
+
+     由于小兵以太网测试仪上并未显示出 CRC 字段数据，所以需要借助 CRC 计
+算软件计算出 CRC 值来对报文的 CRC 数据进行对比验证。仿真中以太网数据
+如下：
+ 0xc8,0x5b,0x76,0xdd,0x0b,0x38,0x00,0x0a,0x35,0x01,0xfe,0xc0,0x08,0x00,
+ 0x45,0x00,0x00,0x33,0x00,0x00,0x00,0x00,0x40,0x11,0xf9,0x64,0xc0,0xa8,
+ 0x00,0x02,0xc0,0xa8,0x00,0x03,0x13,0x88,0x17,0x70,0x00,0x1f,0x00,0x00,
+ 0x48,0x65,0x6c,0x6c,0x6f,0x2c,0x20,0x77,0x65,0x6c,0x63,0x6f,0x6d,0x65,
+ 0x20,0x74,0x6f,0x20,0x46,0x50,0x47,0x41,0x21
+     将数据复制粘贴到 CRC Calculator 软件中，如下图 55-7 所示，计算的 CRC
+结果为 0xC0505770。可与仿真中的数据进行对比，如下图 55-8 所示，可以看出
+是完全一致的，以太网帧中 CRC 字段是先发送 CRC 计算结果的低字节，后发
+高字节。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                         官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                  技术群组：
+                 小梅哥 FPGA 团队                 武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力              开发板 培训 项目研发三位一体
+
+
+
+
+                              图 55-7 CRC Calculator 软件计算结果
+
+
+
+
+                                   图 55-8 仿真 CRC 波形图
+
+
+     至此，在以太网报文发送模块的设计与验证已经完成。
+
+55.1.2系统板级测试
+     接下来是设计上板验证的顶层设计文件，上板验证采取固定时间间隔发送
+发同一字符串“Hello, welcome to FPGA！”具体设计代码如下，固定时间间隔直
+接采用计数器实现。
+ module eth_udp_tx_rgmii_test(
+     clk50M,
+     reset_n,
+     led,
+     eth_reset_n,
+     rgmii_tx_clk,
+     rgmii_txd,
+     rgmii_txen
+ );
+     input         clk50M;
+     input         reset_n;
+     output        led;
+店铺：https://xiaomeige.taobao.com                         官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                  技术群组：
+                 小梅哥 FPGA 团队                武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力              开发板 培训 项目研发三位一体
+
+      output         eth_reset_n;
+      output         rgmii_tx_clk;
+      output   [3:0] rgmii_txd;
+      output         rgmii_txen;
+
+      wire gmii_tx_clk;
+      wire [7:0] gmii_txd;
+      wire gmii_txen;
+
+      wire       clk125M;
+      wire       udp_gmii_rst_n;
+      wire       pll_locked;
+      reg [27:0] cnt_dly_time;
+      wire       tx_en_pulse;
+      wire       payload_req;
+      reg [7:0] payload_dat;
+      reg [15:0] tx_byte_cnt;
+
+      assign led            = pll_locked;
+      assign eth_reset_n    = pll_locked;
+      assign udp_gmii_rst_n = pll_locked;
+
+      Gowin_PLL Gowin_PLL(
+          .lock(pll_locked), //output lock
+          .clkout0(clk125M), //output clkout0
+          .clkin(clk50M), //input clkin
+          .reset(~reset_n) //input reset
+      );
+
+      eth_udp_tx_gmii eth_udp_tx_gmii
+      (
+          .clk125m       (clk125M                  ),
+          .reset_p       (~udp_gmii_rst_n           ),
+
+          .tx_en_pulse       (tx_en_pulse          ),
+          .tx_done           (tx_done              ),
+
+          .dst_mac           (48'hff_ff_ff_ff_ff_ff ),
+          .src_mac           (48'h00_0a_35_01_fe_c0 ),
+          .dst_ip            (32'hc0_a8_00_03       ),
+          .src_ip            (32'hc0_a8_00_02       ),
+          .dst_port          (16'd6102              ),
+          .src_port          (16'd5000              ),
+
+店铺：https://xiaomeige.taobao.com                          官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                   技术群组：
+                 小梅哥 FPGA 团队                武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力              开发板 培训 项目研发三位一体
+
+           .data_length      (23                 ),
+
+           .payload_req_o (payload_req           ),
+           .payload_dat_i (payload_dat           ),
+
+           .gmii_tx_clk      (gmii_tx_clk        ),
+           .gmii_txen        (gmii_txen          ),
+           .gmii_txd         (gmii_txd           )
+      );
+
+       gmii_to_rgmii gmii_to_rgmii(
+        .reset_n(udp_gmii_rst_n),
+
+        .gmii_tx_clk(gmii_tx_clk),
+        .gmii_txd(gmii_txd),
+        .gmii_txen(gmii_txen),
+        .gmii_txer(1'b0),
+
+        .rgmii_tx_clk(rgmii_tx_clk),
+        .rgmii_txd(rgmii_txd),
+        .rgmii_txen(rgmii_txen)
+      );
+
+      always@(posedge clk125M or negedge udp_gmii_rst_n)
+      if(!udp_gmii_rst_n)
+          cnt_dly_time <= 16'd0;
+      else
+          cnt_dly_time <= cnt_dly_time + 1'b1;
+
+      assign tx_en_pulse = &cnt_dly_time;
+
+      always@(posedge clk125M or negedge reset_n)
+      if(!reset_n)
+          tx_byte_cnt <= 16'd0;
+      else if(payload_req)
+          tx_byte_cnt <= tx_byte_cnt + 1'b1;
+      else
+          tx_byte_cnt <= 16'd0;
+
+      always@(*)
+      begin
+      case(tx_byte_cnt)
+        16'd0 : payload_dat = "H";
+        16'd1 : payload_dat = "e";
+店铺：https://xiaomeige.taobao.com                       官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+        16'd2 : payload_dat = "l";
+        16'd3 : payload_dat = "l";
+        16'd4 : payload_dat = "o";
+        16'd5 : payload_dat = ",";
+        16'd6 : payload_dat = " ";
+        16'd7 : payload_dat = "w";
+        16'd8 : payload_dat = "e";
+        16'd9 : payload_dat = "l";
+        16'd10 : payload_dat = "c";
+        16'd11 : payload_dat = "o";
+        16'd12 : payload_dat = "m";
+        16'd13 : payload_dat = "e";
+        16'd14 : payload_dat = " ";
+        16'd15 : payload_dat = "t";
+        16'd16 : payload_dat = "o";
+        16'd17 : payload_dat = " ";
+        16'd18 : payload_dat = "F";
+        16'd19 : payload_dat = "P";
+        16'd20 : payload_dat = "G";
+        16'd21 : payload_dat = "A";
+        16'd22 : payload_dat = "!";
+        default: payload_dat = 8'd0;
+
+      endcase
+      end
+
+ endmodule
+     本次实验上板验证时，目的 IP 地址设置为全 F，也就是广播地址，适应于
+不同的电脑，当然，读者也可以根据自己的电脑 MAC 地址进行修改，如果不知
+道自己电脑网卡的 MAC 地址，就在 DOS 命令窗口，用 ipconfig –all 命令看一
+下。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                 小梅哥 FPGA 团队                武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力             开发板 培训 项目研发三位一体
+
+                                  图 55-9 查看电脑 MAC 地址
+
+
+     上板验证的目的 IP 固定设置的 192.168.0.3，端口号固定设置为 6102。这些
+可根据实际情况更改，需与 FPGA 网口相连接的电脑网口的配置保持一致。
+
+
+
+
+                                  图 55-10 设置计算机静态 IP
+
+
+     在顶层文件设计好之后进行分析综合没有错误并且顶层仿真确认设计功能
+没有问题后，进行上板验证。对工程的管脚约束后，生成 fs 文件。
+     下方图片为使用 ACX720-GW5A138 开发板的硬件连接。
+
+
+
+
+                                图 55-11 计算机开发板网口连接图
+
+
+     在电脑段打开网络调试助手软件，设置协议类型为“UDP”，本地主机地址
+为“192.168.0.3”，本地主机端口为“6102”。设置好后点击“打开”按钮。这
+
+店铺：https://xiaomeige.taobao.com                        官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                 技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+
+个时候在工具打印窗口就会出现打印“Hello, welcome to FPGA！””的数据。
+
+
+
+
+                               图 55-12 网络调试助手答应输出信息
+
+
+     这样，我们利用以太网帧发包设计方案实现的字符串发送功能，就得到了
+验证。
+
+55.2高性能 UDP 发送逻辑设计（第二种方案）
+     在前面章节的内容中，我们从以太网 MAC 帧结构开始，图文并茂的介绍了
+以太网 MAC 帧、IP 协议、UDP 协议的详细结构，并针对每个协议都提供了对
+应的实验内容，带领大家一步一步的掌握了各个协议中的每个细节。相信经过
+前一节内容的认真学习，读者对于每个协议的每个字段的内容都有了非常清晰
+的认识。
+     随着实验的进行，我们编写了 MAC 层、IP 层和 UDP 层的逻辑并最终实现
+了带 FIFO 的通用 UDP 发送接口。只是，在设计中，我们采用的是分布分层设
+计的方法，尤其是在 MAC 层与 UDP 层的交互数据时，大量使用了组合逻辑的
+多路器的方式来在不同的时刻输出不同的数值。这样的写法虽然实现功能没问
+题，但是从时序性能的角度分析，必然不是一个优秀的设计。在 FPGA 中布线
+资源充足的情况下，也许能够满足时序要求，但是一旦系统中还存在其他逻辑，
+
+店铺：https://xiaomeige.taobao.com                   官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/            技术群组：
+                 小梅哥 FPGA 团队                     武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                   开发板 培训 项目研发三位一体
+
+
+导致留给以太网的部分布局布线资源紧张的情况下，就有可能出现时序不满足
+的情况。为此，我们有必要重新设计一个性能优异的 UDP 发送逻辑。
+     提升该设计的性能有两种途径，一是将其中的组合逻辑多路器部分改为时
+序逻辑。这种方案理论来说可行，但是在实际调试时，各层之间的数据交互要
+协调好有一定的困难，往往最终要通过凑时序的方式才能实现。而另一种方案
+则是将三层协议当做一个整体来对待，依次编码，这样就不存在多层之间的数
+据交互问题。
+     本节，将不再延续“以太网通信协议解析与实现”章节的分层介绍，分层
+实现的思路，而是直接将 MAC 层、IP 层、UDP 层看做一个整体，当做同一层
+来实现，通俗一点讲，就是将 MAC 帧头、IP 报头、UDP 报头等看成一个整体，
+按照顺序依次发送这些报头后，再发送用户数据，这样就能够非常直观的构建
+以太网帧了。
+
+55.2.1发送状态机
+     以太网 UDP 帧的格式在前面已经做了讲解，并且帧内各种校验字段的产生
+也做了实现，接下来是对整个以太网 UDP 帧的发送进行实现。UDP 帧根据格式
+包括前导码+帧界定符、以太网头部数据、IP 头部数据、UDP 头部数据、UDP
+数据、FCS 数据。根据格式对 UDP 帧发送的设计的状态机转移图如下图 55-13
+所示。
+
+                  SEND_HEADER      SEND_DES_MAC      SEND_SRC_MAC       SEND_FRAME_TYPE
+
+
+
+       IDLE
+
+
+
+                  SEND_CRC           SEND_DATA      SEND_UDP_HEADER     SEND_IP_HEADER
+
+
+
+                                  图 55-13 UDP 帧发送状态图
+
+
+     通过状态图可以看到，整个的发送过程就是一个顺序执行的过程，不存在
+状态的分支，以下为每个状态的功能说明。
+
+              IDLE：空闲状态
+
+              SEND_HEADER：发送以太网的 7 个字节的前导码和 1 字节的帧
+         首界定符状态
+
+店铺：https://xiaomeige.taobao.com                           官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                    技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+              SEND_DES_MAC：发送 MAC 帧的目的网卡地址字段
+
+              SEND_SRC_MAC：发送 MAC 帧的本机网卡地址字段
+
+              SEND_FRAME_TYPE：发送 MAC 帧的长度类型字段
+
+              SEND_IP_HEADER：发送 IP 报文报头部数据字段
+
+              SEND_UDP_HEADER：发送 UDP 报文报头部数据字段
+
+              SEND_DATA：发送 UDP 数据字段
+
+              SEND_CRC：发送 FCS 校验数据字段
+
+     每一个状态中，实际又分成了很多的小的状态。以发送 MAC 帧的目的网卡
+地址字段（SEND_DES_MAC）为例，该状态中需要发送 48 位，也就是 6 个字
+节的数据。这对于 RGMII 接口来说，需要在该状态执行 6 个时钟周期，每个周
+期发送目的 MAC 值中的 8 位数据。对于其他状态也是一样，该状态需要发送 N
+个字节的数据，就需要在该状态执行 N 个时钟周期。由于在一个确定状态中的
+不同时刻，需要发送的数据内容也是不一样的，所以每个状态中需要使用序列
+机的思想来决定在不同的时刻发送不同是数据。
+
+55.2.2协议与序列编码
+     根据前面内容学习的关于 MAC 层、IP 层、UDP 层的帧结构，我们甚至可
+以用相同的方法，通过一张表的形式来确定每个状态的每个时刻应该发送哪个
+数值。下表为笔者整理 RGMII 发送接口实现时每个状态的每个时刻应该发送的
+数据值。
+                        表 55-1 RGMII 发送接口每个时刻应该发送的数据值
+
+            状态                   状态中时刻     发送值
+                                 0~6       0x55
+            SEND_HEADER
+                                 7         0xd5
+                                 0         des_mac[47:40]
+                                 1         des_mac[39:32]
+                                 2         des_mac[31:24]
+            SEND_DES_MAC
+                                 3         des_mac[23:16]
+                                 4         des_mac[15:8]
+                                 5         des_mac[7:0]
+                                 0         src_mac[47:40]
+                                 1         src_mac[39:32]
+                                 2         src_mac[31:24]
+            SEND_SRC_MAC
+                                 3         src_mac[23:16]
+                                 4         src_mac[15:8]
+                                 5         src_mac[7:0]
+
+店铺：https://xiaomeige.taobao.com                      官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/               技术群组：
+                 小梅哥 FPGA 团队              武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+                                 0           frame_type[15:8]
+            SEND_FRAME_TYPE
+                                 1           frame_type[7:0]
+                                 0           ip_header[0][31:24]
+                                 1           ip_header[0][23:16]
+                                 2           ip_header[0][15:8]
+                                 3           ip_header[0][7:0]
+                                 4           ip_header[1][31:24]
+                                 5           ip_header[1][23:16]
+                                 6           ip_header[1][15:8]
+                                 7           ip_header[1][7:0]
+                                 8           ip_header[2][31:24]
+                                 9           ip_header[2][23:16]
+            SEND_IP_HEADER
+                                 10          ip_header[2][15:8]
+                                 11          ip_header[2][7:0]
+                                 12          ip_header[3][31:24]
+                                 13          ip_header[3][23:16]
+                                 14          ip_header[3][15:8]
+                                 15          ip_header[3][7:0]
+                                 16          ip_header[4][31:24]
+                                 17          ip_header[4][23:16]
+                                 18          ip_header[4][15:8]
+                                 19          ip_header[4][7:0]
+                                 0           udp_header[0][31:24]
+                                 1           udp_header[0][23:16]
+                                 2           udp_header[0][15:8]
+                                 3           udp_header[0][7:0]
+            SEND_UDP_HEADER
+                                 4           udp_header[1][31:24]
+                                 5           udp_header[1][23:16]
+                                 6           udp_header[1][15:8]
+                                 7           udp_header[1][7:0]
+            SEND_DATA            -           fifo_rddata[7:0]
+                                 0           crc_result[31:24]
+                                 1           crc_result[23:16]
+            SEND_CRC
+                                 2           crc_result[15:8]
+                                 3           crc_result[7:0]
+
+
+55.2.3发送逻辑端口设计
+     有了上述列表，实现时只需要先给定各个状态中需要发送的值，然后启动
+发送，整个状态机就会按照顺序依次发送每一个字段的内容。各个状态需要发
+送的值，例如 MAC 地址，IP 报头、UDP 报头的值，既可以根据实际的特定应
+用场合设置为一个固定值，也可以通过端口的方式，由其他模块提供。
+     事实上，由端口的形式输入更加灵活，当需要使用固定值时，在例化时直
+接填入固定值即可，当需要由其他模块传递时，则连接到其他模块的对应信号
+即可。以下表 55-2 为笔者设计的高性能 UDP 发送模块的端口描述：
+                              表 55-2 高性能 UDP 发送模块端口描述
+
+店铺：https://xiaomeige.taobao.com                         官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                  技术群组：
+                        小梅哥 FPGA 团队           武汉芯路恒科技
+               专注于培养您的 FPGA 独立开发能力            开发板 培训 项目研发三位一体
+
+ 端口名和属性                    端口功能介绍
+ input Rst_n               复位信号
+ input Go                  启动发送信号，当该信号高脉冲出现时，启动一次完整的数据帧发送
+                           发送完成标志信号，当该信号出现一个时钟周期的高脉冲时标志着一次数据
+ output reg Tx_Done
+                           帧发送完成
+ input [47:0]des_mac       数据帧接收方的网卡地址
+ input [47:0]src_mac       数据帧发送方，也就是本机（这里指 FPGA 板卡）的网卡地址
+ input [15:0]des_port      UDP 协议中接收方接收数据使用的端口号
+ input [15:0]src_port      UDP 协议中发送方（本机，FPGA 板卡）发送数据使用的端口号
+ input [31:0]des_ip        IP 协议中接收方的 IP 地址
+ input [31:0]src_ip        IP 协议中发送方（本机，FPGA 板卡）的 IP 地址
+ input [15:0]data_length   发送的数据长度，IP 报头和 UDP 报头中的数据长度值都是由该值计算得到
+ input GMII_GTXC           GMII 接口的发送时钟，也是整个发送逻辑的工作时钟
+ output
+                           GMII 接口的发送数据
+ reg[7:0]GMII_TXD
+ output reg GMII_TXEN      GMII 接口的数据发送使能信号
+ input wrreq               以太网数据发送缓冲 FIFO 写请求信号
+ input [7:0]wrdata         以太网数据发送缓冲 FIFO 写数据内容
+ input wrclk               以太网数据发送缓冲 FIFO 写入侧时钟信号
+ input aclr                以太网数据发送缓冲 FIFO 清零信号。
+ output [12:0]wrusedw      以太网数据发送缓冲 FIFO 写空间已使用值
+
+
+55.2.4用户数据输入
+      为了让该发送逻辑有更加实际的应用价值，设计时在该逻辑中加入了一个
+发送 FIFO，发送 FIFO 中存储需要发送的数据内容，在以太网帧发送过程中由
+发送逻辑在对应的时刻依次读取指定长度的值并发送。所以，使用该发送逻辑
+发送用户数据时，只需要将需要发送的数据写入 FIFO，给出需要发送的数据的
+长度值（data_length），然后再产生一个发送启动信号（Go）即可。
+
+55.2.5性能优化
+      设计该逻辑的一个最大原则就是让整个逻辑的时序性能尽可能优异，真正
+的 FPGA 设计师都明白优异的时序是设计出来的，而不是靠约束出来的。所以
+要想得到优异的时序性能，必须在设计时就考虑好很多细节，并按照最优的设
+计方式进行。本节将重点介绍笔者在设计高性能的 UDP 发送逻辑时采用了哪些
+能够确实提升设计的逻辑的时序性能的方法。
+
+ 55.2.5.1序列计数优化
+
+      设计时，对于整个发送逻辑中的每个状态所需要的计数，可以使用同一个
+
+店铺：https://xiaomeige.taobao.com                      官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/               技术群组：
+                 小梅哥 FPGA 团队                    武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                 开发板 培训 项目研发三位一体
+
+
+计数器，在每次进入该状态之前清零，然后计数到最大值后让状态跳转到写一
+个状态，但是这种写法，由于每个状态都有对其执行计数，限制计数最大值，
+以及清零计数值的操作，会导致该计数器的计数和清零逻辑变的异常复杂，降
+低整个设计的时序性能。
+     另外也有读者表示可以使用一个计数器从头计到尾的方式，即中间不加清
+零逻辑，和之前分层设计以太网协议逻辑时候的方法一样。这样的方式，确实
+可以降低计数器计数本身的控制逻辑，但是这样会导致整计数器的计数值比较
+多，需要判断的值也比较多，反而又会影响整个系统的运行频率。
+     所以，为了尽可能的提升系统的时序性能，设计中可以对每个状态使用一
+个独立的计数器进行计数，这样每个状态对应的计数器的计数和清零条件就变
+得固定且简单了，能够有效提升设计的时序性能。
+     设计中，对于每个状态，都提供了一个对应的计数器来控制该状态中每个
+时刻应该发送的数据内容，下表为每个状态和其对应的计数器的名称以及计数
+最大值关系。
+                               表 55-3 每个状态对应的计数器名称
+
+       状态                   序列计数器名称          功能描述             计数最大值
+       SEND_HEADER          cnt_header       前导码计数器           7
+       SEND_DES_MAC         cnt_des_mac      目标 MAC 地址计数器     5
+       SEND_SRC_MAC         cnt_src_mac      源 MAC 地址计数器      5
+       SEND_FRAME_TYPE      cnt_frame_type   帧类型计数器           1
+       SEND_IP_HEADER       cnt_ip_header    IP 报头计数器         19
+       SEND_UDP_HEADER      cnt_udp_header   UDP 报头计数器        7
+       SEND_DATA            cnt_data         用户数据计数器          data_length_reg - 1
+       SEND_CRC             cnt_crc          crc 计数器          3
+
+     当然了，上述分法，其实也存在继续优化的情况，比如均匀的控制每个计
+数器的计数最大值，保证每个计数器的计数最大值不超过 7。这样，计数器的位
+宽不超过 3 位，加上其他可能存在的控制逻辑，能够保证该计数器的清零判断
+逻辑尽可能的在一个 LUT 中完成，从而进一步降低组合逻辑链路延迟。当然了，
+这些建议只是方向，具体的实现情况还需要根据 EDA 软件最后的布局布线情况
+来确定。
+
+ 55.2.5.2输入输出端口优化
+
+     由于整个设计存在多个输入和输出端口，这些端口的值随时都有可能发生
+变化。为了提升逻辑的时序性能，对于输入和输出端口，均采用先寄存再使用
+
+店铺：https://xiaomeige.taobao.com                            官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                     技术群组：
+                    小梅哥 FPGA 团队                            武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                            开发板 培训 项目研发三位一体
+
+
+的设计方法。这种方法能够有效缩短输入端口到逻辑电路和逻辑电路到输出端
+口的数据链路长度，对于 EDA 软件对设计进行布局布线是非常有利的。
+     对于输入端口，可以先使用寄存器寄存数据，内部的发送逻辑直接使用寄
+存后的数据。对于输出端口，先将需要输出的信号通过寄存器寄存一拍之后再
+输出。图 55-14 为不添加输入输出寄存器时可能的逻辑电路布局情况，图 55-15
+为添加可输入输出寄存器后可能的逻辑电路布局情况。
+                    data_length[11:0]
+                   a                               b      FSM           gmii_tx_data[7:0]
+      USER_Logic
+                                                                  c                    d
+                       gmii_gtx_clk
+                                        UDP_Send
+                                                                              ...
+                            ...
+
+
+                               图 55-14 未添加寄存器时逻辑电路可能的布局
+
+                  data_length[11:0]
+                 a                 e               b      FSM           gmii_tx_data[7:0]
+      USER_Logic
+                      gmii_gtx_clk                                c     f                  d
+                                                       UDP_Send
+
+
+                            ...                                               ...
+
+
+
+                                  图 55-15 添加寄存器后逻辑电路可能的布局
+
+
+     在图中，a 点到 b 点为发送逻辑的输入端口，以 data_length 这个端口为例；
+c 点到 d 点为发送逻辑的输出端口，以 gmii_tx_data 端口为例。图 55-13 中，用
+户逻辑产生的 data_length 信号直接输入到发送逻辑内部的状态机中作为状态机
+的跳转条件。而状态机输出的 gmii_tx_data 信号也直接输出到 FPGA 的物理管
+脚。这样的实现方式存在两个问题：
+
+                   1.对于输入端口，由于输入端口的数据是由其他逻辑产生，而其他
+         逻辑本身也较为复杂。在布局布线资源已经十分紧缺的 FPGA 系统中，
+         这个其他逻辑到 UDP 发送逻辑的布线距离如果太远，则有可能会引入
+         相当大的数据传输延迟。在 EDA 软件开了优化的情况下，为了降低这
+         个延迟，EDA 软件可能会将其他逻辑与 UDP 发送逻辑拆散打乱后混合
+         布局布线，从而对整体系统时序性能带来不可预料的影响。
+
+                   2.对于输出端口，如果由状态机产生的信号直接输出到 FPGA 管脚，
+         这之间的信号传输路径就比较长了，而且受 EDA 软件布局布线的影响，
+         这个信号即使是由寄存器输出的，也有可能无法将该寄存器安置到
+
+店铺：https://xiaomeige.taobao.com                                       官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                                技术群组：
+                 小梅哥 FPGA 团队              武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+         FPGA 管脚的快速输出到寄存器上，从而降低系统时序性能。
+
+     而在输入和输出端口上插入寄存器先寄存一拍，则可以较好的解决这些问
+题。对于输入端口，该寄存器相当于在两个独立的逻辑块之间架起了一座桥梁，
+两个模块在布局布线时以该寄存器作为分界，能够有效缩短传输路径，也能够
+避免为了优化该路径传输延迟而对两个逻辑块混合布局布线的影响。对于输出
+端口，加入该寄存器后，该寄存器首先能够将发送逻辑和 FPGA 管脚的这条路
+径切分为 2 条较短路径，降低传输延迟，而且由于该寄存器没有其他复杂的功
+能，可以很容易的安置到 FPGA 管脚的快速输出寄存器，从而进一步提升系统
+时序性能。
+     以下为对输入端口进行寄存的逻辑代码，需要注意的是，这些端口上的数
+据在一次以太网帧发送的过程中必须保持稳定，避免在发送过程中这些参数发
+生变化导致发送失败。所以这些端口仅在有发送使能信号（Go）出现的时候更
+新一次，其他时刻全部保持自身值不变。
+ //将所有输入信号存储进入寄存器
+ always@(posedge GMII_GTXC)
+ if(Go)begin
+     des_mac_reg <= #1 des_mac;
+     src_mac_reg <= #1 src_mac;
+     des_port_reg <= #1 des_port;
+     src_port_reg <= #1 src_port;
+     des_ip_reg <= #1 des_ip;
+     src_ip_reg <= #1 src_ip;
+     data_length_reg <= #1 data_length;
+ end
+     以下为对输出端口进行寄存的逻辑代码，对于输出端口，加上寄存器的目
+的是为了使其能够更加方便的放置到 FPGA 管脚上的快速输出寄存器，以使数
+据的输出延迟最小，也能保证多位宽数据的各个信号输出到 FPGA 物理 I/O 管脚
+上能够尽量的对齐。
+ //对输出端口加一级寄存器，以方便使用 IO 输出寄存器
+ always@(posedge GMII_GTXC)begin
+     GMII_TXD <= #1 GMII_TXD_reg;
+     GMII_TXEN <= #1 GMII_TXEN_reg;
+ end
+
+
+ 55.2.5.3内部信号寄存器
+
+     对于 IP、UDP 报头数据，在组织时，也尽量采用寄存器的方式存储数据。
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                 小梅哥 FPGA 团队                武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力             开发板 培训 项目研发三位一体
+
+
+对于 IP 报头数据，设计时直接建立了一个深度为 5，位宽为 32 的二维寄存器，
+将对应的字段直接存入该寄存器中对应的位即可。对于 UDP 报头，也是按照相
+同的思路，建立了深度为 2，位宽为 32 的二维寄存器来存储报头中的各个字段，
+如下所示。
+ always@(posedge GMII_GTXC)
+ begin
+       ip_header[0][31:24] <= #1 8'h45;       //协议版本+首部长度
+       ip_header[0][23:16] <= #1 8'h00;       //服务类型
+
+
+       //IP 数据报总长度（IP 报头+数据）
+       ip_header[0][15:0]     <= #1 data_length_reg + 8'd28;
+       ip_header[1][31:0] <= #1 32'd0; //数据包标识 + 标识+分段偏移
+       ip_header[2][31:24] <= #1 8'd64;       //生存时间 64
+       ip_header[2][23:16] <= #1 8'd17;       //UDP 协议
+       ip_header[2][15:0] <= #1 ip_checksum;         //IP 校验和
+       ip_header[3][31:0] <= #1 src_ip_reg;          //源 IP 地址
+       ip_header[4][31:0] <= #1 des_ip_reg;          //目的 IP 地址
+ end
+
+ always@(posedge GMII_GTXC)
+ begin
+       udp_header[0][31:16] <= #1 src_port_reg;         //源端口号
+       udp_header[0][15:0]     <= #1 des_port_reg;      //目的端口号
+
+
+       //UDP 数据报总长度（UDP 报头+数据）
+       udp_header[1][31:16] <= #1 data_length_reg + 8'd8;
+       udp_header[1][15:0] <= #1 16'h00;             //UDP 报头校验和忽略
+ end
+
+55.2.6实用型 UDP 收发器 FIFO 缓存配置
+       本次实验中由于输入输出数据位宽为 8 位，所以 FIFO 的输入输出位宽设置
+为 8。因为以太网一次发送需要从 FIFO 中读取最少 2562 字节的数据，所以这里
+我们设置一个大于该值的存储深度 4096 即可。
+       为了方便实验，勾选输入输出端口的 Read Data Num 和 Write Data Num 信
+号，其余配置保持默认，这样可以方便知道当前 FIFO 中数据写入情况，FIFO
+的配置界面如下图 55-16 所示。特别注意 Read Mode 选择 First World Fall Through
+模式。
+
+店铺：https://xiaomeige.taobao.com                          官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                   技术群组：
+                 小梅哥 FPGA 团队                 武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力               开发板 培训 项目研发三位一体
+
+
+
+
+                                    图 55-16 FIFO 配置界面
+
+
+55.2.7UDP 发送模块设计（核心内容）
+     本次设计的 UDP 发送模块，由前面的章节实用型 UDP 收发逻辑设计与实
+现的理论框架设计而来。该模块将 FIFO IP，以及 CRC32_D8 校验模块例化其
+中，并添加设计一些发送控制信号。
+     我们在前面讲解 UDP 协议原理与 FPGA 实现以及实用型 UDP 收发逻辑的理
+论知识的时候，也专门讲解了校验文件的两种设计方法，我们也就不再进一步
+对校验文件进行分析了，而是直接将其例化引用。
+
+店铺：https://xiaomeige.taobao.com                         官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                  技术群组：
+                      小梅哥 FPGA 团队                           武汉芯路恒科技
+              专注于培养您的 FPGA 独立开发能力                          开发板 培训 项目研发三位一体
+
+
+     这里，我们给设计文件添加一个顶层 UDP_Send 模块，在顶层中同时例化
+刚刚讲解的 FIFO IP 以及 CRC32_D8 两个模块。
+                                   Clk
+                                   Rst_n               UDP_Send
+                                 des_mac
+                                                                    Tx_Done
+                                 src_mac
+                                 des_port
+                                 src_port                           GMII_TXD
+                                                      eth_dcfifo
+                                  des_ip
+                                src_ip
+                                                                    GMII_TXEN
+                             data_length
+                             GMII_GTXC
+                               wrreq                                wrusedw
+                                                      CRC32_D8
+                                  wrdata
+                                  wrclk
+                                   aclr
+
+
+
+
+                                            图 55-17 UDP_Send 模块框图
+
+                                     表 55-4 UDP_Send 模块接口功能描述
+
+        接口名称           I/O   位宽           功能描述
+        Clk            I     1            模块工作时钟
+        Rst_n          I     1            模块复位
+        des_mac        I     48           目标 mac 地址，相对于本工程 FPGA 而言，是 PC 机地址
+        src_mac        I     48           源 mac 地址，相对于本工程而言，是 FPGA 地址
+        des_port       I     16           目标端口号
+        src_port       I     16           源端口号
+        des_ip         I     32           目标 IP 地址
+        src_ip         I     32           源 IP 地址
+        data_length    I     16           数据长度
+        GMII_GTXC      I     1            GMII 发送时钟
+        wrreq          I     1            写请求信号
+        wrdata         I     8            写数据
+        wrclk          I     1            fifo 写时钟
+        aclr           I     1            fifo 复位信号
+        Tx_Done        O     1            发送完成信号
+        GMII_TXD       O     8            GMII 端口形式的发送数据
+        GMII_TXEN      O     1            GMII 发送使能
+        wrusedw        O     12           写数据计数器
+
+     下面给出 UDP 发送层的模块设计。受篇幅所限，我们将代码中描述本模块
+输入输出接口的代码篇幅省略。特定需要参考的同学，既可以拿本章节配套源
+码进行学习，又可以根据刚刚给出的端口列表进行复现。
+     在模块开始，给出本次发送的”长度/类型”字段。
+ 第 1 部分：模块头部
+ `timescale 1 ns/ 1 ns
+ module UDP_Send(
+店铺：https://xiaomeige.taobao.com                                       官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                                技术群组：
+                 小梅哥 FPGA 团队              武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+ ......
+ );
+ ......
+     localparam FRAME_TYPE = 16'h0800;
+     对于本帧发送的一些关键信息，在本帧数据发送前作出缓存，便于后续操
+作。
+ 第 2 部分：将所有输入信号储存进入寄存器
+ always@(posedge GMII_GTXC)
+ if(Go)begin
+     des_mac_reg <= #1 des_mac;
+     src_mac_reg <= #1 src_mac;
+     des_port_reg <= #1 des_port;
+     src_port_reg <= #1 src_port;
+     des_ip_reg <= #1 des_ip;
+     src_ip_reg <= #1 src_ip;
+     data_length_reg <= #1 data_length;
+ end
+     输出端口添加一级寄存器，作为输出缓存。
+ 第 3 部分：对输出端口加一级寄存器，方便 IO 输出寄存器
+ reg [7:0]GMII_TXD_reg;
+ reg GMII_TXEN_reg;
+
+ always@(posedge GMII_GTXC)begin
+     GMII_TXD <= #1 GMII_TXD_reg;
+     GMII_TXEN <= #1 GMII_TXEN_reg;
+ end
+     将上一小节讲解的输出缓存 fifo，例化到本小节内容中。
+ 第 4 部分：例化以太网输出缓存 fifo
+ wire [7:0]fifo_rddata;
+ reg fifo_rdreq;
+
+ wire [11:0]rdusedw;
+ fifo_top fifo_top(
+     .Data(wrdata), //input [7:0] Data
+     .WrClk(wrclk), //input WrClk
+     .RdClk(GMII_GTXC), //input RdClk
+     .WrEn(wrreq), //input WrEn
+     .RdEn(fifo_rdreq), //input RdEn
+     .Wnum(wrusedw), //output [12:0] Wnum
+     .Rnum(rdusedw), //output [12:0] Rnum
+     .Q(fifo_rddata), //output [7:0] Q
+     .Empty(), //output Empty
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+      .Full() //output Full
+ );
+      接下来，描述出一个专门针对 GO 信号的辅助状态机。由于 GO 信号既有可
+能在本工程中通过数据和状态的变化而获得拉高条件，又有可能在别的工程中，
+和别的模块进行数据交互而获得拉高条件，这样，我们通过单独设计 GO 信号
+的状态机变化，将其从主状态机中剥离，保持主状态机设计的独立性和完整性，
+避免 GO 信号在切换来源时，修改状态机主体。
+      在状态 0，如果从 fifo 中读出的数据大于等于数据长度（本例中对应图像传
+输的行像素数），则进入状态 1 开始发送。状态机通过判断 Tx_done 是否拉高，
+判断发送是否完成，如果发送完成，则进入等待延时状态 2，完成等待延时状态
+2 后，进入过渡状态 3，随后跳转回归到状态 0。
+ 第 5 部分：UDP 发送控制状态机以及延时
+ reg [1:0]ctrl_state;
+ reg [7:0]delay_cnt;
+
+ always@(posedge GMII_GTXC or negedge Rst_n)
+ if(!Rst_n)begin
+     ctrl_state <= #1 0;
+     Go <= #1 1'b0;
+     delay_cnt <= #1 0;
+ end
+ else begin
+     case(ctrl_state)
+         0:
+             if(rdusedw >= data_length)begin
+                 ctrl_state <= #1 2'd1;
+                 Go <= #1 1'b1;
+             end
+             else begin
+                 ctrl_state <= 0;
+                 Go <= #1 1'b0;
+             end
+
+          1:
+               begin
+                   Go <= #1 1'b0;
+                   if(Tx_Done)
+                       ctrl_state <= #1 2'd2;
+                   else
+                       ctrl_state <= #1 2'd1;
+
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                 小梅哥 FPGA 团队               武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力            开发板 培训 项目研发三位一体
+
+                end
+
+           2:
+                if(delay_cnt == 8'd255)begin
+                    ctrl_state <= #1 2'd3;
+                    delay_cnt <= #1 0;
+                end
+                else begin
+                    ctrl_state <= #1 2'd2;
+                    delay_cnt <= #1 delay_cnt + 1'b1;
+                end
+
+           3: ctrl_state <= #1 2'd0;
+       endcase
+ end
+       接下来，可以进行 IP 层的数据报报头排列。
+ 第 6 部分：IP 数据报发送设计
+ reg [31:0]ip_header[4:0];
+ reg [31:0]des_ip_reg;
+ reg [31:0]src_ip_reg;
+ reg [15:0]data_length_reg;
+ wire [15:0]ip_checksum;
+
+ always@(posedge GMII_GTXC)
+ begin
+       ip_header[0][31:24] <= #1 8'h45;       //协议版本+首部长度
+       ip_header[0][23:16] <= #1 8'h00;       //服务类型
+       ip_header[0][15:0]     <= #1 data_length_reg + 8'd28; //IP 数据报总长度
+ （IP 报头+数据）
+       ip_header[1][31:0] <= #1 32'd0; //数据包标识 + 标识+分段偏移
+       ip_header[2][31:24] <= #1 8'd64;       //生存时间 64
+       ip_header[2][23:16] <= #1 8'd17;       //UDP 协议
+       ip_header[2][15:0] <= #1 ip_checksum;     //IP 校验和
+       ip_header[3][31:0] <= #1 src_ip_reg;      //源 IP 地址
+       ip_header[4][31:0] <= #1 des_ip_reg;      //目的 IP 地址
+ end
+       完成 IP 层的数据报报头设计后，接下来完成 UDP 层数据报的报头设计。
+ 第 7 部分：UDP 报头设计
+ reg [31:0]udp_header[1:0];
+ reg [15:0]des_port_reg;
+ reg [15:0]src_port_reg;
+
+店铺：https://xiaomeige.taobao.com                         官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                  技术群组：
+                 小梅哥 FPGA 团队                武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力             开发板 培训 项目研发三位一体
+
+
+
+ always@(posedge GMII_GTXC)
+ begin
+       udp_header[0][31:16] <= #1 src_port_reg;         //源端口号
+       udp_header[0][15:0]     <= #1 des_port_reg;      //目的端口号
+       udp_header[1][31:16] <= #1 data_length_reg + 8'd8;
+       udp_header[1][15:0] <= #1 16'h00;             //UDP 报头校验和    忽略
+ end
+
+
+       接下来就是 IP 数据报的各字段求和，例化校验模块。
+ 第 8 部分：IP 数据报求和及校验模块例化
+ wire [31:0]suma,sumb;
+ assign suma = ip_header[0][31:16] + ip_header[0][15:0]
+                 + ip_header[1][31:16] + ip_header[1][15:0]
+                 + ip_header[2][31:16] + ip_header[3][31:16]
+                 + ip_header[3][15:0] + ip_header[4][31:16] +
+ ip_header[4][15:0];
+
+ assign sumb = (suma[31:16] + suma[15:0]);
+ assign ip_checksum = sumb[31:16]? ~(sumb[31:16] + sumb[15:0]):~sumb;
+
+ wire CRC_Reset;
+ reg CRC_EN;
+
+ assign CRC_Reset = (state == IDLE);
+
+ CRC32_D8 CRC32_D8(
+     .Clk(GMII_GTXC),
+     .Reset(CRC_Reset),
+     .Data_in(GMII_TXD_reg),
+     .Enable(CRC_EN),
+     .Crc(),
+     .CrcNext(),
+     .Crc_eth(crc_result)
+ );
+       在下一步，就是描述 MAC、IP、UDP 层层打包的主状态机。状态机的每一
+个状态，依次就是一个数据帧发送的每一个数据字段。为了讲解清晰，各位读
+者可以把状态机和 MAC 层数据组包图进行对比分析。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                         官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                  技术群组：
+                 小梅哥 FPGA 团队                    武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                 开发板 培训 项目研发三位一体
+
+
+       前同步码        SFD   目的地址            源地址     长度/类型        数据和填充               FCS
+
+        7字节       1字节      6字节           6字节      2字节         46~1500字节       4字节
+
+
+
+                                   2字节              46~1500字节
+
+                                 0x0800    IP 报文头部            IP 报文数据
+
+
+
+
+                                               UDP报文头部          UDP报文数据
+
+                                图 55-18 MAC 层打包示意图回顾
+
+ 第 9 部分：MAC 层发送状态机（关于层层打包的状态机描述）
+ reg [47:0]des_mac_reg;
+ reg [47:0]src_mac_reg;
+
+ reg [4:0]cnt_header;         //前导码计数器
+ reg [4:0]cnt_des_mac;        //目标 MAC 地址计数器
+ reg [4:0]cnt_src_mac;        //源 MAC 地址计数器
+ reg [1:0]cnt_frame_type;          //帧类型计数器
+
+
+ reg [4:0]cnt_ip_header; //IP 报头计数器
+
+
+ reg [4:0]cnt_udp_header;          //UDP 报头计数器
+ reg [11:0]cnt_data; //数据计数器
+ reg [4:0]cnt_crc;       //crc 计数器
+
+ wire [31:0]crc_result;
+ reg [9:0]state;
+
+ localparam
+     IDLE =              10'b0000000001,
+     SEND_HEADER =       10'b0000000010,
+     SEND_DES_MAC = 10'b0000000100,
+     SEND_SRC_MAC = 10'b0000001000,
+     SEND_FRAME_TYPE = 10'b0000010000,
+     SEND_IP_HEADER =    10'b0000100000,
+     SEND_UDP_HEADER = 10'b0001000000,
+     SEND_DATA =         10'b0010000000,
+     SEND_CRC =      10'b0100000000;
+
+
+店铺：https://xiaomeige.taobao.com                          官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                   技术群组：
+                 小梅哥 FPGA 团队                 武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力               开发板 培训 项目研发三位一体
+
+ always@(posedge GMII_GTXC or negedge Rst_n)
+ if(!Rst_n)begin
+     state <= #1 IDLE;
+      cnt_header <= #1 0; //前导码计数器
+      cnt_des_mac <= #1 0;         //目标 MAC 地址计数器
+      cnt_src_mac <= #1 0;         //源 MAC 地址计数器
+      cnt_frame_type <= #1 0; //帧类型计数器
+      cnt_ip_header <= #1 0;       //IP 报头计数器
+      cnt_udp_header <= #1 0; //UDP 报头计数器
+      cnt_data <= #1 0;       //数据计数器
+      cnt_crc <= #1 0;        //crc 计数器
+      GMII_TXD_reg <= #1 0;
+      GMII_TXEN_reg <= #1 0;
+      fifo_rdreq <= #1 1'b0;
+      Tx_Done <= #1 1'b0;
+      CRC_EN <= #1 1'b0;
+ end
+ else begin
+     case(state)
+         IDLE:
+             begin
+                 GMII_TXEN_reg <= #1 0;
+                 Tx_Done <= #1 1'b0;
+                 if(Go)
+                         state <= #1 SEND_HEADER;   // 发送前导码
+                     else
+                         state <= #1 IDLE;
+               end
+
+          SEND_HEADER:
+              begin
+                  GMII_TXEN_reg <= #1 1;
+                  if(cnt_header >= 7)begin
+                       cnt_header <= #1 0;
+                       state <= #1 SEND_DES_MAC;
+                  end
+                  else begin
+                       cnt_header <= #1 cnt_header + 1'b1;
+                       state <= #1 SEND_HEADER;
+                  end
+                  case(cnt_header)
+                       0,1,2,3,4,5,6:GMII_TXD_reg <= #1 8'h55;
+                       7:GMII_TXD_reg <= #1 8'hd5;
+店铺：https://xiaomeige.taobao.com                     官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/              技术群组：
+                 小梅哥 FPGA 团队               武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力            开发板 培训 项目研发三位一体
+
+                         default:GMII_TXD_reg <= #1 8'h55;
+                     endcase
+               end
+
+          SEND_DES_MAC:
+              begin
+                  CRC_EN <= #1 1'b1;
+                  if(cnt_des_mac >= 5)begin
+                      cnt_des_mac <= #1 0;
+                      state <= #1 SEND_SRC_MAC;
+                  end
+                  else begin
+                      cnt_des_mac <= #1 cnt_des_mac + 1'b1;
+                      state <= #1 SEND_DES_MAC;
+                  end
+                  case(cnt_des_mac)
+                      0:GMII_TXD_reg <= #1 des_mac_reg[47:40];
+                      1:GMII_TXD_reg <= #1 des_mac_reg[39:32];
+                      2:GMII_TXD_reg <= #1 des_mac_reg[31:24];
+                      3:GMII_TXD_reg <= #1 des_mac_reg[23:16];
+                      4:GMII_TXD_reg <= #1 des_mac_reg[15:8];
+                      5:GMII_TXD_reg <= #1 des_mac_reg[7:0];
+                      default:GMII_TXD_reg <= #1 8'hff;
+                  endcase
+              end
+
+          SEND_SRC_MAC:
+              begin
+                  if(cnt_src_mac >= 5)begin
+                      cnt_src_mac <= #1 0;
+                      state <= #1 SEND_FRAME_TYPE;
+                  end
+                  else begin
+                      cnt_src_mac <= #1 cnt_src_mac + 1'b1;
+                      state <= #1 SEND_SRC_MAC;
+                  end
+                  case(cnt_src_mac)
+                      0:GMII_TXD_reg <= #1 src_mac_reg[47:40];
+                      1:GMII_TXD_reg <= #1 src_mac_reg[39:32];
+                      2:GMII_TXD_reg <= #1 src_mac_reg[31:24];
+                      3:GMII_TXD_reg <= #1 src_mac_reg[23:16];
+                      4:GMII_TXD_reg <= #1 src_mac_reg[15:8];
+                      5:GMII_TXD_reg <= #1 src_mac_reg[7:0];
+                      default:GMII_TXD_reg <= #1 8'hff;
+店铺：https://xiaomeige.taobao.com                       官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+                     endcase
+               end
+
+          SEND_FRAME_TYPE:
+              begin
+                  if(cnt_frame_type >= 1)begin
+                      cnt_frame_type <= #1 0;
+                      state <= #1 SEND_IP_HEADER;
+                  end
+                  else begin
+                      cnt_frame_type <= #1 cnt_frame_type + 1'b1;
+                      state <= #1 SEND_FRAME_TYPE;
+                  end
+                  case(cnt_frame_type)
+                      0:GMII_TXD_reg <= #1 FRAME_TYPE[15:8];
+                      1:GMII_TXD_reg <= #1 FRAME_TYPE[7:0];
+                      default:GMII_TXD_reg <= #1 8'hff;
+                  endcase
+              end
+
+          SEND_IP_HEADER:
+              begin
+                  if(cnt_ip_header >= 19)begin
+                      cnt_ip_header <= #1 0;
+                      state <= #1 SEND_UDP_HEADER;
+                  end
+                  else begin
+                      cnt_ip_header <= #1 cnt_ip_header + 1'b1;
+                      state <= #1 SEND_IP_HEADER;
+                  end
+                  case(cnt_ip_header)
+                      0 :GMII_TXD_reg <= #1 ip_header[0][31:24];
+                      1 :GMII_TXD_reg <= #1 ip_header[0][23:16];
+                      2 :GMII_TXD_reg <= #1 ip_header[0][15:8];
+                      3 :GMII_TXD_reg <= #1 ip_header[0][7:0];
+                      4 :GMII_TXD_reg <= #1 ip_header[1][31:24];
+                      5 :GMII_TXD_reg <= #1 ip_header[1][23:16];
+                      6 :GMII_TXD_reg <= #1 ip_header[1][15:8];
+                      7 :GMII_TXD_reg <= #1 ip_header[1][7:0];
+                      8 :GMII_TXD_reg <= #1 ip_header[2][31:24];
+                      9 :GMII_TXD_reg <= #1 ip_header[2][23:16];
+                      10:GMII_TXD_reg <= #1 ip_header[2][15:8];
+                      11:GMII_TXD_reg <= #1 ip_header[2][7:0];
+                      12:GMII_TXD_reg <= #1 ip_header[3][31:24];
+店铺：https://xiaomeige.taobao.com                    官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/             技术群组：
+                 小梅哥 FPGA 团队               武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力            开发板 培训 项目研发三位一体
+
+                         13:GMII_TXD_reg <= #1 ip_header[3][23:16];
+                         14:GMII_TXD_reg <= #1 ip_header[3][15:8];
+                         15:GMII_TXD_reg <= #1 ip_header[3][7:0];
+                         16:GMII_TXD_reg <= #1 ip_header[4][31:24];
+                         17:GMII_TXD_reg <= #1 ip_header[4][23:16];
+                         18:GMII_TXD_reg <= #1 ip_header[4][15:8];
+                         19:GMII_TXD_reg <= #1 ip_header[4][7:0];
+                         default:GMII_TXD_reg <= #1 8'hff;
+                     endcase
+               end
+
+          SEND_UDP_HEADER:
+              begin
+                  if(cnt_udp_header >= 7)begin
+                      cnt_udp_header <= #1 0;
+                      fifo_rdreq <= #1 1'b1;
+                      state <= #1 SEND_DATA;
+                  end
+                  else begin
+                      cnt_udp_header <= #1 cnt_udp_header + 1'b1;
+                      state <= #1 SEND_UDP_HEADER;
+                  end
+                  case(cnt_udp_header)
+                      0 :GMII_TXD_reg<=#1 udp_header[0][31:24];
+                      1 :GMII_TXD_reg<=#1 udp_header[0][23:16];
+                      2 :GMII_TXD_reg<=#1 udp_header[0][15:8];
+                      3 :GMII_TXD_reg<=#1 udp_header[0][7:0];
+                      4 :GMII_TXD_reg<=#1 udp_header[1][31:24];
+                      5 :GMII_TXD_reg<=#1 udp_header[1][23:16];
+                      6 :GMII_TXD_reg<=#1 udp_header[1][15:8];
+                      7 :GMII_TXD_reg<=#1 udp_header[1][7:0];
+                      default:GMII_TXD_reg <= #1 8'hff;
+                  endcase
+              end
+
+          SEND_DATA:
+              begin
+                  if(cnt_data >= data_length_reg - 1)begin
+                      cnt_data <= #1 0;
+                      state <= #1 SEND_CRC;
+                      fifo_rdreq <= #1 1'b0;
+                      GMII_TXD_reg <= #1 fifo_rddata;
+                  end
+                  else begin
+店铺：https://xiaomeige.taobao.com                       官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                技术群组：
+                 小梅哥 FPGA 团队                 武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力              开发板 培训 项目研发三位一体
+
+                           cnt_data <= #1 cnt_data + 1'b1;
+                           state <= #1 SEND_DATA;
+                           GMII_TXD_reg <= #1 fifo_rddata;
+                     end
+               end
+
+           SEND_CRC:
+               begin
+                   CRC_EN <= #1 1'b0;
+                   if(cnt_crc >= 3)begin
+                       cnt_crc <= #1 0;
+                       state <= #1 IDLE;
+                       Tx_Done <= #1 1'b1;
+                   end
+                   else begin
+                       cnt_crc <= #1 cnt_crc + 1'b1;
+                       state <= #1 SEND_CRC;
+                   end
+                   case(cnt_crc)
+                       0 :GMII_TXD_reg <= #1 crc_result[31:24];
+                       1 :GMII_TXD_reg <= #1 crc_result[23:16];
+                       2 :GMII_TXD_reg <= #1 crc_result[15:8];
+                       3 :GMII_TXD_reg <= #1 crc_result[7:0];
+                       default:GMII_TXD_reg <= #1 8'hff;
+                   endcase
+               end
+           default:begin state <= #1 IDLE;end
+       endcase
+ end
+       至此，关于高性能 UDP 发送逻辑的设计要点就介绍完毕了。
+
+55.2.8UDP 发送逻辑仿真验证
+       首先，需要编写激励文件，将 UDP_Send 模块例化至仿真文件中，然后使
+用 task 事件向 FIFO 中写入两次数据，整个的仿真激励文件如下所示：
+ `timescale 1ns / 1ps
+
+ module UDP_Send_tb;
+     reg Clk;
+     reg Rst_n;
+     wire Tx_Done;
+     reg GMII_GTXC;
+     reg wrreq;
+店铺：https://xiaomeige.taobao.com                         官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                  技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+      reg [7:0]wrdata;
+      reg wrclk;
+      reg aclr;
+
+      wire [7:0]GMII_TXD;
+      wire GMII_TXEN;
+      wire [12:0]wrusedw;
+
+      parameter data_length = 16'd16;
+      parameter des_mac = 48'hFF_FF_FF_FF_FF_FF;
+      parameter src_mac = 48'h00_0a_35_01_fe_c0;
+      parameter des_port = 16'd6102;
+      parameter src_port = 16'd5000;
+      parameter des_ip = 32'hc0_a8_00_03;
+      parameter src_ip = 32'hc0_a8_00_02;
+
+      UDP_Send UDP_Send(
+          .Clk(Clk),
+          .Rst_n(Rst_n),
+
+           // Go,
+           .Tx_Done(Tx_Done),
+
+           .des_mac(des_mac),
+           .src_mac(src_mac),
+
+           .des_port(des_port),
+           .src_port(src_port),
+
+           .des_ip(des_ip),
+           .src_ip(src_ip),
+
+           .data_length(data_length),
+
+           .GMII_GTXC(GMII_GTXC),
+           .GMII_TXD(GMII_TXD),
+           .GMII_TXEN(GMII_TXEN),
+
+           .wrreq(wrreq),
+           .wrdata(wrdata),
+           .wrclk(wrclk),
+           .aclr(aclr),
+           .wrusedw(wrusedw)
+      );
+店铺：https://xiaomeige.taobao.com                    官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/             技术群组：
+                 小梅哥 FPGA 团队              武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力            开发板 培训 项目研发三位一体
+
+
+
+      initial Clk = 1;
+      always #10 Clk = ~Clk;
+
+      initial wrclk = 1;
+      always #10 wrclk = ~wrclk;
+
+      initial GMII_GTXC = 1;
+      always #4 GMII_GTXC = ~GMII_GTXC;
+
+      initial begin
+          Rst_n = 0;
+          #201;
+          Rst_n = 1;
+          #201;
+          wr_data(8'h00,data_length);
+          #2000;
+          wr_data(8'h10,data_length);
+          #2000;
+          $stop;
+      end
+
+     task wr_data;
+     input [7:0]data_begin;
+     input [7:0]data_length;
+     begin
+         wrdata = data_begin;
+         wrreq = 0;
+         aclr = 1;
+         #601;
+         #1 aclr = 0;
+         #401;
+         repeat(data_length)
+         begin
+             @(posedge wrclk);
+             wrdata = wrdata +1'b1;
+             wrreq = 1;
+         end
+         @(posedge wrclk);
+         wrreq = 0;
+     end
+   endtask
+ endmodule
+
+店铺：https://xiaomeige.taobao.com                  官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/           技术群组：
+                 小梅哥 FPGA 团队                武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力             开发板 培训 项目研发三位一体
+
+
+     仿真波形如下图 55-19 所示。
+
+
+
+
+                                图 55-19 UDP_Send 仿真波形图
+
+
+     放大第一次写入 FIFO 中的数据，以及以太网第一次发送出去的数据，如下
+图 55-20 和图 55-21 所示。
+
+
+
+
+                               图 55-20 第一次写入 FIFO 中的数据
+
+
+
+
+                               图 55-21 以太网第一次发送的数据
+
+
+     从上述图中可以看出，第一次写入 FIFO 中的数据和以太网第一次发送的数
+据完全一致。至此，通过仿真验证了 UDP_Send 模块的设计符合预期。
+
+55.3总结
+     本次实验通过两种方式实现了以太网发送模块的设计，同时对两种设计方
+案的状态机都进行了详细介绍，在后续的实验中，我们一般都使用第一种方式
+实现以太网发送模块的功能。读者可以依照本节内容，尝试自行编写以太网发
+送模块，以此对以太网协议各个字段有进一步的了解。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                          官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                   技术群组：
+

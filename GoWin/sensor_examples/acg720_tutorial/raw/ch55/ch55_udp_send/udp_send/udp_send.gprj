@@ -1,0 +1,14 @@
+<?xml version="1" encoding="UTF-8"?>
+<!DOCTYPE gowin-fpga-project>
+<Project>
+    <Template>FPGA</Template>
+    <Version>5</Version>
+    <Device name="GW5AT-138B" pn="GW5AT-LV138PG484AC1/I0">gw5at138b-012</Device>
+    <FileList>
+        <File path="src/CRC32_D8.v" type="file.verilog" enable="1"/>
+        <File path="src/UDP_Send.v" type="file.verilog" enable="1"/>
+        <File path="src/UDP_Send_tb.v" type="file.verilog" enable="0"/>
+        <File path="src/fifo_top/fifo_top.v" type="file.verilog" enable="1"/>
+        <File path="src/udp_send.cst" type="file.cst" enable="1"/>
+    </FileList>
+</Project>

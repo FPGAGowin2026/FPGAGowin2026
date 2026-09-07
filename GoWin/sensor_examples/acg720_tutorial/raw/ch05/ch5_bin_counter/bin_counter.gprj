@@ -1,0 +1,13 @@
+<?xml version="1" encoding="UTF-8"?>
+<!DOCTYPE gowin-fpga-project>
+<Project>
+    <Template>FPGA</Template>
+    <Version>5</Version>
+    <Device name="GW5AT-138B" pn="GW5AT-LV138PG484AC1/I0">gw5at138b-012</Device>
+    <FileList>
+        <File path="src/bin_counter.v" type="file.verilog" enable="1"/>
+        <File path="src/bin_counter_tb.v" type="file.verilog" enable="1"/>
+        <File path="src/bin_counter.cst" type="file.cst" enable="1"/>
+        <File path="src/bin_counter.sdc" type="file.sdc" enable="1"/>
+    </FileList>
+</Project>

@@ -1,0 +1,3 @@
+"chapter","case","top","sources","compile_status","run_status","compile_exit","run_exit","compile_log","run_log"
+"12","key_led_original_tb_with_compat_alias","key_led_tb","6","PASS","PASS","0","0","reports/normalized_sim_logs/ch12_key_led_original_tb_with_compat_alias.compile.log","reports/normalized_sim_logs/ch12_key_led_original_tb_with_compat_alias.run.log"
+"44","dvp_capture_original_tb","DVP_Capture_tb","2","PASS","PASS","0","0","reports/normalized_sim_logs/ch44_dvp_capture_original_tb.compile.log","reports/normalized_sim_logs/ch44_dvp_capture_original_tb.run.log"

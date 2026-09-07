@@ -1,0 +1,21 @@
+<?xml version="1" encoding="UTF-8"?>
+<!DOCTYPE gowin-fpga-project>
+<Project>
+    <Template>FPGA</Template>
+    <Version>5</Version>
+    <Device name="GW5AT-138B" pn="GW5AT-LV138PG484AC1/I0">gw5at138b-012</Device>
+    <FileList>
+        <File path="src/DDS_Module.v" type="file.verilog" enable="1"/>
+        <File path="src/dds_ad9767.v" type="file.verilog" enable="1"/>
+        <File path="src/gowin_pll/gowin_pll.v" type="file.verilog" enable="1"/>
+        <File path="src/gowin_prom/rom_sine.v" type="file.verilog" enable="1"/>
+        <File path="src/gowin_prom/rom_square.v" type="file.verilog" enable="1"/>
+        <File path="src/gowin_prom/rom_triangular.v" type="file.verilog" enable="1"/>
+        <File path="src/key_control.v" type="file.verilog" enable="1"/>
+        <File path="src/key_filter.v" type="file.verilog" enable="1"/>
+        <File path="src/seg7/hc595_driver.v" type="file.verilog" enable="1"/>
+        <File path="src/seg7/hex8.v" type="file.verilog" enable="1"/>
+        <File path="src/dds_ad9767.cst" type="file.cst" enable="1"/>
+        <File path="src/dds_ad9767.rao" type="file.gao" enable="0"/>
+    </FileList>
+</Project>

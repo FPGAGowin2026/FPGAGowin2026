@@ -1,0 +1,31 @@
+<?xml version="1" encoding="UTF-8"?>
+<!DOCTYPE gowin-fpga-project>
+<Project>
+    <Template>FPGA</Template>
+    <Version>5</Version>
+    <Device name="GW5AT-138B" pn="GW5AT-LV138PG484AC1/I0">gw5at138b-012</Device>
+    <FileList>
+        <File path="src/Camera_ETH_Formator.v" type="file.verilog" enable="1"/>
+        <File path="src/cache.v" type="file.verilog" enable="1"/>
+        <File path="src/camera_init/camera_init.v" type="file.verilog" enable="1"/>
+        <File path="src/camera_init/i2c_control/i2c_bit_shift.v" type="file.verilog" enable="1"/>
+        <File path="src/camera_init/i2c_control/i2c_control.v" type="file.verilog" enable="1"/>
+        <File path="src/camera_init/ov5640_init_table_jpeg.v" type="file.verilog" enable="1"/>
+        <File path="src/camera_init/ov5640_init_table_rgb.v" type="file.verilog" enable="1"/>
+        <File path="src/camera_init/ov7725_init_table_rgb.v" type="file.verilog" enable="1"/>
+        <File path="src/controller.v" type="file.verilog" enable="1"/>
+        <File path="src/controller_top.v" type="file.verilog" enable="1"/>
+        <File path="src/controller_top_tb.v" type="file.verilog" enable="1"/>
+        <File path="src/dc_fifo/dc_fifo.v" type="file.verilog" enable="1"/>
+        <File path="src/eth/CRC32_D8.v" type="file.verilog" enable="1"/>
+        <File path="src/eth/UDP_Send.v" type="file.verilog" enable="1"/>
+        <File path="src/eth_dcfifo/eth_dcfifo.v" type="file.verilog" enable="1"/>
+        <File path="src/gmii_to_rgmii.v" type="file.verilog" enable="1"/>
+        <File path="src/gowin_pll/gowin_pll.v" type="file.verilog" enable="1"/>
+        <File path="src/mdio/mdio_bit_shift.v" type="file.verilog" enable="1"/>
+        <File path="src/mdio/mdio_tb.v" type="file.verilog" enable="1"/>
+        <File path="src/mdio/phy_reg_config.v" type="file.verilog" enable="1"/>
+        <File path="src/ov5640x2_udp_rgmii.v" type="file.verilog" enable="1"/>
+        <File path="src/ov5640x2_udp_rgmii.cst" type="file.cst" enable="1"/>
+    </FileList>
+</Project>

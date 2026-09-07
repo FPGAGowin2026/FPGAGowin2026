@@ -1,2 +1,26 @@
-/GoWin/
 /FPGA_ws/
+
+# The outer workspace is vendored under GoWin/ as a source-only snapshot.
+# Keep reproducible sources and project inputs, but ignore generated outputs.
+/GoWin/**/.git/
+/GoWin/**/.svn/
+/GoWin/**/impl/
+/GoWin/**/build/
+/GoWin/**/sim/work/
+/GoWin/**/temp/
+/GoWin/**/*.gprj.user
+/GoWin/**/*.pr
+/GoWin/**/*.p
+/GoWin/**/*.fs
+/GoWin/**/*.bin
+/GoWin/**/*.binx
+/GoWin/**/*.wlf
+/GoWin/**/*.qpg
+/GoWin/**/*.qtl
+/GoWin/**/*.qdb
+/GoWin/**/*.vg
+/GoWin/**/*.vo
+/GoWin/**/*.html
+/GoWin/**/*.log
+/GoWin/**/*.result
+/GoWin/**/*.timing_paths

@@ -1,0 +1,23 @@
+<?xml version="1" encoding="UTF-8"?>
+<!DOCTYPE gowin-fpga-project>
+<Project>
+    <Template>FPGA</Template>
+    <Version>5</Version>
+    <Device name="GW5AT-138B" pn="GW5AT-LV138PG484AC1/I0">gw5at138b-012</Device>
+    <FileList>
+        <File path="src/eth_data_buf/eth_data_buf.v" type="file.verilog" enable="1"/>
+        <File path="src/eth_msg_buf/eth_msg_buf.v" type="file.verilog" enable="1"/>
+        <File path="src/eth_udp_gmii/crc32_d8.v" type="file.verilog" enable="1"/>
+        <File path="src/eth_udp_gmii/eth_udp_rx_gmii.v" type="file.verilog" enable="1"/>
+        <File path="src/eth_udp_gmii/eth_udp_tx_gmii.v" type="file.verilog" enable="1"/>
+        <File path="src/eth_udp_gmii/ip_checksum.v" type="file.verilog" enable="1"/>
+        <File path="src/gmii_rgmii_gmii/gmii_to_rgmii.v" type="file.verilog" enable="1"/>
+        <File path="src/gmii_rgmii_gmii/rgmii_to_gmii.v" type="file.verilog" enable="1"/>
+        <File path="src/gowin_pll/gowin_pll.v" type="file.verilog" enable="1"/>
+        <File path="src/gowin_pll/gowin_pll_mod.v" type="file.verilog" enable="1"/>
+        <File path="src/pll_init.v" type="file.verilog" enable="1"/>
+        <File path="src/top/eth_udp_loopback_rgmii.v" type="file.verilog" enable="1"/>
+        <File path="src/eth_udp_lookback_rgmii.cst" type="file.cst" enable="1"/>
+        <File path="src/eth_udp_lookback_rgmii.rao" type="file.gao" enable="1"/>
+    </FileList>
+</Project>

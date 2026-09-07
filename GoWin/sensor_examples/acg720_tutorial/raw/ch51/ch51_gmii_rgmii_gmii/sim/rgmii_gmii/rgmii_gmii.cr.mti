@@ -1,0 +1,22 @@
+H:/01_gaoyun/gao_project/33_gmii_rgmii_gmii/gmii_rgmii_gmii/src/gmii_rgmii_gmii/rgmii_to_gmii.v {1 {vlog -work work -vopt -stats=none H:/01_gaoyun/gao_project/33_gmii_rgmii_gmii/gmii_rgmii_gmii/src/gmii_rgmii_gmii/rgmii_to_gmii.v
+Model Technology ModelSim SE-64 vlog 10.7 Compiler 2017.12 Dec  7 2017
+-- Compiling module rgmii_to_gmii
+
+Top level modules:
+	rgmii_to_gmii
+
+} {} {}} H:/01_gaoyun/gao_project/33_gmii_rgmii_gmii/gmii_rgmii_gmii/src/gowin_pll/gowin_pll.v {1 {vlog -work work -vopt -stats=none H:/01_gaoyun/gao_project/33_gmii_rgmii_gmii/gmii_rgmii_gmii/src/gowin_pll/gowin_pll.v
+Model Technology ModelSim SE-64 vlog 10.7 Compiler 2017.12 Dec  7 2017
+-- Compiling module Gowin_PLL
+
+Top level modules:
+	Gowin_PLL
+
+} {} {}} H:/01_gaoyun/gao_project/33_gmii_rgmii_gmii/gmii_rgmii_gmii/src/tb/rgmii_to_gmii_tb.v {1 {vlog -work work -vopt -stats=none H:/01_gaoyun/gao_project/33_gmii_rgmii_gmii/gmii_rgmii_gmii/src/tb/rgmii_to_gmii_tb.v
+Model Technology ModelSim SE-64 vlog 10.7 Compiler 2017.12 Dec  7 2017
+-- Compiling module rgmii_to_gmii_tb
+
+Top level modules:
+	rgmii_to_gmii_tb
+
+} {} {}}

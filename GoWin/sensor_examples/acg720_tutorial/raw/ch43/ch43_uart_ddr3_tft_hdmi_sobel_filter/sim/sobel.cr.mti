@@ -1,0 +1,29 @@
+H:/01_gaoyun/gao_project/39_uart_ddr3_tft_hdmi_sobel_filter/uart_ddr3_tft_hdmi_sobel_filter/src/sobel/shift_register_2taps/shift_register_2taps.v {1 {vlog -work work -vopt -stats=none H:/01_gaoyun/gao_project/39_uart_ddr3_tft_hdmi_sobel_filter/uart_ddr3_tft_hdmi_sobel_filter/src/sobel/shift_register_2taps/shift_register_2taps.v
+Model Technology ModelSim SE-64 vlog 10.7 Compiler 2017.12 Dec  7 2017
+-- Compiling module shift_register_2taps
+
+Top level modules:
+	shift_register_2taps
+
+} {} {}} H:/01_gaoyun/gao_project/39_uart_ddr3_tft_hdmi_sobel_filter/uart_ddr3_tft_hdmi_sobel_filter/src/sobel/sobel.v {1 {vlog -work work -vopt -stats=none H:/01_gaoyun/gao_project/39_uart_ddr3_tft_hdmi_sobel_filter/uart_ddr3_tft_hdmi_sobel_filter/src/sobel/sobel.v
+Model Technology ModelSim SE-64 vlog 10.7 Compiler 2017.12 Dec  7 2017
+-- Compiling module sobel
+
+Top level modules:
+	sobel
+
+} {} {}} H:/01_gaoyun/gao_project/39_uart_ddr3_tft_hdmi_sobel_filter/uart_ddr3_tft_hdmi_sobel_filter/src/shift_reg_ram/shift_reg_ram.vo {1 {vlog -work work -vopt -stats=none H:/01_gaoyun/gao_project/39_uart_ddr3_tft_hdmi_sobel_filter/uart_ddr3_tft_hdmi_sobel_filter/src/shift_reg_ram/shift_reg_ram.vo
+Model Technology ModelSim SE-64 vlog 10.7 Compiler 2017.12 Dec  7 2017
+-- Compiling module shift_reg_ram
+
+Top level modules:
+	shift_reg_ram
+
+} {} {}} H:/01_gaoyun/gao_project/39_uart_ddr3_tft_hdmi_sobel_filter/uart_ddr3_tft_hdmi_sobel_filter/src/sobel/sobel_tb.v {1 {vlog -work work -vopt -stats=none H:/01_gaoyun/gao_project/39_uart_ddr3_tft_hdmi_sobel_filter/uart_ddr3_tft_hdmi_sobel_filter/src/sobel/sobel_tb.v
+Model Technology ModelSim SE-64 vlog 10.7 Compiler 2017.12 Dec  7 2017
+-- Compiling module sobel_tb
+
+Top level modules:
+	sobel_tb
+
+} {} {}}

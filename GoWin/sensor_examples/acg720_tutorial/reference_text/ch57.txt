@@ -1,0 +1,753 @@
+                 小梅哥 FPGA 团队                 武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力               开发板 培训 项目研发三位一体
+
+
+
+                           57 MDIO 控制器设计
+                 |----02_设计实例
+ 工程源码
+                 |----ch57_phy_config_mdio
+ 相关视频课程
+ 说明
+
+      章节导读
+
+      PHY 芯片根据不同的需求，会有不同的工作模式，例如需要设置其以太网通
+信速率为千兆、百兆、十兆或自动协商，而处理器也需要知道其连接状态，例
+如需要知道网络是否已经连接通，以及当前的链接速率是多少。为了实现这些
+功能，IEEE 在以太网标准 IEEE 802.3 中使用若干条款定义了用处理器来管理
+PHY 芯片的标准控制接口——MDIO。
+
+      本章，我们将学习 MDIO 接口相关知识，并设计相应的驱动模块，通过 MDIO
+接口带领大家学习如何配置 PHY 芯片。
+
+
+57.1PHY 管理接口 MDIO 介绍
+
+57.1.1MDIO 接口介绍
+      MDIO 是一种简单的双线串行接口，将管理器件(如 MAC 控制器、微处理
+器)与具备管理功能的 PHY 芯片相连接，从而控制收发器并从收发器收集状态信
+息。可收集的信息包括链接状态、传输速度与选择、断电、低功率休眠状态、
+TX/RX 模式选择、自动协商控制、环回模式控制等。除了拥有 IEEE 要求的功
+能之外，收发器厂商还可添加更多的信息收集功能。
+      MDIO 总线包含两个信号：MDC 和 MDIO。MDC 是管理数据的时钟信号，
+由管理器（如处理器或 MAC）输出给 PHY 芯片，最高速率可超过 5MHz。
+MDIO 则是管理数据的输入输出双向接口，其中的数据与 MDC 时钟同步。
+      和大家熟悉的 I2C 接口相似，MDIO 总线也支持多设备模式，即一个 MDIO
+总线上最多可连接 32 个 PHY 芯片的 MDIO 接口，通过在传输过程中的 PHY 器
+件地址字段传输不同的器件地址值来指定具体操作哪个 PHY 芯片。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                     官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/              技术群组：
+                 小梅哥 FPGA 团队                     武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                  开发板 培训 项目研发三位一体
+
+
+                                         VCC
+
+
+
+
+                       MDC
+                   MDIO接口
+                      MDIO
+
+
+
+
+                                MDC   MDIO     MDC   MDIO           MDC   MDIO
+                 MAC/            MDIO接口         MDIO接口               MDIO接口
+                处理器              PHY0           PHY1        ...      PHYn
+
+
+
+                               图 57-1 MDIO 与 PHY 芯片连接结构
+
+
+     每个 PHY 芯片都有一个硬件地址，该地址为 5 位，由固定部分和可变部分
+组成，可变部分可以在芯片应用电路中通过对地址脚设置上下拉到电源或 GND。
+若多个 PHY 芯片同时连接在同一个 MDIO 总线上，需要设置不同的 PHY 器件
+地址以示区分。
+     每个 PHY 芯片中都有最多 32 个寄存器可供读写（32 个寄存器，需要 5 位
+寄存器地址），包括由 IEEE 802.3 规范定义的前 16 个标准功能寄存器和后续最
+多 16 个由 PHY 芯片厂家自定义的功能寄存器。所有 PHY 芯片的前 16 个寄存器
+功能定义都必须相同，后续 0~16 个寄存器的功能由 PHY 芯片厂家根据实际需
+求自定义。
+     开发板上使用的 PHY 芯片型号为 RTL8211F-CG，通过查询手册可以知道其
+器件地址由固定的 00+由引脚控制的 PHYAD[2:0]组成，如图 57-2 所示。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                              官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                       技术群组：
+                 小梅哥 FPGA 团队                    武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                  开发板 培训 项目研发三位一体
+
+                                         图 57-2 PHY 地址
+
+
+     而在开发板上，这三个引脚分别被上拉和接地，如图 57-3 所示。
+
+
+
+
+                               图 57-3 开发板上 PHY 芯片引脚电路
+
+
+     据此，我们便可以得出开发板上 PHY 芯片的地址为 0x05(5’b00101)。而有
+了地址后，后续对 MDIO 的时序介绍也就方便了不少。
+
+57.1.2MDIO 时序介绍
+     介绍了 MDIO 接口之后，要想正确的使用 MDIO 接口来管理 PHY 芯片，还
+需要了解 MDIO 接口的时序流程。MDIO 的工作流程为：
+
+              1.空闲：MDIO 接口在没有传输数据的空闲状态（IDLE）数据线
+         MDIO 处于高阻态。
+
+              2.开始：MAC 或处理器驱动 MDIO 产生一个 2bit 的开始标识码(01)，
+         标志着一次读、写传输的开始。
+
+              3.读写标记：MAC 或处理器驱动 MDIO 产生一个 2bit 数据来标识
+         本次操作是读操作(10)还是写操作(01)。
+
+              4.PHY 器件地址：MAC 或处理器驱动 MDIO 产生 5 位的 PHY 器件
+         地址数据，用来指明此次操作是针对的具体那一个 PHY 芯片。
+店铺：https://xiaomeige.taobao.com                          官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                   技术群组：
+                    小梅哥 FPGA 团队                     武汉芯路恒科技
+             专注于培养您的 FPGA 独立开发能力                   开发板 培训 项目研发三位一体
+
+                 5.PHY 寄存器地址：MAC 或处理器驱动 MDIO 产生 5 位的 PHY 寄
+            存器地址数据，用来指明此次操作是针对的 PHY 中具体哪一个寄存器。
+
+                 6.MDIO 控制权切换：在读操作中，由于在 PHY 移出寄存器中的数
+            据时，MDIO 信号将由 PHY 芯片接管驱动，既 MDIO 信号存在一个驱
+            动切换的情形，为了避免切换过程中 MAC 或处理器驱动和 PHY 芯片
+            同时驱动 MDIO 信号以出现冲突干扰，在传输完 PHY 寄存器地址后，
+            需要传输 2bit 的 TA（Turnaround）信号，传输该信号时，MAC 或处理
+            器 MDIO 信号为高阻状态，即不驱动 MDIO 信号至低电平，对于读操
+            作，PHY 芯片将在这 2bit 信号的第 2 个 bit 时将 MDIO 信号拉低以标记
+            读出数据传输。同时，这第 2 个 bit 还将作为类似于 I2C 总线中的应答
+            位，如果在读操作中，该 bit 没有被拉低，则表明读 PHY 芯片操作失
+            败。对于写操作，第一个 bit 时 MAC 或处理器和 PHY 芯片都保持为高
+            阻状态，MDIO 被上拉电阻拉为高电平，在第 2 个 bit 时由 MAC 或处理
+            器将该位拉低。
+
+                 7.读写数据：MDIO 串行读出/写入 16bit 的寄存器数据。
+
+                 8.IDLE 状态： MDIO 再次进入高阻状态，对于部分 PHY 芯片，
+            MDC 将继续产生至少 7 个时钟周期之后方可停止。
+
+      注意，在空闲和开始状态之间，MDIO 需要保持高阻态至少 32 个 MDC 时
+钟周期，该段称为前导信号（preamble）。
+      下表 57-1 为一次读写操作的数据帧格式：
+                                      表 57-1 MDIO 读写操作数据帧格式
+
+         Preamble   ST       OP       PHYAD    REGAD    TA       DATA                  IDLE
+         （32bit）    (2bit)   (2bit)   (5bit)   (5bit)   (2bit)   (16bit)
+ Read    1...1      01       10       AAAAA    RRRRR    Z0       DDDDDDDDDDDDDDDD      Z
+ Write   1...1      01       01       AAAAA    RRRRR    10       DDDDDDDDDDDDDDDD      Z
+
+      其中各段的意义和功能如下表 57-2 所示。
+                                          表 57-2 各段功能意义
+
+ 名称          功能和意义描述
+ Preamble    mac 端在 mdc 时钟下，通过 mdio，发送 32 个连续的逻辑 1
+ ST          帧起始，用 01 来表示
+ OP          操作符，用 01 来表示写操作，用 10 来表示读操作
+ PHYAD       物理地址，最多可以将 8 个物理连接到一个 MAC，高 2bit 为 0
+ REGAD       寄存器地址，5 位宽度，用于设置当前操作 PHY 的 32 个寄存器中的哪一个
+ TA          这两位是用来指示方向的，Z 是高阻态
+ DATA        总线上传输的 16 位数据
+
+
+店铺：https://xiaomeige.taobao.com                                      官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                               技术群组：
+                 小梅哥 FPGA 团队                武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力              开发板 培训 项目研发三位一体
+
+ IDLE      无传输时的状态，该状态时候 PHY 的 MDIO 设置为高阻态，其电平将由 MDIO 引脚上的
+           上拉电阻上拉到高电平
+
+     MDIO 会在 MDC 的下降沿变化，变化后的数据会在 MDC 上升沿被采样，
+进而组成上述所说的数据帧。图 57-4 和图 57-5 便是 MDIO 接口进行读/写时的
+时序关系：
+
+
+
+
+                                  图 57-4 MDC/MDIO 读时序
+
+
+
+
+                                  图 57-5 MDC/MDIO 写时序
+
+
+     基于该时序图，我们便能很方便的写出对应的驱动模块，对 PHY 芯片进行
+读写操作。至于具体在什么模式下需要对什么寄存器进行操作，则需要读者查
+询 PHY 芯片手册中对应寄存器的说明。
+
+57.1.3MDIO 接口注意事项
+     部分 PHY 芯片（如 RTL8211）要求在一次读写操作完成，转为 IDLE 状态
+之后，还需要 MDC 信号持续至少 7 个时钟周期以确保 PHY 芯片正常完成该操
+作。
+     PHY 芯片的 MDIO 引脚需要连接至少 1.5K Ohm 的上拉电阻。
+     在 PHY 芯片成功 Link 之前，不得向 PHY 芯片提供发送使能信号，即
+TX_EN 信号在 PHY 芯片没有成功 Link 之前不得出现高电平，否则可能会影响
+PHY 芯片的自动协商和工作模式设置。
+     PHY 芯片一般都有一个硬件复位引脚 reset，一般 PHY 芯片都会做出说明，
+在该复位信号释放后需要等待至少多久的时间（例如，对于 RTL8211，这个值
+为 30ms）才能开始使用 MDIO 接口对 PHY 芯片进行读写操作。
+店铺：https://xiaomeige.taobao.com                         官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                  技术群组：
+                 小梅哥 FPGA 团队                   武汉芯路恒科技
+             专注于培养您的 FPGA 独立开发能力              开发板 培训 项目研发三位一体
+
+
+57.2mdio_bit_shift 模块设计
+      根据协议帧的格式和上面的读写时序图，我们发现这个协议帧里面的变化
+内容有 OP、PYHAD、REGAD、以及传输的数据（DATA）等字段，在这里我
+们可以把这些作为端口，同时加入传输开始 start 和传输完成 done 等握手信号来
+指示当前的模块工作状态，因此设计出图 57-6 所示模块单元。
+                  mdc
+                  rst_n
+                                                                 mdio
+                  start
+                 if_read                                          done
+              phy_addr[4:0]        mdio_bit_shift
+                                                              rddata[15:0]
+              reg_addr[4:0]
+              wrdata[15:0]
+
+                                 图 57-6 mdio_bit_shift 模块框图
+
+
+      其中，该模块的各个接口信号如表 57-3 所示。
+                               表 57-3 mdio_bit_shift 接口功能描述
+
+  接口名称            I/O      功能描述
+  mdc             I        时钟接口
+  rst_n           I        模块复位，低电平有效
+  start           I        开始传输标志
+  if_read         I        读写方向控制 1:读，0:写
+  phy_addr        I        5 位的 phy 地址输入信号，最高 2 位为 0
+  reg_addr        I        5 位的 reg 地址输入信号
+  wrdata          I        要写入 phy 寄存器的 16 位数据
+  mdio            I/O      数据接口
+  done            O        操作完成标志
+  rddata          O        从 phy 寄存器读出的 16 位数据
+
+      模块使用状态机来描述 MDIO 接口的读写时序，对于时序图中的每个字段
+都采样独热码定义了一个状态，如下：
+ localparam IDLE = 8'h01,
+            PRE   = 8'h02,
+            ST    = 8'h04,
+            OP    = 8'h08,
+            PHYAD = 8'h10,
+            REGAD = 8'h20,
+            TA    = 8'h40,
+店铺：https://xiaomeige.taobao.com                               官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                        技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+              DATA   = 8'h80;
+     在不同状态下，让状态机按照时序图对差异部分进行描述，从而实现对 phy
+寄存器的配置和读取，该部分代码如下：
+ case (state)
+     IDLE:
+         begin
+             mdio_o <= 1'b1;
+             mdio_oe <= 1'b0;
+             done <= 1'b0;
+             rddata <= 'd0;
+             if (start)
+             begin
+                 cnt <= 'd0;
+                 state <= PRE;
+             end
+         end
+     PRE://PRE 32'hffff_ffff 32bit
+         begin
+             mdio_oe <= 1'b1;
+             mdio_o <= 1'b1;
+             cnt <= cnt + 1'b1;
+             if (cnt > 'd30)
+             begin
+                 cnt <= 'd0;
+                 state <= ST;
+                 mdio_o <= 1'b0;
+             end
+         end
+     ST: //ST 01 2bit
+         begin
+             mdio_o <= 1'b1;
+             cnt <= cnt + 1'b1;
+             if (cnt >= 'd1)
+             begin
+                 cnt <= 'd0;
+                 state <= OP;
+                 mdio_o <= if_read;
+             end
+         end
+     OP: //OP 01:write,10:read 2bit
+         begin
+             mdio_o <= !if_read;
+             cnt <= cnt + 1'b1;
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                 小梅哥 FPGA 团队                武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+               if (cnt >= 'd1)
+               begin
+                   cnt <= 'd0;
+                   state <= PHYAD;
+                   mdio_o <= phy_addr[4];
+               end
+          end
+      PHYAD: //PHYAD 5bit
+          begin
+                 cnt <= cnt + 1'b1;
+
+               if (cnt >= 'd4)
+               begin
+                    cnt <= 'd0;
+                    state <= REGAD;
+                    mdio_o <= reg_addr[4];
+               end
+               else
+                    mdio_o <= phy_addr[4 - cnt[2:0]-1];
+          end
+      REGAD: //REGAD 5bit
+          begin
+              cnt <= cnt + 1'b1;
+              if (cnt >= 'd4)
+              begin
+                   cnt <= 'd0;
+                   state <= TA;
+                   mdio_o <= !if_read;
+                   mdio_oe <= !if_read;
+              end
+              else
+                       mdio_o <= reg_addr[4 - cnt[2:0]-1];
+          end
+      TA:     //TA      2bit
+          begin
+              mdio_o <= 1'b0;
+              cnt <= cnt + 1'b1;
+              if (cnt >= 'd1)
+              begin
+                   cnt <= 'd0;
+                   state <= DATA;
+                   mdio_o <= wrdata[15];
+              end
+
+店铺：https://xiaomeige.taobao.com                      官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/               技术群组：
+                 小梅哥 FPGA 团队                 武汉芯路恒科技
+             专注于培养您的 FPGA 独立开发能力             开发板 培训 项目研发三位一体
+
+         end
+     DATA:   //DATA   16bit
+         begin
+             cnt <= cnt + 1'b1;
+             if(cnt < 'd15)begin
+                 if (if_read)
+                     rddata <= {rddata[14:0], mdio};
+                 else
+                     mdio_o <= wrdata[15 - cnt[3:0]-1];
+             end
+             else begin
+                 cnt <= 'd0;
+                 state <= IDLE;
+                 mdio_o <= 1'b1;
+                 mdio_oe <= 1'b0;
+                 done <= 1'b1;
+             end
+         end
+ endcase
+     这里我们的状态机并没有完全按照时序图中的顺序来写，这是因为一段式
+状态机在工作时，输出总是会比状态慢一拍，这是一段式状态机本身的特性。
+虽然输出滞后一拍并不会影响功能的实现（输出数据是正确的），但是为了使后
+续仿真波形数据更符合时序图，这里我们在状态机每个状态结束时，提前产生
+下一拍的数据，以此实现输出数据与状态的同步。
+
+57.3mdio_bit_shift 模块仿真验证
+     上一节我们已经对模块主要代码进行了分析，但是模块能否正常工作并达
+到我们所想要的效果，仍需要进行仿真验证。为此，我们设计了如下激励文件：
+ `timescale 1ns/1ps
+ module mdio_bit_shift_tb;
+      reg                mdc;            //时钟接口
+      wire               mdio;           //数据接口
+      reg                rst_n;          //模块复位，低电平有效
+      reg                if_read;        //读写方向控制 1:读，0:写
+      reg       [4:0]    phy_addr;       //phy 地址
+      reg       [4:0]    reg_addr;       //reg 地址
+      reg       [15:0] wrdata;           //写入 phy 寄存器的数据
+      reg                start;          //开始传输标志
+      wire               done;           //操作完成标志
+
+店铺：https://xiaomeige.taobao.com                     官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/              技术群组：
+                 小梅哥 FPGA 团队                武汉芯路恒科技
+             专注于培养您的 FPGA 独立开发能力            开发板 培训 项目研发三位一体
+
+      wire      [15:0] rddata;           //phy 寄存器读出的数据
+
+
+      pullup PUP(mdio);      //模拟外部上拉电阻
+      mdio_bit_shift DUT(
+          .mdc      (mdc      ),
+          .mdio     (mdio     ),
+          .rst_n    (rst_n    ),
+          .if_read (if_read ),
+          .phy_addr (phy_addr ),
+          .reg_addr (reg_addr ),
+          .wrdata   (wrdata   ),
+          .start    (start    ),
+          .done     (done     ),
+          .rddata   (rddata   )
+      );
+      always #10 mdc = ~mdc;
+      initial begin
+          mdc = 1;
+          rst_n = 0;
+          if_read = 0;
+          phy_addr = 5'b00000;
+          reg_addr = 5'b00000;
+          wrdata = 16'd0;
+          start = 0;
+          #201;
+
+          rst_n = 1;
+          if_read = 0;
+          phy_addr = 5'b00101;
+          reg_addr = 5'b00000;
+          wrdata = 16'h2100;
+          @(posedge mdc);
+          start = 1;
+          @(posedge done);
+          #200;
+          $stop;
+     end
+ endmodule
+     在上面代码中，我们是对物理地址 5'b00101 的寄存器 0（BMCR）进行一次
+写操作，写入的 16 位数据位 16'h2100，仿真波形如下图 57-7 所示：
+
+
+
+
+店铺：https://xiaomeige.taobao.com                     官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/              技术群组：
+                 小梅哥 FPGA 团队                      武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                  开发板 培训 项目研发三位一体
+
+
+
+
+                                           图 57-7 仿真波形
+
+
+     在上述波形中当 state 为 02（也就是 PRE 状态），mdio 发送了连续的 32 个
+逻辑 1，当 state 为 04（也就是 ST 状态），mdio 先后产生了 01，当 state 为 08
+（也就是 OP 状态），mdio 依次产生了 01 说明是写操作，当 state 为 10（也就是
+PHYAD 状态），mdio 依次产生了 00101 表示操作的 phy 地址，当 state 为 20（也
+就是 REGAD 状态），mdio 依次产生了 00000 表示操作的 phy 的寄存器 0
+（BMCR），当 state 为 40（也就是 TA 状态），mdio 依次产生了 10，当 state 为
+80（也就是 DATA 状态），mdio 依次产生了 0010_0001_0000_0000(16'h2100)表示
+写入寄存器 0 的值为 16'h2100，符合我们预期的结果。
+
+57.4phy_reg_config 模块设计
+     通过上一节的仿真波形，我们可发现，mdio_bit_shift 模块虽然能实现基本
+的 phy 寄存器的读写操作，但是是一次性的，不能连续配置。为了使设计更贴
+合实际应用场景，我们需要设计一个上层模块来控制 mdio_bit_shift 模块实现多
+次读写操作。根据功能我们加入 phy芯片寄存器配置完成标志信号 phy_init_done，
+从 phy 寄存器读出的数据 rddata，以及 phy 芯片的复位信号 phy_rst_n，因此设计
+出如下模块单元：
+                                                           mdio
+                            clk                            mdc
+                                                         phy_rst_n
+                                     phy_reg_config rddata[15:0]
+                           rst_n
+                                                         phy_init_done
+
+
+                               图 57-8 phy_reg_config 模块结构框图
+
+
+     模块对应的接口说明如表 57-4 所示。
+                                   表 57-4 phy_reg_config 接口说明
+
+                     接口名称            I/O   功能描述
+                     clk             I     模块时钟 50MHz
+
+店铺：https://xiaomeige.taobao.com                                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                          技术群组：
+                 小梅哥 FPGA 团队                    武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                  开发板 培训 项目研发三位一体
+
+                     rst_n           I     模块复位，低电平有效
+                     mdio            I/O   管理接口数据总线
+                     mdc             O     管理接口时钟总线
+                     phy_rst_n       O     phy 芯片复位，低电平有效
+                     rddata          O     从 phy 寄存器读出的 16 位数据
+                     phy_init_done   O     phy 寄存器初始化操作完成标志
+
+     那么我们该如何使用该模块控制mdio_bit_shift 工作呢？还是通过实际的应
+用来说明，开发板使用的是 RGMII 模式，是千兆模式。如果此时我们希望它工
+作在百兆模式可行么，答案是肯定的，我们通过查询 数据手册，寄存器 0
+（BMCR 寄存器）里面有对应的速率控制，前提是要将自动协商给关闭了，当
+然为了能正确的配置，我们首先要让芯片先重新上电。
+     这里给出寄存器 0 的位描述，更多寄存器表用户可以查看芯片手册：
+
+
+
+
+     第一步，通过寄存器表我们可知道要让 phy 芯片先掉电，可以通过配置寄
+存器 0 的 bit11 位来实现，同时这个时候我们也顺便可以配置让芯片工作在双工
+
+店铺：https://xiaomeige.taobao.com                           官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                    技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+
+模式下, 通过配置寄存器 0 的 bit8 位来实现，通过上表我们可以得出此时这个寄
+存器应该配置成 0000_1001_0000_0000（16'h0900）。
+     第二步，通过寄存器表我们可知道要让 phy 芯片工作在百兆模式，那么可
+以通过配置寄存器 0 的 bit13 和 bit6 来实现，此时 bit13 里面的注释也说了，要
+先把自动协商禁用了，我们知道寄存器 0 的 bit12 就可以控制自动协商，此时我
+们把寄存器 0 的 bit12 置为 0 就可以了，自动协商禁用了，我们就可以配置速度
+了，要工作在百兆模式，那么 bit13 置为 1，bit6 置为 0，通过上表我们可以得出
+此时这个寄存器应该配置成 0010_0001_0000_0000（16'h2100）。
+     知道了要配置的寄存器值，那我们就可以通过序列完成对 phy 的初始化，
+代码如下：
+ parameter speed = 2'b01, //10 为千兆，01 为百兆，00 为十兆
+
+ reg [2:0] reg_cnt;
+ //配置寄存器
+ always @ (reg_cnt)
+ begin
+     case (reg_cnt)
+         0 : reg_data <= {1'b0, 5'd0, 16'h0900}; //掉电
+         1 : reg_data <= {1'b0, 5'd0,16'h2140&
+ {2'h3,speed[0],6'h3f,speed[1],6'h3f}}; //修改网卡速率，设置全双工
+     endcase
+ end
+
+
+     其中，reg_data 的高 5bit 是 phy 的寄存器地址，低 16 位是配置进去的值。
+为了方便修改，这里我们使用 parameter 声明了一个 speed，用户只需修改 speed
+的值便能完成对网卡速率的修改。
+     代码中只是对 PHY 的寄存器 0 进行了两次配置，如果需要配置其他的寄存
+器，只需添加新的序列即可。
+     有了待配置的寄存器值，这个时候就需要一个模块来控制每一次的寄存器
+操作，这里我们通过状态机实现，代码如下：
+ parameter MAX_CNT = 2 //要配置的寄存器个数
+
+
+ //配置 PHY 寄存器状态控制
+ reg [1:0] state;
+
+ always @ (negedge mdc)
+ begin
+     if (!Go) begin
+
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                  小梅哥 FPGA 团队                   武汉芯路恒科技
+             专注于培养您的 FPGA 独立开发能力             开发板 培训 项目研发三位一体
+
+             state <= 1'b0;
+             start <= 1'b0;
+             reg_cnt <= 'd0;
+       end
+       else if (reg_cnt < MAX_CNT) begin
+           case (state)
+                0:begin     //开始写寄存器
+                       start <= 1'b1;
+                       state <= 1'b1;
+                       mdio_data <= reg_data;
+                end
+                1:begin //写寄存器完成
+                       if (done) begin
+                           start <= 1'b0;
+                           state <= 1'b0;
+                           reg_cnt <= reg_cnt + 1'b1;
+                       end
+                 end
+             endcase
+       end
+ end
+       状态机在开始工作时，首先将 start 信号拉高，以开始写 phy 寄存器。写操
+作完成后，done 信号便会被拉高，此时我们需要将 start 信号拉低，准备开始下
+一次写操作。通过 reg_cnt 和 MAX_CNT，完成对所需个数寄存器的配置。
+       整个设计依赖于 mdc 时钟，为了方便修改，这里我们使用 parameter 对时钟
+信号进行定义。设计中 mdc 时钟用的是 50KHz，产生 mdc 时钟部分代码如下
+ parameter SYS_CLOCK = 50_000_000,              //系统时钟采用 50MHz
+ parameter MDC_CLOCK = 2_000,            //MDC 总线时钟采用 2kHz
+ //产生时钟 mdc 计数器最大值
+ localparam MDC_CNT_M = SYS_CLOCK/MDC_CLOCK/4 - 1;
+
+ reg [19:0] div_cnt;
+ always@(posedge clk or negedge rst_n)
+ if (!rst_n)
+     div_cnt <= 'd0;
+ else if(div_cnt < MDC_CNT_M)
+     div_cnt <= div_cnt + 1'b1;
+ else
+     div_cnt <= 'd0;
+
+ wire mdc_pulse = div_cnt == MDC_CNT_M;
+
+店铺：https://xiaomeige.taobao.com                         官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                  技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+
+
+ reg mdc_clk;
+ always@(posedge clk or negedge rst_n)
+ if (!rst_n)
+     mdc_clk <= 1'b0;
+ else if(mdc_pulse)
+     mdc_clk <= ~mdc_clk;
+
+
+57.5phy_reg_config 模块仿真验证
+     介绍完 phy_reg_config 模块后，同样的，我们需要对模块仿真，以验证模块
+功能。仿真代码如下：
+ `timescale 1ns/1ns
+ module mdio_tb;
+     reg         clk;
+     reg         rst_n;
+     wire        eth_rst_n;
+     wire        eth_mdc;
+     wire        eth_mdio;
+     wire [15:0] rddata;
+     wire        init_done;
+
+
+      pullup PUP(eth_mdio);      //模拟外部上拉电阻
+
+      phy_reg_config
+      #(
+          .speed(2'b01)
+      )
+      u_phy_config(
+          .clk          (clk       ),
+          .rst_n        (rst_n     ),
+          .phy_rst_n    (eth_rst_n ),
+          .mdc          (eth_mdc   ),
+          .mdio         (eth_mdio ),
+          .rddata       (rddata    ),
+          .phy_init_done(init_done )
+      );
+
+      always #10 clk = ~clk;
+      initial begin
+          clk = 1;
+          rst_n = 0;
+
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                 小梅哥 FPGA 团队                   武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                开发板 培训 项目研发三位一体
+
+          #201;
+          rst_n = 1;
+
+          @(posedge init_done);
+          #2000;
+          $stop;
+     end
+ endmodule
+     在上面代码中，我们是对物理地址为 5'b00101 的寄存器 0（BMCR）进行两
+次写操作，首先写入的 16 位数据位 16'h0900, 之后写入的 16 位数据位 16'h2100,
+仿真波形如下：
+
+
+
+
+                                         图 57-9 仿真波形
+
+
+
+
+                                   图 57-10 仿真波形（续）
+
+
+     从 上 面的 波形 可以 看得 出 来 ，start_pos 将操 作 分成 了两 次， 第一 次 将
+16'h0900 写入了 phy 的寄存器 0，第二次将 16'h2100 写入了 phy 的寄存器 0，每
+次完成后 done 信号都会被拉高，用来跟上层的 phy_reg_config 模块握手，两个
+寄存器都初始化完成后，phy_init 信号就被拉高指示寄存器初始化完成。
+     因此，仿真结果与我们预期中一致，说明模块功能正常。而为了进一步确
+保设计能够运行在实际的硬件中工作，我们还需要为设计分配引脚，以进行板
+级验证。
+
+57.6引脚分配与约束
+     本次验证使用的硬件平台为 ACX720-GW5A138 开发板，设计的目的只是为
+店铺：https://xiaomeige.taobao.com                        官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                 技术群组：
+                 小梅哥 FPGA 团队                       武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                    开发板 培训 项目研发三位一体
+
+
+了将数据写入到 PHY 芯片中，观察能否实现对 PHY 的配置。因此，我们只需
+分配其中的部分引脚即可，对应的引脚分配表如表 57-5 所示。
+                                         表 57-5 引脚分配表
+
+                       Signial Name   Pin NO.   Signial Name   Pin NO.
+                       clk            Y18       phy_rst_n      V22
+                       mdc            AA18      rst_n          F15
+                       mdio           W17
+
+
+57.7板级验证
+     在连接好硬件将 fs 文件下载到开发板之前，我们首先打开网络连接查看当
+前开发板网卡的速度模式，笔者电脑此时以太网速度如图 57-11 所示。
+
+
+
+
+                                         图 57-11 网卡速度
+
+
+     可以看到，此时速度为 1.0Gbps，也就是千兆网模式。接下来我们将生成的
+fs 文件下载到开发板中，此时笔者电脑中以太网速度如下图 57-12：
+
+
+
+
+店铺：https://xiaomeige.taobao.com                                   官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                            技术群组：
+                 小梅哥 FPGA 团队                    武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                 开发板 培训 项目研发三位一体
+
+
+
+
+                                         图 57-12 百兆模式
+
+
+     可以看到此时网络速度为 100.0Mbps，也就是百兆模式，说明 PHY 芯片被
+配置成功，设计能够很好的实现预期功能。
+
+57.8总结
+     本章我们学习了 MDIO 接口的时序及工作原理，并设计了基于 MDIO 接口
+的 PHY 驱动模块，最后通过仿真和板级验证的方式验证了设计模块功能的正确
+性。建议读者能够跟随本实验内容，完整的进行整个实验。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                         官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                  技术群组：
+

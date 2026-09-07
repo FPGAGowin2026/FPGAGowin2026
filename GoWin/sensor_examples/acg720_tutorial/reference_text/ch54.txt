@@ -1,0 +1,764 @@
+                 小梅哥 FPGA 团队                武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力              开发板 培训 项目研发三位一体
+
+
+
+                 54 UDP 协议原理与 FPGA 实现
+                 |----02_设计实例
+ 工程源码
+                 |----ch54_udp_send_rgmii
+ 相关视频课程
+ 说明
+
+      章节导读
+
+      本章将讲解千兆以太网传输层 UDP 协议的相关内容。学习 UDP 层协议的内
+容，核心也是明确该协议的数据字段格式。在此基础上，理解其“不可靠、无
+连接”的传输特性。同时，结合前面章节的内容，进一步深化理解用户数据、
+UDP、IP、MAC 层的层层打包嵌套关系。
+
+
+54.1UDP 协议介绍
+      UDP 是 User Datagram Protocol 的简称，中文名是用户数据包协议，是 OSI
+（Open System Interconnection，开放式系统互联）参考模型中一种无连接的传
+输层协议，提供面向事务的简单不可靠信息传送服务。IETF RFC 768 是 UDP 的
+正式规范。UDP 在 IP 报文的协议号是 17（即 0x11）。
+      UDP 协议全称是用户数据报协议，在网络中它与 TCP 协议一样用于处理数
+据包，是一种无连接的协议。在 OSI 模型中，在第四层——传输层，处于 IP 协
+议的上一层。UDP 有不提供数据包分组、组装和不能对数据包进行排序的缺点，
+也就是说，当报文发送之后，是无法得知其是否安全完整到达的。UDP 用来支
+持那些需要在计算机之间传输数据的网络应用。包括网络视频会议系统在内的
+众多的客户/服务器模式的网络应用都需要使用 UDP 协议。UDP 协议从问世至
+今已经被使用了很多年，虽然其最初的光彩已经被一些类似协议所掩盖，但是
+即使是在今天 UDP 任然不失为一项非常实用和可行的网络传输层协议。
+      与所熟知的 TCP（传输控制协议）协议一样，UDP 协议直接位于 IP（网络
+协议）协议的顶层。根据 OSI（开放系统互连）参考模型，UDP 和 TCP 都属于
+传输层协议。UDP 协议的主要作用是将网络数据流量压缩成数据包的形式。一
+个典型的数据包就是一个二进制数据的传输单位。每一个数据包的前 8 个字节
+用来包含报头信息，剩余字节则用来包含具体的传输数据。
+      以太网 UDP 帧的用户数据是打包在 UDP 协议中，而 UDP 协议又是基于 IP
+协议之上的，IP 协议又是走 MAC 层发送的，即从包含关系来说：MAC 帧中的
+店铺：https://xiaomeige.taobao.com                    官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/             技术群组：
+                 小梅哥 FPGA 团队                   武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                开发板 培训 项目研发三位一体
+
+
+数据段为 IP 数据报文，IP 报文中的数据段为 UDP 报文，UDP 报文中的数据段
+为用户希望传输的数据内容，如“Hello，welcome to FPGA!”。下图 54-1 为使用
+UDP 协议发送“Hello，welcome to FPGA!”数据的层层打包示意图。
+          MAC层       目的地址        源地址        长度/类型     数据和填充               FCS
+
+                      6字节         6字节         2字节                        4字节
+
+
+
+           IP层                           IP 报文头部      IP 报文数据
+
+
+
+
+          UDP层                           UDP报文头部     Hello, welcome to FPGA！
+
+
+                        图 54-1 UDP 数据包（Hello，welcome to FPGA!）
+
+
+     其中，和以太网帧、IP 报文具有帧头一样，UDP 数据报也包含了一个 UDP
+报头部分，与 UDP 协议相关的一些如端口号，数据包长度等会被打包进 UDP 报
+文中，然后再与需要传输的 UDP 报文数据一起，作为 IP 报文的数据段送往 IP
+层发送。
+
+54.2UDP 数据报格式
+     UDP 协议实用端口号为不同的应用保留其各自的数据传输通道。UDP 和
+TCP 协议正是采用这一机制实现对同一时刻内多项应用同时发送和接收数据的
+支持。数据发送一方（可以是客户端或服务器端）将 UDP 数据报通过源端口发
+送出去，而数据接收一方则通过目标端口接收数据。有的网络应用只能使用预
+先为其预留或注册的静态端口；而另外一些网络应用则可以使用未被注册的动
+态端口。因为 UDP 报文使用两个字节存放端口号，所以端口号的有效范围是从
+0 到 65535。一般来说，大于 49151 的端口号都代表动态端口。
+     数据报的长度是指包括报头和数据部分在内的总字节数。因为报头的长度
+是固定的，所以该域主要被用来计算可变长度的数据部分（又称为数据负载）。
+数据报的最大长度根据操作环境的不同而各异。从理论上来说，包含报头在内
+的数据报的最大长度为 65535 字节。不过，一些实际应用往往会限制数据报的
+大小，有时会降低到 8192 字节。
+     UDP 协议使用报头中的校验值来保证数据的安全。校验值首先在数据发送
+方通过特殊的算法计算得出，在传递到接收方之后，还需要再重新计算。如果
+
+店铺：https://xiaomeige.taobao.com                         官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                  技术群组：
+                 小梅哥 FPGA 团队                        武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                     开发板 培训 项目研发三位一体
+
+
+某个数据报在传输过程中被第三方篡改或者由于线路噪音等原因受到损坏，发
+送和接收方的校验计算值将不会相符，由此 UDP 协议可以检测是否出错。这与
+TCP 协议是不同的，后者要求必须具有校验值。
+     许多链路层都提供错误检查，包括流行的以太网协议，也许你想知道为什
+么 UDP 也要提供检查和校验。其原因是链路层以下的协议在源端和终端之间的
+某些通道可能不提供错误检测。虽然 UDP 提供有错误检测，但检测到错误时，
+UDP 不做错误校正，只是简单地把损坏的消息段扔掉，或者给应用程序提供警
+告信息。下表 54-1 为 UDP 报文的格式。
+                                      表 54-1 UDP 报文格式表
+
+       字段名称         长度       功能说明                    解释
+ U
+       源端口号         2 字节     例如 5000                 发送方的网络端口地址
+ D
+       目的端口号        2 字节     例如 6000                 接收方的网络端口地址
+ P
+       UDP 长度       2 字节     UDP 报文长度                UDP 报文（含数据）长度
+ 字
+ 段     UDP 校验和      2 字节     UDP 报头校验和               UDP 协议的报头和数据的和校验
+       UDP 数据       n 字节
+
+     由于每次需要发送的数据都不相同，而且校验和内容在发送数据段之前就
+需要计算出来，不像 MAC 层是在所有数据都发送完成之后才发送 CRC 校验值，
+因此在 UDP 组包时，校验和值的计算是一个不太好处理的地方，即使通过专用
+的计算单元计算出校验和，在待发送数据输入完成到数据开始通过 UDP 包发送
+之间，也有一个计算校验和的时间段。所幸，UDP 校验和在一些要求不太严格
+的地方，是可以忽略的。因此，在使用 Verilog 实现时，为了提升效率并节约
+FPGA 资源，将校验和字段忽略。这样一来，UDP 数据包的组包就变得非常简
+单了。例如本机端口号为 5000(0x1388)，要给端口号为 6102(0x17D6)的目标主
+机发送“Hello, welcom to FPGA!!!”，数据为 24 个字节，UDP 首部 8 个字节，合
+计 32 个字节，则 UDP 数据段可以组包如下表 54-2 所示：
+                                     表 54-2 UDP 数据段组包方式
+
+                         0x13        0x88        0x17        0xD6
+                         0x00        0x20        0x00        0x00
+                         ‘H’(0x48)   ‘e’(0x65)   ‘l’(0x6c)   ‘l’(0x6c)
+                         ‘o’(0x6f)   ‘,’(0x2c)   ‘ ’(0x20)   ‘w’(0x77)
+                         ‘e’(0x65)   ‘l’(0x6c)   ‘c’(0x63)   ‘o’(0x6f)
+                         ‘m’(0x6d)   ‘ ’(0x20)   ‘t’(0x74)   ‘o’(0x6f)
+                         ‘ ’(0x20)   ‘F’(0x46)   ‘P’(0x50)   ‘G’(0x47)
+                         ‘A’(0x41)   ‘!’(0x21)   ‘!’(0x21)   ‘!’(0x21)
+
+     以下图 54-2 为通过以太网工具组包出来的该报文 UDP 部分内容：
+
+
+
+店铺：https://xiaomeige.taobao.com                                     官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                              技术群组：
+                 小梅哥 FPGA 团队                   武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                开发板 培训 项目研发三位一体
+
+
+
+
+                          图 54-2 太网工具组包出的该报文 UDP 部分内容
+
+
+54.3以太网 UDP 帧发包实例（手动 IP checksum）
+     本节实验我们使用以太网发包工具构建一个 UDP 包，然后将该包使用我们
+上一节设计的带 CRC 校验的 ARP 发送工程来发送出去。设计时，只需替换查找
+表 中 的内容即可。 本设计实例 提供的工程名称为 udp_send_rgmii.rar（千兆
+RGMII 接口）。
+
+54.3.1使用以太网测试仪构建 UDP 数据包
+     打开小兵以太网测试仪，新建一个数据流，如下图 54-3 所示。
+
+
+
+
+                                         图 54-3 新建流
+
+
+     在常用报文中选择 UDP 格式报文，设置包长为 66，自动更新的所有项全部
+勾选上，如下图 54-4 所示。
+
+
+店铺：https://xiaomeige.taobao.com                       官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                技术群组：
+                 小梅哥 FPGA 团队                武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力             开发板 培训 项目研发三位一体
+
+
+
+
+                                  图 54-4 设置 UDP 报文格式
+
+
+     修改以太网包和 IP、UDP 包中各自段内容如下图 54-5 所示。
+
+
+
+
+                                 图 54-5 修改报文中各字段内容
+
+
+     配置好之后点击确定，将设置好的数据包导出为 16 进制格式文本文件，如
+店铺：https://xiaomeige.taobao.com                        官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                 技术群组：
+                 小梅哥 FPGA 团队                 武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力              开发板 培训 项目研发三位一体
+
+
+下图 54-6 所示。
+
+
+
+
+                                图 54-6 另存为 16 进制文本文件
+
+
+     得到的文本中数据内容如下所示：
+     0x00, 0x23, 0xcd, 0x76, 0x63, 0x1a, 0x00, 0x21, 0x85, 0xc5, 0x2b, 0x8f, 0x08,
+0x00, 0x45, 0x00, 0x00, 0x34, 0x00, 0x00, 0x00, 0x00, 0x40, 0x11, 0xf9, 0x63, 0xc0,
+0xa8, 0x00, 0x02, 0xc0, 0xa8, 0x00, 0x03, 0x13, 0x88, 0x17, 0xd6, 0x00, 0x20, 0x91,
+0x49, 0x48, 0x65, 0x6c, 0x6c, 0x6f, 0x2c, 0x20, 0x77, 0x65, 0x6c, 0x63, 0x6f, 0x6d,
+0x20, 0x74, 0x6f, 0x20, 0x46, 0x50, 0x47, 0x41, 0x21, 0x21, 0x21
+     其中我们只需要 IP 层以及 UDP 层，MAC 层的数据直接丢弃，因为我们以
+太网帧发送逻辑会自动组建 MAC 数据。所以我们只需要保留深色背景的内容即
+可。
+
+54.3.2使用 FPGA 发送 UDP 数据
+     修 改 eth_send 的 例 化 内 容 ， 并 将 目 的 地 址 设 置 广 播 地 址 ：
+48'hFF_FF_FF_FF_FF_FF， 源 地 址 为 板 卡 地 址 。 这 里 将 板 卡 地 址 为 48'
+h00_0a_35_01_fe_c0。协议类型为 IP（0800）。数据长度为 50。
+     由于使用了自动 CRC 校验，因此用户可以手动修改源 MAC 地址，并使用
+以太网发包工具重新组建对饮的 UDP 包，替换查找表中的值。然后发送数据。
+组包完成后无需再用 PC 端 CRC 计算工具计算 CRC 值。以下为 eth_send_test.v
+中部分代码内容：
+店铺：https://xiaomeige.taobao.com                          官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                   技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+ wire fifo_rdreq;
+ wire tx_go;
+
+ reg [7:0] fifo_rddata;
+ wire fifo_rdclk;
+ reg [11:0]data_cnt;
+ wire CRC_EN;
+
+ wire [31:0]CRC_result;
+
+ CRC32_D8 CRC32_D8(
+   .Clk(gmii_tx_clk),
+   .Reset(rst_n),
+   .Data_in(gmii_tx_data),
+   .Enable(CRC_EN),
+   .Initialize(~gmii_tx_en),
+   .Crc(),
+   .CrcNext(),
+   .Crc_eth(CRC_result)
+ );
+
+ eth_send eth_send(
+   .rst_n(rst_n),
+   .tx_go(tx_go),
+   .data_length(16'd52), //需要发送的数据长度，以字节为单位
+   .des_mac(48'hff_ff_ff_ff_ff_ff),
+   .src_mac(48'h00_0a_35_01_fe_c0),
+   .type_length(16'h08_00),
+   .CRC_Result(CRC_result),
+   .CRC_EN(CRC_EN),
+   .fifo_rdreq(fifo_rdreq),
+   .fifo_rddata(fifo_rddata),
+   .fifo_rdclk(fifo_rdclk),
+   .gmii_tx_clk(gmii_tx_clk),
+   .gmii_tx_en(gmii_tx_en),
+   .gmii_tx_er(gmii_tx_er),
+   .gmii_tx_data(gmii_tx_data)
+ );
+
+ //计数发送数据个数，用于产生对应的数据
+ always@(posedge gmii_tx_clk or negedge rst_n)
+ if(!rst_n)
+   data_cnt <= #1 12'd0;
+
+店铺：https://xiaomeige.taobao.com                  官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/           技术群组：
+                 小梅哥 FPGA 团队                     武汉芯路恒科技
+            专注于培养您的 FPGA 独立开发能力                 开发板 培训 项目研发三位一体
+
+ else if(fifo_rdreq)
+   data_cnt <= #1 data_cnt + 1'b1;
+ else
+   data_cnt <= #1 12'd0;
+
+
+ //UDP 包
+ always@(*)
+ begin
+   case(data_cnt)
+      0     : fifo_rddata = 8'h45;//协议版本,首部长度
+      //服务类型
+      1     : fifo_rddata = 8'h00;
+      //IP 数据报总长度（IP 报头+数据）
+      2   : fifo_rddata = 8'h00;
+      ...
+      50 : fifo_rddata = 8'h21;//!
+      51 : fifo_rddata = 8'h21;//!
+
+     default:fifo_rddata = 8'h0;
+   endcase
+ end
+
+
+ //发送间隔计数器
+ reg [23:0]cnt;
+
+ always@(posedge gmii_tx_clk or negedge rst_n)
+ if(!rst_n)
+   cnt <= #1 0;
+   else //计数器自增，不考虑溢出，接受溢出自动清零
+   cnt <= #1 cnt + 1'b1;
+
+ //24 位 cnt 计满一次启动一次发送，该时间大约为 134ms
+ assign tx_go = (cnt == 24'd1);
+     修改完成后为设计分配管脚并约束电平。本次设计的引脚约束如下表 54-3
+所示。
+                                          表 54-3 引脚约束表
+
+                                          Pin                                       Pin
+ Pin Name              Signial Name              Pin Name           Signial Name
+                                          NO.                                       NO.
+ PL_ENET0_TX_DATA3     rgmii_tx_data[3]   F1     PL_ENET0_GTX_CLK   rgmii_gtx_clk   C1
+ PL_ENET0_TX_DATA2     rgmii_tx_data[2]   F2     PL_ENET0_TX_EN     rgmii_tx_en     C2
+ PL_ENET0_TX_DATA1     rgmii_tx_data[1]   D1     FPGA_GCLK1         clk             T9
+ PL_ENET0_TX_DATA0     rgmii_tx_data[0]   D2     FPGA_KEY0          rst_n           C15
+
+
+店铺：https://xiaomeige.taobao.com                             官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                      技术群组：
+                  小梅哥 FPGA 团队                  武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                开发板 培训 项目研发三位一体
+
+ PL_ENET0_RESET        phy_rst_n         G6
+
+     分配完引脚后为其约束电平，随后全编辑工程，烧写 fs 文件到开发板上，
+打开 wireshark 工具，对本地连接进行抓包，抓取到的数据如下图 54-7 所示：
+
+
+
+
+                                   图 54-7 使用 wireshark 抓包
+
+
+     可以看到，IP 源地址为 192.168.0.2、目标地址为 192.168.0.3、协议类型为
+UDP、源端口号为 5000、目的端口号为 6102。数据内容为：“Hello, welcome to
+FPGA!!!”。
+
+54.3.3使用以太网助手接收数据
+     打开网络调试工具，设置协议类型为 UDP，本地 IP 地址为 192.168.0.3，本
+地端口号 6102，然后点击连接，接着在目的 IP 地址和目的端口号处分别填入
+192.168.0.2 和 5000，然后点击一次发送按钮（此处点击发送按钮的目的是为了
+通过这种方式激活刚刚设置的目的 IP 和端口号，并不是真的为了发数据），则
+软件上就会源源不断的开始收到 FPGA 板卡发出的数据内容了，如下图 54-8 所
+示。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                             官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                      技术群组：
+                 小梅哥 FPGA 团队              武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+
+
+
+                               图 54-8 使用网络调试助手接收数据
+
+
+54.3.4忽略 UDP 校验和测试
+     接下来我们测试 UDP 协议中忽略校验和，我们在代码中将 UDP 校验和部
+分数据修改为 0x0000，然后重新编译并烧写至开发板中。
+
+
+
+
+                                 图 54-9 修改代码，忽略校验和
+
+
+     在 wireshark 中抓取数据包，可以看到，依旧能够正常抓取到数据，在 UDP
+
+店铺：https://xiaomeige.taobao.com                      官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/               技术群组：
+                 小梅哥 FPGA 团队                  武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                开发板 培训 项目研发三位一体
+
+
+的 checksum 一栏，显示的状态为 none，即无 UDP 校验和。
+
+
+
+
+                                  图 54-10 使用 wireshark 抓包
+
+
+     在网络调试工具中，依然可以正确的接收到数据。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                             官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                      技术群组：
+                 小梅哥 FPGA 团队               武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力             开发板 培训 项目研发三位一体
+
+                        图 54-11 使用网络调试助手接收数据（忽略校验和）
+
+
+54.3.5错误 UDP 校验和测试
+     接下来测试 UDP 校验和错误的情况。我们在代码中将 UDP 校验和部分数
+据修改为非 0 但又非正确的值，如 0x1234，然后重新编译并烧写至开发板中。
+
+
+
+
+                                图 54-12 修改代码，错误校验和
+
+
+     在 wireshark 中抓取数据包，可以看到，依旧能够正常抓取到数据，在 UDP
+的 checksum 一栏，显示的状态为 validation disabled，即软件关闭了 UDP 校验和
+的验证。
+
+
+
+
+                         图 54-13 使用 wireshark 抓包（错误 UDP 校验和）
+
+
+     我们可以手动打开 wireshark 的 UDP 校验和验证，方法为选中任意一个抓取
+到的 UDP 数据包，右键，选择【Protocol Preferences】-> 【Data Preferences】，
+如下图 54-14 所示，左侧找到 UDP 协议，勾选上 Validate the UDP checksum if
+
+店铺：https://xiaomeige.taobao.com                       官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                技术群组：
+                 小梅哥 FPGA 团队                武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力              开发板 培训 项目研发三位一体
+
+
+possible。然后点击 apply，再 OK，如下所示。
+
+
+
+
+                                图 54-14 进入协议数据设置界面
+
+
+
+
+                            图 54-15 打开开 wireshark 的 UDP 校验和
+
+
+     可以看到，所有 UDP 数据包的颜色变成了深黑色，并在下方提示 checksum
+错误，并给出了正确的值，如下图 54-16 所示。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                         官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                  技术群组：
+                 小梅哥 FPGA 团队               武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力            开发板 培训 项目研发三位一体
+
+
+
+
+                               图 54-16 手动开始 UDP 校验和检测
+
+
+     回到以太网调试工具中，此时，以太网工具也无法收到数据了。
+     总结，UDP 报文的 checksum 字段可以为正确，也可以忽略（0x0000），但
+是不能为错，为错误一些标准的以太网工具将会将这样的数据包直接丢弃。
+
+54.4以太网 UDP 帧发包实例（自动 IPchecksum）
+     在上一个实验中，我们使用了以太网组包工具组建了 UDP 数据包并发送到
+PC 端。并测试了 UDP 校验和正确、忽略和错误时网络抓包工具 wireshark 的处
+理以及常用的网络调试工具对待这三种情况的处理，可以知道，UDP 校验和正
+确或者忽略（0x0000），网络调试工具都能够收到数据。而 UDP 校验和错误时，
+则无法收到。在这个实例中，我们没有关心 IP 首部校验和的正确与否，默认使
+用发包工具计算提供的值，该值是正确的。但是这种方式只适用于 IP 首部中的
+所有值都是确定的情况下，如确定的目标 IP 和源 IP、确定的数据长度。那么当
+我们需要每次发送的数据长度都可能不同，或者 IP 地址不同时，就需要 FPGA
+来自动生成 IP 校验和了。
+
+54.4.1加入自动 IP 报头校验逻辑
+     关于 IP 首部校验和的计算方法和计算 Verilog 代码，我们在介绍 IP 协议内
+容时就已经给出，本实验将使用这个代码，对 IP 首部进行实时自动校验。
+     实现该功能非常简单，只需要将 checksum 模块代码例化到 eth_send_test 模
+块中，然后连接对应端口即可，如下所示：
+店铺：https://xiaomeige.taobao.com                     官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/              技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+ checksum checksum(
+     .ver(4'h4),
+     .hdr_len(4'h5),
+     .tos(8'h0),
+     .total_len(ip_total_len),
+     .id(16'h0),
+     .offset(16'h0),
+     .ttl(8'h40),
+     .protocol(8'h11),
+     .src_ip(src_ip),
+     .dst_ip(dst_ip),
+     .checksum_result(ip_checksum)
+ );
+     由于 IP 报文中，报头很多参数在实际使用时都是固定的，因此在模块例化
+时，就直接将这些参数固定，例如 IP 版本（ver），首部长度（hdr_len）、tos、id、
+offset、ttl、上层协议类型（protocol）。最终可能每次发送数据时需要变化的，
+也就是数据长度（ip_total_len）、源 IP 地址（src_ip）、目的 IP 地址（dst_ip）
+                                                     。
+IP_checksum 为实时校验和的值。
+     目的 IP 地址和源 IP 地址一般在某个具体应用中是固定的，因此，直接使用
+一个定值，当然，也可以通过寄存器的方式，使用其他控制逻辑来修改。在具
+体应用时，可以通过修改这个值来确定系统的 IP 地址。
+ wire [31:0]src_ip;
+ wire [31:0]dst_ip;
+
+ assign src_ip = 32'hc0_a8_00_02;
+ assign dst_ip = 32'hc0_a8_00_03;
+     每次发送数据时，用户数据长度定义为 data_total_len，该值在每次发送数
+据前确定。
+     每个 UDP 报文的长度为用户数据长度（data_total_len）+UDP 报头长度（8）
+代码如下所示：
+ wire [15:0]udp_total_len;
+ assign udp_total_len = data_total_len + 8'd8;
+     每个 IP 报文的长度为用户数据长度（data_total_len）+ UDP 首部长度（8）
++ IP 首部长度。一般取 IP 首部长度为 20，则 IP 数据包长度。
+ wire [15:0]ip_total_len;
+ assign ip_total_len = data_total_len + 8'd28;
+
+
+
+
+店铺：https://xiaomeige.taobao.com                  官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/           技术群组：
+                 小梅哥 FPGA 团队                 武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力               开发板 培训 项目研发三位一体
+
+
+54.4.2发送可变内容长度的数据
+     为了测试 IP 首部校验和代码是否确实能够完成 IP 首部的校验和计算，在这
+里设计一个可变长的数据发送序列。即使每次发送数据的长度都不一样，用户
+数据长度从 22 到 28 个字节循环变化，发送的内容为：
+     Hello, welcom to FPGA!
+     Hello, welcom to FPGA!t
+     Hello, welcom to FPGA!th
+     Hello, welcom to FPGA!tha
+     Hello, welcom to FPGA!than
+     Hello, welcom to FPGA!thank
+     Hello, welcom to FPGA!thanks
+     这样，就能模拟出不同数据包长度时 IP 首部校验和是否正确。控制每次发
+送数据包长度不一样的方法很简单，即每发完一次数据，就将 data_total_len 的
+值加 1，这样在 22 到 28 个字节长度之间循环变化。
+     为了确定上一帧数据发送完成的时间，对以太网帧发送模块 eth_send 模块
+代码进行一定改写，改写的内容包括：
+
+              1.添加一个发送完成标志信号输出端口 send_done
+
+              2.每当一帧数据发送完成，send_done 信号产生一个高脉冲
+
+
+
+
+                               图 54-17 定义输出信号 send_done
+
+
+
+
+                                 图 54-18 产生 send_done 信号
+
+
+     然后，每次 send_done 信号产生高电平，则 data_total_len 自加 1，该部分代
+码在 eth_send_test 中如下所示：
+
+店铺：https://xiaomeige.taobao.com                            官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                     技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+ //每次发送完成，将发送的数据长度累加 1
+ always@(posedge mii_tx_clk or negedge rst_n)
+ if(!rst_n)
+     data_total_len <= 22;
+ else if(send_done)begin
+     if(data_total_len >= 28)
+         data_total_len <= 22;
+     else
+         data_total_len <= data_total_len + 1'b1;
+ end
+ else
+     data_total_len <= data_total_len;
+     最后，在数据输出查找表中，将 UDP 和 IP 报头中可变部分替换为代码中定
+义的寄存器或者线网。
+ //UDP 包
+ always@(*)
+ begin
+     case(data_cnt)
+           0   : fifo_rddata = 8'h45;//协议版本,首部长度
+
+
+           //服务类型
+           1   : fifo_rddata = 8'h00;
+
+
+           //IP 数据报总长度（IP 报头+数据）
+           2   : fifo_rddata = ip_total_len[15:8];
+           3   : fifo_rddata = ip_total_len[7:0];
+
+
+           //数据包标识
+           4   : fifo_rddata = 8'h00;
+           5   : fifo_rddata = 8'h00;
+
+           //标识+分段偏移
+           6   : fifo_rddata = 8'h00;
+           7   : fifo_rddata = 8'h00;
+
+
+           //生存时间 64
+           8   : fifo_rddata = 8'h40;
+
+
+           //数据报类型 17： UDP
+           9   : fifo_rddata = 8'h11;
+
+           //IP 报头校验和
+店铺：https://xiaomeige.taobao.com                      官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/               技术群组：
+                 小梅哥 FPGA 团队                 武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力             开发板 培训 项目研发三位一体
+
+          10   : fifo_rddata = ip_checksum[15:8];
+          11   : fifo_rddata = ip_checksum[7:0];
+
+
+          //源地址 192.168.0.2
+          12   : fifo_rddata = src_ip[31:24];
+          13   : fifo_rddata = src_ip[23:16];
+          14   : fifo_rddata = src_ip[15:8];
+          15   : fifo_rddata = src_ip[7:0];
+
+          //目的地址 192.168.0.3
+          16   : fifo_rddata = dst_ip[31:24];
+          17   : fifo_rddata = dst_ip[23:16];
+          18   : fifo_rddata = dst_ip[15:8];
+          19   : fifo_rddata = dst_ip[7:0];
+
+
+          //源端口号 5000(0x1388)
+          20   : fifo_rddata = src_port[15:8];
+          21   : fifo_rddata = src_port[7:0];
+
+
+          //目的端口号 6102(0x17d6)
+          22   : fifo_rddata = dst_port[15:8];
+          23   : fifo_rddata = dst_port[7:0];
+
+
+          //UDP 数据报总长度（UDP 报头+数据）
+          24   : fifo_rddata = udp_total_len[15:8];
+          25   : fifo_rddata = udp_total_len[7:0];
+
+
+          //UDP 报头校验和          忽略
+          26   : fifo_rddata = 8'h00;
+          27   : fifo_rddata = 8'h00;
+ //
+ //            //UDP 报头校验和          错误校验和
+ //            26   : fifo_rddata = 8'h12;
+ //            27   : fifo_rddata = 8'h34;
+          //用户数据：Hello, welcom to FPGA!
+          28   : fifo_rddata = 8'h48;//H
+          29   : fifo_rddata = 8'h65;//e
+          30   : fifo_rddata = 8'h6c;//l
+          31   : fifo_rddata = 8'h6c;//l
+          32   : fifo_rddata = 8'h6f;//0
+          33   : fifo_rddata = 8'h2c;//,
+          34   : fifo_rddata = 8'h20;//
+          35   : fifo_rddata = 8'h77;//w
+店铺：https://xiaomeige.taobao.com                       官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                技术群组：
+                 小梅哥 FPGA 团队               武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力             开发板 培训 项目研发三位一体
+
+          36   : fifo_rddata = 8'h65;//e
+          37   : fifo_rddata = 8'h6c;//l
+          38   : fifo_rddata = 8'h63;//c
+          39   : fifo_rddata = 8'h6f;//o
+          40   : fifo_rddata = 8'h6d;//m
+          41   : fifo_rddata = 8'h20;//
+          42   : fifo_rddata = 8'h74;//t
+          43   : fifo_rddata = 8'h6f;//o
+          44   : fifo_rddata = 8'h20;//
+          45   : fifo_rddata = 8'h46;//F
+          46   : fifo_rddata = 8'h50;//P
+          47   : fifo_rddata = 8'h47;//G
+          48   : fifo_rddata = 8'h41;//A
+          49   : fifo_rddata = 8'h21;//!
+
+           50 : fifo_rddata = 8'h74;//t
+           51 : fifo_rddata = 8'h68;//h
+           52 : fifo_rddata = 8'h61;//a
+           53 : fifo_rddata = 8'h6e;//n
+           54 : fifo_rddata = 8'h6b;//k
+           55 : fifo_rddata = 8'h73;//s
+           default:fifo_rddata = 8'h00;
+       endcase
+ end
+       Data_cnt 从 100 到 111 是在上一个实验的内容上增加的 6 个字节，其内容为
+“thanks”，每次发送时，根据设定的 data_total_len 的值，在“Hello, welcome to
+FPGA!”的末尾依次多发送 thanks 的一个到 6 个字符。
+
+54.4.3功能验证
+       按 照 上 述 说 明 修 改 好后 ， 全 编 译 工 程 并 下载 fs 文 件 到 开 发 板 ， 使 用
+wireshark 工具抓取 PC 网卡，按照之前打开 UDP 校验和检查的方式，打开
+wireshark 中对 ip 校验和的验证。对抓取的报文分析如下图 54-19 所示：
+
+
+
+
+店铺：https://xiaomeige.taobao.com                   官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/            技术群组：
+                 小梅哥 FPGA 团队                 武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力              开发板 培训 项目研发三位一体
+
+
+
+
+                                图 54-19 wireshark 抓取报文分析
+
+
+     可以看到，开发板循环发出 64 到 70 个字节长度的数据包，且 IP 校验和都
+是正确的。表明本设计能够应对各种数据长度的 UDP 报文发送。
+     打开网络调试工具，按图设置好各项参数，然后点击一次发送按钮，即可
+接收到数据，接收到的数据内容如下图 54-20 所示：
+
+
+
+
+店铺：https://xiaomeige.taobao.com                            官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                     技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+
+
+
+                              图 54-20 以太网调试助手接收到的数据
+
+
+     至此，基于 FPGA 的以太网 UDP 数据发送协议就设计完成了。
+
+54.5总结
+     虽然本设计完成了以太网的 UDP 发送逻辑，但是设计发送的数据内容都是
+预先写好的确定值。而我们实际在应用以太网发送数据时，更多时候发送的是
+实时在变，且无法预先预知值的内容，例如摄像头采集的图像数据，ADC 采样
+的数据。这种情况下，需要发送的应该是从某个数据源或者存储器直接取到的
+数据。所以要想本发送逻辑拥有实用价值，我们应该为其设计一个 FIFO 接口，
+让数据源产生的数据直接写入该 FIFO，而本发送逻辑则将数据部分修改为从
+FIFO 中取数，这样就具备了相当的实用价值。下一节，我们将实现该实用性的
+UDP 发送逻辑。
+
+
+
+店铺：https://xiaomeige.taobao.com                   官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/            技术群组：
+

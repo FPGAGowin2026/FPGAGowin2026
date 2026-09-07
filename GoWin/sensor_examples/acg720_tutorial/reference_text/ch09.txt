@@ -1,0 +1,853 @@
+                 小梅哥 FPGA 团队                         武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                   开发板 培训 项目研发三位一体
+
+
+
+                 9 多字节串口收发模块设计与验证
+                      |----02_设计实例
+      工程源码
+                      |----ch9_uart_loopback
+      相关视频
+ 课程
+      说明
+
+      章节导读
+
+      在前面章节中我们已经带大家完成了单字节串口收发模块的设计，但是这
+两个模块的应用场景相对较小。在大多数场景下，串口都是用于连续多字节的
+收发工作。因此，本章将基于已有的单字节串口收发模块，带大家完成多字节
+串口发送模块和多字节串口接收模块的设计，并通过仿真和板级测试对设计进
+行验证。
+
+
+9.1 多字节串口发送原理与设计
+      要实现多字节串口发送，以常用的 8N1 配置为例(即八个数据位、无奇偶校
+验、一个停止位)，很多同学会有个误区，认为只要将数据填充进起始信号跟停
+止信号之间即可。例如我想用串口发送 16 位的数据 0x1234，根据以上思路，就
+应该模拟串口输出 0_0010_1100_0100_1000_1，如图 9-1 所示：
+           CLK
+                         起始位                                               结束位
+       uart_tx
+      （错误示范）
+
+                                图 9-1 串口发送 0x1234（错误示范）
+
+
+      这些数据在被目的串口接收后，会按照 8N1 进行解析，提取出其中的数据
+位。一次解析需要接收 10 位数据，如果解析正确便会提取出中间的 8 位有效数
+据。要解析得到 16 位的 0x1234 就需要解析 2 次，也就是需要 20 位数据。而我
+们模拟串口时，仅发送了 18 位数据，所以无论最终解析出来的是什么，都不会
+是我们期望收到的 0x1234。
+      正确的传输应该是分为两次，第一次传输 0_0100_1000_1，第二次传输
+0_0010_1100_1，如图 9-2 所示：
+         CLK
+                     起始位                       结束位      起始位             结束位
+       uart_tx
+      （正确示范）
+
+店铺：https://xiaomeige.taobao.com                          官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                   技术群组：
+                 小梅哥 FPGA 团队                            武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                       开发板 培训 项目研发三位一体
+
+                                    图 9-2 串口发送 0x1234
+
+
+     目 的 串 口 在 接 收 到 数 据 后 ， 会 按 照 8N1 对 数 据 解 析 ， 分 两 次 得 到
+8’b0001_0010（0x12）和 8’b0011_0100（0x34）。将两个 8 位数据拼接后便能得
+到 0x1234。
+     因此，多字节的串口发送，可以看作连续多个单字节数据的串口发送过程。
+而在前面章节中，我们已经带大家学习并完成了单字节串口发送模块的设计。
+本章中我们只需要将待发送的数据拆分为多个单字节，然后调用单字节串口发
+送模块逐个发送，就能实现多字节数据的串口发送。
+
+9.1.1 多字节串口发送原理
+     为了保证数据的连续性，我们可以使用单字节串口发送模块的单字节发送
+完成信号（byte_tx_done）作为条件信号。当该信号有效时，说明一字节数据发
+送完成，此时就需要输出下一字节数据给单字节串口发送模块。
+     一次多字节串口发送，所需发送的数据量是确定的，串口不可能一直发送
+下去。因此在每发送完一字节数据后，我们还需要判断发送是否完成。根据
+byte_tx_done 信号计算当前已发送数据，再与接收到的数据位宽做对比。如果发
+送未完成，则继续下一字节的发送，一旦判断发送完成，产生串口发送完成信
+号，本次传输结束。
+     据此，我们可以设计一个状态机，用来产生单字节数据、判断单次字节发
+送是否完成、判断整个发送过程是否完成。因此，本次设计的串口发送模块的
+结构如图 9-3 所示：
+
+                                              uart_data_tx
+                Clk
+                                                                             uart_tx
+                Rst_n
+           Baud_Set[2:0]                                                    uart_state
+                                                          uart_byte_tx
+                                         byte_send_en
+
+                                         data_byte[7:0]
+              send_en             FSM    byte_tx_done
+      data[DATA_WIDTH - 1 : 0]                                              Tx_Done
+
+                                  图 9-3 多字节串口发送模块
+
+
+9.1.2 多字节串口发送模块设计
+     在确定了设计的整体功能及结构之后，接下来就是设计的代码实现了。首
+店铺：https://xiaomeige.taobao.com                                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                          技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+
+先是对单字节串口发送模块的例化，代码如下：
+ input Clk;
+ input Rst_n;
+ input [2:0]Baud_Set;
+ output uart_tx;
+ output uart_state;
+
+ reg [7:0] data_byte;
+ reg byte_send_en;
+ wire byte_tx_done;
+
+ uart_byte_tx uart_byte_tx(
+     .Clk(Clk),
+     .Rst_n(Rst_n),
+     .data_byte(data_byte),
+     .send_en(byte_send_en),
+     .Baud_Set(Baud_Set),
+     .uart_tx(uart_tx),
+     .Tx_Done(byte_tx_done),
+     .uart_state(uart_state)
+ );
+     为了使设计能够适配更多应用场景，我们可以使用 parameter 定义多字节串
+口发送模块的输入数据位宽。parameter用于在模块内部或外部定义常量，这种
+方式定义常量最大的好处就是在对模块实例化时，能够进行参数传递（重写）。
+     通过这种方式，我们可以使用 parameter 将多字节串口发送模块的输入数据
+位宽设定为 8，代码如下：
+ parameter DATA_WIDTH = 8;
+     这样，默认情况下模块只会实现单字节的串口发送。而如果我们想让模块
+一次发送多个字节，以 8 字节为例，我们只需要在顶层中通过 parameter 定义输
+入数据位宽为 64，参数就能够传递到子模块中，对常量值重写。
+     对于多字节串口发送模块而言，当输入的 send_en 有效时，表明传输开始，
+状态机产生一字节的发送数据以及发送使能信号给单字节串口发送模块。随后，
+状态机需要等待 byte_tx_done 信号，确认当前字节数据已经发送完毕。同时，
+状态机需要基于该信号计数，判断传输是否完成。如果未传输完成，便继续下
+一字节数据和使能信号的发送。如果传输完成，状态机便需要产生发送完成信
+号 tx_done，标志本次多字节发送结束。
+     综上所述，状态机需要至少四个状态，才能实现上述功能。四个状态分别
+用来等待发送使能、发起单字节数据发送、等待单字节数据发送完成、检查所
+有数据是否传输完成。对应的四种状态代码定义如下：
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+ localparam S0 = 0;      //等待发送请求
+ localparam S1 = 1;      //发起单字节数据发送
+ localparam S2 = 2;      //等待单字节数据发送完成
+ localparam S3 = 3;      //检查所有数据是否发送完成
+       接下来实现四个状态的功能，首先是状态 S0，该状态需要等待发送请求信
+号 send_en，在 send_en 有效时，接收传入的数据，并使状态跳转到 S1。对应代
+码如下：
+ S0:
+       begin
+           data_byte <= 0;
+           cnt <= 0;
+           Tx_Done <= 0;
+           if(send_en)begin
+               state <= S1;
+               data_r <= data;
+           end
+           else begin
+               state <= S0;
+               data_r <= data_r;
+           end
+       end
+       接下来是 S1 状态，该状态需要产生单字节发送使能信号以及单字节数据，
+并使状态跳转到 S2。考虑到在不同应用场景中，数据的字节序会有不同需求，
+我们可以通过使用 parameter 定义一个常量 MSB_FIRST 控制数据的大小端字节
+序。代码如下：
+ parameter MSB_FIRST = 1;
+       S1 状态代码如下：
+ S1:
+       begin
+           byte_send_en <= 1;
+           if(MSB_FIRST == 1)begin
+               data_byte <= data_r[DATA_WIDTH-1:DATA_WIDTH - 8];
+               data_r <= data_r << 8;
+           end
+           else begin
+               data_byte <= data_r[7:0];
+               data_r <= data_r >> 8;
+           end
+           state <= S2;
+       end
+       随后是 S2 状态，该状态需要等待单字节数据发送完成，也就是等待单字节
+串口发送模块的 byte_tx_done 信号。当该信号有效时，代表单字节数据发送完
+
+店铺：https://xiaomeige.taobao.com                     官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/              技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+
+成，我们可以基于该信号计数当前已发送的数据量，并将状态跳转到 S3。代码
+如下：
+ S2:
+       begin
+           byte_send_en <= 0;
+           if(byte_tx_done)begin
+               state <= S3;
+               cnt <= cnt + 9'd8;
+           end
+           else
+               state <= S2;
+       end
+       最后便是 S3 状态，我们可以通过对比已发送数据量和输入位宽量来产生
+Tx_Done 信号。当已发送数据量大于等于输入位宽时，说明数据全部发送完毕，
+此时可以产生 Tx_Done 信号并将状态跳转到 S0，等待下次传输开始。当已发送
+数据量小于输入位宽时，说明传输还未结束，此时将状态跳转到 S1，准备下一
+字节的数据传输。代码如下：
+ S3:
+       if(cnt >= DATA_WIDTH)begin
+           state <= S0;
+           cnt <= 0;
+           Tx_Done <= 1;
+       end
+       else begin
+           state <= S1;
+           Tx_Done <= 0;
+       end
+       至此，我们便完成了多字节串口发送模块的设计。至于模块是否能够正常
+工作，还需要进一步验证，因此，接下来我们还需要创建一个仿真激励文件，
+对模块进行仿真验证。
+
+9.1.3 激励创建及仿真测试
+       仿真激励的创建相对简单，只需在例化多字节串口发送模块时，设置好输
+入位宽以及大小端的值，并在激励中为设计产生输入数据以及发送使能信号即
+可。本次仿真激励文件完整代码如下：
+ module uart_data_tx_tb();
+
+       parameter DATA_WIDTH = 32;
+       parameter MSB_FIRST = 0;
+
+
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+      reg Clk;
+      reg Rst_n;
+
+      reg [DATA_WIDTH - 1 : 0]data;
+      reg send_en;
+      wire uart_tx;
+      wire Tx_Done;
+      wire uart_state;
+
+      uart_data_tx
+      #(
+          .DATA_WIDTH(DATA_WIDTH),
+          .MSB_FIRST(MSB_FIRST)
+      )
+      uart_data_tx(
+          .Clk(Clk),
+          .Rst_n(Rst_n),
+          .data(data),
+          .send_en(send_en),
+          .Baud_Set(3'd4),
+          .uart_tx(uart_tx),
+          .Tx_Done(Tx_Done),
+          .uart_state(uart_state)
+      );
+      initial Clk = 1;
+      always #10 Clk = !Clk;
+      initial begin
+          Rst_n = 0;
+          data = 0;
+          send_en = 0;
+          #201;
+          Rst_n = 1;
+          #2000;
+          data = 32'h01234567;
+          send_en = 1;
+          #20;
+          send_en = 0;
+          #20;
+          @(posedge Tx_Done);
+          #1;
+          data = 32'h12345678;
+          send_en = 1;
+          #20;
+          send_en = 0;
+          #20;
+          @(posedge Tx_Done);
+          #1;
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+          data = 32'h23456789;
+          send_en = 1;
+          #20;
+          send_en = 0;
+          #20;
+          @(posedge Tx_Done);
+          #1;
+          #2000;
+          $stop;
+     end
+ endmodule
+     激励文件中设置输入数据位宽为 32，输出为小端字节序，并输入了三个已
+知数据。因此，以第一次输入的数据为例，第一次多字节串口发送，输出的数
+据应该依次为 0x67、0x45、0x23、0x01，共 32 字节数据。后续两次发送结果同
+理。对比仿真波形与推论是否一致，我们便能知道设计是否正确。
+     本次仿真波形如图 9-4 所示：
+
+
+
+
+                               图 9-4 多字节串口发送模块仿真波形
+
+
+     可以看到三次数据都被成功接收，并且串口完成了三次多字节发送任务。
+为了方便查看串口具体发送的数据，这里又添加 uart_byte_tx 模块的 data_byte 和
+Tx_Done 信号进行观察。完整波形时序如图 9-5 所示：
+
+
+
+
+                                 图 9-5 第一次多字节串口发送
+
+
+     可以看到，在 send_en 信号有效后，多字节串口发送模块开始工作，输出值
+与预期中第一次多字节串口发送的结果一致。后两次传输的结果与预期中同样
+一致，这里暂不列出详细时序，本次设计成功。
+
+9.2 多字节串口接收原理与设计
+     串口接收模块在工作时，会接收连续的串行数据，并以字节为单位，对有
+效数据进行输出。而所谓的多字节串口接收，就是在串口接收模块在接收到数
+店铺：https://xiaomeige.taobao.com                     官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/              技术群组：
+                 小梅哥 FPGA 团队                武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力             开发板 培训 项目研发三位一体
+
+
+据后，不再以单字节数据输出，而是对数据进行拼接，组合成一个多字节数据
+后输出。
+     结合前面我们设计的多字节串口发送模块，要实现多字节串口接收模块设
+计，我们可以例化单字节串口接收模块，随后设计一个状态机，对单字节串口
+接收模块输出的数据进行拼接。同时，基于单字节串口接收模块产生的接收完
+成信号，计数当前已经接收（拼接）的数据量。当拼接的数据达到指定位宽时，
+将数据输出。
+
+9.2.1 多字节串口接收原理
+     当然，仅仅如此是不够的。如果串口在接收过程中，因为某些外部干扰，
+导致部分数据发生变化无法被识别，那么后续被成功识别的数据将会代替这些
+数据的位置，最终拼接成错误的数据。
+     例如，假设在某次串口接收时，串口本应该能正确接收 0x98、0x76、0x54、
+0x32。但是在传输的过程中由于外部干扰，0x76 的部分位数据发生了改变，没
+有被串口识别到，最终接收到的数据为 0x98、0x54、0x32。如果这些数据直接
+交给状态机进行拼接，最终输出的必然是错误数据。
+     为了防止这种情况，我们就需要对每次接收进行计时，一旦接收超时，便
+产生接收超时标志信号，同时通过状态机结束本次串口接收。经过以上分析，
+我们可以得出本次设计系统结构如图 9-6 所示：
+
+                                 uart_data_rx
+        Baud_Set[2:0]
+                                                                       Rx_Done
+           uart_rx                        data_byte[7:0]
+
+                                                                     timeout_flag
+            Clk            uart_byte_rx   byte_rx_done
+                                                           FSM
+            Rst_n                                                data[DATA_WIDTH - 1 : 0]
+
+
+
+
+                               图 9-6 多字节串口接收模块系统框图
+
+
+9.2.2 多字节串口接收模块设计
+     在确定了设计整体结构之后，接下来就是设计的代码实现。首先是对单字
+节串口接收模块的例化，代码如下：
+ input Clk;
+ input Rst_n;
+ input uart_rx;
+ wire [7:0] data_byte;
+
+店铺：https://xiaomeige.taobao.com                                   官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                            技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+ wire byte_rx_done;
+
+ uart_byte_rx uart_byte_rx(
+     .Clk(Clk),
+     .Rst_n(Rst_n),
+     .baud_set(Baud_Set),
+     .uart_rx(uart_rx),
+     .data_byte(data_byte),
+     .Rx_Done(byte_rx_done)
+ );
+     为了使设计能够适配更多应用场景，我们可以使用 parameter 定义多字节串
+口接收模块输出位宽为 16。这样我们在调用该模块时，随时都能通过顶层修改
+模块输出位宽。代码如下：
+ parameter DATA_WIDTH = 16;
+     接下来我们就该考虑如何产生接收超时信号了。对于串口接收来说，在不
+同应用场景下，会使用不同的波特率，每种波特率下，串口传输数据的频率也
+各不相同。那么我们该如何判断接收是否是超时的呢？
+     这里，我们参考了 modbus 对于串口传输超时的定义。在 modbus 中，规定
+报文间隔要大于 3.5 字符时间，也就是传输一旦超过 3.5 字符时间就视作是新的
+报文。基于此，本次设计中，我们认为，在进行串口接收数据时，一旦数据间
+超过 3.5 个字符时间，便是接收超时。
+     以常用的 115200 波特率为例，我们可以计算出，串口正常接收一字节数据
+所 需 的 时 间 为 1/115200*10^9*(1+8+1)=86.805us。 那 么 如 果 串 口 超 过
+86.805*3.5=300.8175us 时间内都未接收到数据，便可以认为是接收超时。
+     在本次设计中，我们使用的是 50MHz 时钟，即每个时钟周期为 20ns。串口
+接收一字节数据所花的时间，可以通过计数两个串口接收完成信号之间的时钟
+上升沿来确定。因此，我们就可以求出，当计数值大于 300.8175*10^3/20-1 =
+15190 时，接收超时。一旦接收超时，我们就让它产生超时标志信号。
+     至于计数器该何时计数，我们可以让计数器在每个字节接收开始时工作，
+在字节接收完成时被清零。具体就是利用串口传输时的低电平起始信号（！
+uart_rx），以及单字节串口接收模块在接收完一个字节后产生的 byte_rx_done 信
+号。因此，判断并产生串口接收超时标志信号的设计代码如下：
+ parameter TIMEOUT = 15190;//115200 下为 15190,9600 下为 182292
+
+ reg [31:0]timeout_cnt;
+ always@(posedge Clk or negedge Rst_n)
+ if(!Rst_n)
+
+店铺：https://xiaomeige.taobao.com                  官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/           技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+     timeout_flag <= 1'd0;
+ else if(timeout_cnt >= TIMEOUT)
+     timeout_flag <= 1'd1;
+ else if(state == S0)
+     timeout_flag <= 1'd0;
+
+ reg to_state;
+ always@(posedge Clk or negedge Rst_n)
+ if(!Rst_n)
+     to_state <= 0;
+ else if(!uart_rx)
+     to_state <= 1;
+ else if(byte_rx_done)
+     to_state <= 0;
+
+ always@(posedge Clk or negedge Rst_n)
+ if(!Rst_n)
+     timeout_cnt <= 32'd0;
+ else if(to_state)begin
+     if(byte_rx_done)
+         timeout_cnt <= 32'd0;
+     else if(timeout_cnt >= TIMEOUT)
+         timeout_cnt <= TIMEOUT;
+     else
+         timeout_cnt <= timeout_cnt + 1'd1;
+ end
+     设计完接收超时信号，接下来就是状态机了。结合前面的原理分析和结构
+图我们可以知道，本次设计中状态机的工作流程如下：
+
+              1.等待单字节接收模块的接收完成信号，缓存第一个字节数据，对
+         缓存的数据进行计数
+
+              2.开始超时计数，如果下一次传输完成信号到来前接收超时，产生
+         Rx_Done 信号，传输结束。如果未超时则对新一字节数据进行拼接，
+         并对已缓存数据计数。
+
+              3.对比已缓存的数据与输出数据位宽，检查所有数据是否接收完成。
+         如果完成，产生 Rx_Done 信号，传输结束。如果未完成则继续步骤 2
+
+     因此，整个状态只需要三个状态就能实现功能，状态定义及初始化如下：
+ localparam S0 = 0;      //等待单字节接收完成信号
+ localparam S1 = 1;      //判断接收是否超时
+ localparam S2 = 2;      //检查所有数据是否接收完成
+     接下来首先是 S0 状态的实现，考虑到在不同应用场景下，可能会对数据有
+不同的字节序需求，我们可以通过使用 parameter 定义一个常量 MSB_FIRST 控
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+
+制数据的大小端字节序。该状态代码如下：
+ S0:
+       begin
+           Rx_Done <= 0;
+           data_r <= 0;
+           if(DATA_WIDTH == 8)begin
+               data <= data_byte;
+               Rx_Done <= byte_rx_done;
+           end
+           else if(byte_rx_done)begin
+               state <= S1;
+               cnt <= cnt + 9'd8;
+               if(MSB_FIRST == 1)
+                    data_r <= {data_r[DATA_WIDTH - 1 - 8 : 0]
+                    , data_byte};
+               else
+                    data_r <= {data_byte
+                    , data_r[DATA_WIDTH - 1 : 8]};
+           end
+       end
+       随后是 S1 状态的实现，代码如下：
+ S1:
+       if(timeout_flag)begin
+           state <= 0;
+           Rx_Done <= 1;
+       end
+       else if(byte_rx_done)begin
+           state <= S2;
+           cnt <= cnt + 9'd8;
+           if(MSB_FIRST == 1)
+               data_r <= {data_r[DATA_WIDTH - 1 - 8 : 0], data_byte};
+           else
+               data_r <= {data_byte, data_r[DATA_WIDTH - 1 : 8]};
+       end
+       最后便是 S2 状态的实现，代码如下：
+ S2:
+       if(cnt >= DATA_WIDTH)begin
+           state <= S0;
+           cnt <= 0;
+           data <= data_r;
+           Rx_Done <= 1;
+       end
+       else begin
+           state <= S1;
+           Rx_Done <= 0;
+
+店铺：https://xiaomeige.taobao.com                     官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/              技术群组：
+                 小梅哥 FPGA 团队              武汉芯路恒科技
+            专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+      end
+     至此，我们便完成了多字节串口接收模块的设计。至于模块是否能够正常
+工作，还需要进一步验证，因此，接下来我们还需要创建一个仿真激励文件，
+对模块进行仿真验证。
+
+9.2.3 激励创建及仿真测试
+     为了方便测试，在激励文件中，我们可以例化前面设计的多字节串口发送
+模块，用以产生测试多字节串口接收模块所需的串行输入信号。本次仿真激励
+文件完整代码如下：
+ module uart_data_rx_tb();
+
+      parameter DATA_WIDTH = 32;
+      parameter MSB_FIRST = 0;
+
+      reg Clk;
+      reg Rst_n;
+
+      reg [DATA_WIDTH - 1 : 0]data;
+      wire [DATA_WIDTH - 1 : 0]rx_data;
+      reg send_en;
+      wire uart_tx;
+      wire uart_rx;
+      wire Tx_Done;
+      wire uart_state;
+      wire Rx_Done;
+      wire timeout_flag;
+
+      assign uart_rx = uart_tx;
+
+      //为多字节串口接收模块产生输入数据
+      uart_data_tx
+      #(
+          .DATA_WIDTH(DATA_WIDTH),
+          .MSB_FIRST(MSB_FIRST)
+      )
+      uart_data_tx(
+          .Clk(Clk),
+          .Rst_n(Rst_n),
+          .data(data),
+          .send_en(send_en),
+          .Baud_Set(3'd4),
+          .uart_tx(uart_tx),
+          .Tx_Done(Tx_Done),
+
+店铺：https://xiaomeige.taobao.com                  官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/           技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+           .uart_state(uart_state)
+      );
+
+      uart_data_rx
+      #(
+          .DATA_WIDTH(DATA_WIDTH),
+          .MSB_FIRST(MSB_FIRST)
+      )
+      uart_data_rx(
+          .Clk(Clk),
+          .Rst_n(Rst_n),
+          .uart_rx(uart_rx),
+          .data(rx_data),
+          .Rx_Done(Rx_Done),
+          .timeout_flag(timeout_flag),
+          .Baud_Set(3'd4)
+      );
+
+      initial Clk = 1;
+      always #10 Clk = !Clk;
+
+      initial begin
+          Rst_n = 0;
+          data = 0;
+          send_en = 0;
+          #201;
+          Rst_n = 1;
+          #2000;
+          data = 32'h12345678;
+          send_en = 1;
+          #20;
+          send_en = 0;
+          #20;
+          @(posedge Tx_Done);
+          #1;
+          #1000000;
+          data = 32'h87654321;
+          send_en = 1;
+          #20;
+          send_en = 0;
+          #20;
+          @(posedge Tx_Done);
+          #1;
+          #1000000;
+          data = 32'h24680135;
+          send_en = 1;
+          #20;
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                 小梅哥 FPGA 团队               武汉芯路恒科技
+            专注于培养您的 FPGA 独立开发能力            开发板 培训 项目研发三位一体
+
+            send_en = 0;
+            #20;
+            @(posedge Tx_Done);
+            #1;
+            #400000;
+            $stop;
+      end
+
+ endmodule
+     激励文件中，波特率被设置为 115200，为了验证模块能否正确判断传输是
+否超时，将每两次数据输入之间的间隔设置为 1000.001us。
+     同时，激励文件中，DATA_WIDTH 被设置为 32，字节序被设置为小端字
+节序。由于是小端字节序，所以多字节串口发送模块会先发低位字节再发高位
+字节。以第一次数据发送为例，多字节串口发送模块会依次发送数据 0x78、
+0x56、0x34、0x12。由于多字节串口接收模块也是使用的小端字节序，这些字
+节数据在被多字节串口接收模块接收拼接时，先接收的字节将会被作为最高位。
+因此多字节串口接收模块输出的数据为 32'h12345678。
+     根据理论结果，观察仿真波形与推论是否一致，我们便能知道设计是否正
+确，本次设计仿真总体波形如图 9-7 所示。
+
+
+
+
+                                     图 9-7 仿真整体波形
+
+
+     可以看到，即使是延时了 1000.001us，timeout_flag 信号也并未置高，且多
+字节串口接收模块的输出数据与我们预期中的一致。
+     接下来我们再来观察数据传输的中间过程，观察字节序是否正常工作。为
+了方便观察，在仿真中添加了 uart_byte_tx 的 data_byte（输出字节数据）信号、
+uart_byte_rx 的 data_byte（输入字节数据）信号，波形时序如图 9-8 所示：
+
+
+
+
+店铺：https://xiaomeige.taobao.com                     官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/              技术群组：
+                 小梅哥 FPGA 团队               武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力            开发板 培训 项目研发三位一体
+
+
+
+
+                                    图 9-8 多字节串口接收
+
+
+       可以看到，数据波形与我们推导中一致，说明字节序功能也正常工作。至
+此，多字节串口接收模块设计完成。
+
+9.3 创建测试用顶层封装
+       虽然我们已经通过仿真测试，验证了两个模块功能的可行性，但是考虑到
+仿真终究是理想条件，与实际的应用情况始终会有出入。因此，设计还需要进
+行板级测试，验证其功能的完整性。
+       为了方便测试，这里我们新建一个顶层，例化多字节串口收发模块，将接
+收模块的输出端与发送模块的输入端相连。这样，接收模块接收到的数据就会
+通过发送模块发送出去，再通过电脑端的串口调试软件，就能实现一个简易的
+串口回环。通过判断回环的数据是否一致，就能知道模块功能是否实现。
+       顶层代码如下：
+ module uart_loopback(
+     Clk,
+     Rst_n,
+     uart_rx,
+
+       led,
+       uart_tx
+  );
+
+       parameter DATA_WIDTH = 32;
+       parameter MSB_FIRST = 0;
+
+       input Clk;
+       input Rst_n;
+       input uart_rx;
+
+       output [2:0]led;
+       output uart_tx;
+
+
+店铺：https://xiaomeige.taobao.com                     官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/              技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+            专注于培养您的 FPGA 独立开发能力          开发板 培训 项目研发三位一体
+
+      wire [DATA_WIDTH-1:0]data;
+      wire Rx_Done;
+      wire [7:0]data_byte;
+
+      uart_data_rx
+      #(
+          .DATA_WIDTH(DATA_WIDTH),
+          .MSB_FIRST(MSB_FIRST)
+      )
+      uart_data_rx(
+          .Clk(Clk),
+          .Rst_n(Rst_n),
+          .uart_rx(uart_rx),
+
+            .data(data),
+            .Rx_Done(Rx_Done),
+            .timeout_flag(led[0]),
+
+            .Baud_Set(3'd4)
+       );
+
+      uart_data_tx
+      #(
+          .DATA_WIDTH(DATA_WIDTH),
+          .MSB_FIRST(MSB_FIRST)
+      )uart_data_tx(
+          .Clk(Clk),
+          .Rst_n(Rst_n),
+
+            .data(data),
+            .send_en(Rx_Done),
+            .Baud_Set(3'd4),
+
+            .uart_tx(uart_tx),
+            .Tx_Done(led[1]),
+            .uart_state(led[2])
+      );
+
+ endmodule
+     顶层中设置 DATA_WIDTH 为 32，波特率为 115200，超时信号、发送完成
+信号、串口状态信号被连接到 LED 灯上进行显示。
+     在添加完测试顶层且综合无误后，需要为设计添加管脚分配和电平约束，
+本次设计管脚分配表如表 9-1 所示：
+
+
+
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                 小梅哥 FPGA 团队                   武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                开发板 培训 项目研发三位一体
+
+                                         表 9-1 管脚分配表
+
+                   Signial Name     Pin NO.     Signial Name       Pin NO.
+                   CLK              Y18         led[2]             L21
+                   Rst_n            B21         led[1]             N22
+                   uart_rx          J21         led[0]             M22
+                   uart_tx          M15
+
+     引脚电平约束为 LVCMOS 33，设置完成后编译设计并生成 fs 文件，接下来
+准备对设计板级验证。
+
+9.4 板级验证
+     本节将在 ACX720-GW5A138 开发板上使用设计的多字节串口收发模块，通
+过串口回环的方式，对来自电脑的数据回环。通过对比回环数据与发送数据是
+否一致，对设计模块进行验证。
+
+9.4.1 系统所需硬件
+              1.ACX720-GW5A13 开发板 x1
+
+              2.高云下载器 x1
+
+              3.串口线 x1
+
+              4.电源线 x1
+
+9.4.2 硬件连接
+     连接开发板的下载线和电源线，使用串口线一端连接开发板上的 UART 接
+口，一端连接电脑的 USB 口，如下图所示。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                                官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                         技术群组：
+                 小梅哥 FPGA 团队                    武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                 开发板 培训 项目研发三位一体
+
+
+
+
+                                          图 9-9 硬件连接
+
+
+     连接完成后，确保开发板电源拨码开关拨到 DC 侧，接下来将生成好的 fs
+文件烧录到开发板中。
+     烧录完成后打开设备管理器，查询串口端口号，设备管理器中串口的名称
+如图 9-10：
+
+
+
+
+                                         图 9-10 查询端口号
+
+
+     这里笔者电脑串口端口号为 COM5，用户在查询时，以自己电脑中的端口
+号为准。随后打开串口猎人，在软件中连接上刚刚查询到的端口，设置波特率
+为 115200。接着输入 4 字节数据，点击发送开始回环，如图 9-11 实验结果所示：
+
+
+
+
+店铺：https://xiaomeige.taobao.com                         官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                  技术群组：
+                 小梅哥 FPGA 团队                   武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                开发板 培训 项目研发三位一体
+
+
+
+
+                                         图 9-11 实验结果
+
+
+     这里笔者发送了多次，一共发送 76 字节数据。可以看到，软件接收到的回
+环数据也为 76 字节，且接收到的数据与发送数据一致。证明功能正常，本次多
+字节串口收发模块设计成功。
+
+9.5 总结
+     本章带大家完成了多字节串口接收模块和多字节串口发送模块的设计，并
+通过仿真测试和板级验证带领大家验证了设计的可行性。为了方便使用，模块
+中部分信号使用的 parameter 参数定义，用户可以通过顶层参数传递，根据自己
+的设计需求对这些参数值修改。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                        官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                 技术群组：
+

@@ -1,0 +1,22 @@
+D:/work/waresoft/Gowin2/workspace/720-138K/ch7_uart_rx/src/uart_byte_rx.v {1 {vlog -work work -vopt -stats=none D:/work/waresoft/Gowin2/workspace/720-138K/ch7_uart_rx/src/uart_byte_rx.v
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module uart_byte_rx
+
+Top level modules:
+	uart_byte_rx
+
+} {} {}} D:/work/waresoft/Gowin2/workspace/720-138K/ch7_uart_rx/src/uart_byte_rx_tb.v {1 {vlog -work work -vopt -stats=none D:/work/waresoft/Gowin2/workspace/720-138K/ch7_uart_rx/src/uart_byte_rx_tb.v
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module uart_byte_rx_tb
+
+Top level modules:
+	uart_byte_rx_tb
+
+} {} {}} D:/work/waresoft/Gowin2/workspace/720-138K/ch7_uart_rx/src/uart_byte_tx.v {1 {vlog -work work -vopt -stats=none D:/work/waresoft/Gowin2/workspace/720-138K/ch7_uart_rx/src/uart_byte_tx.v
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module uart_byte_tx
+
+Top level modules:
+	uart_byte_tx
+
+} {} {}}

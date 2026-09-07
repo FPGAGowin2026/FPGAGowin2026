@@ -1,0 +1,15 @@
+D:/work/waresoft/Gowin2/workspace/720-138K/HT6221/src/ir_decode_tb.v {1 {vlog -work work -vopt -stats=none D:/work/waresoft/Gowin2/workspace/720-138K/HT6221/src/ir_decode_tb.v
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module ir_decode_tb
+
+Top level modules:
+	ir_decode_tb
+
+} {} {}} D:/work/waresoft/Gowin2/workspace/720-138K/HT6221/src/ir_decode.v {1 {vlog -work work -vopt -stats=none D:/work/waresoft/Gowin2/workspace/720-138K/HT6221/src/ir_decode.v
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module ir_decode
+
+Top level modules:
+	ir_decode
+
+} {} {}}

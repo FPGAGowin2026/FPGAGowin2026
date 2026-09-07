@@ -1,0 +1,299 @@
+                 小梅哥 FPGA 团队                        武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                      开发板 培训 项目研发三位一体
+
+
+
+
+  69 USB2.0 基于 Stream_IN 的 JPEG 图像传输测试
+ 工程源码            |----02_设计实例
+                 |-------- ch69_FX2_Stream_IN_JPEG.rar
+ 相关视频课程          无
+ 说明              无
+
+      章节导读
+
+      在“基于 FX2 片上回环的图像显示系统测试”实验中，我们使用自己开发的上位机读
+取 FX2 传输的 jpeg 图像数据并显示。在该应用中，使用的是片上回环的模式，由上位机发
+送 jpeg 图像数据到 FX2 的端点 2，再由 FX2 中的 8051 CPU 将端点 2 中的数据搬运到端点 6
+中，由 PC 读回，从而得到待显示图像的数据文件。那么本例，我们将直接使用 FPGA 通过
+SlaveFIFO 接口将 jpeg 图像数据传输到 FX2 的端点 6 中，再由图像显示软件将数据读取，
+在读完一整幅图像的数据后，显示出来。
+
+
+69.1 系统整体设计
+      为了使 FPGA 能够通过 FX2 传输 jpeg 图像到 PC 中，需要 FPGA 本身拥有或者能够从
+其他设备获取 jpeg 图像数据。要得到 jpeg 图像数据，至少有两种方式，第一种方式为直接
+使用电脑转换 jpg 图像得到 FPGA 中 ROM 的初始化文件（.coe 格式），然后使用该 coe 文件
+初始化 FPGA 中的 ROM，FPGA 循环从 ROM 中读取该图片数据，写入到 FX2 的端点 6。
+第二种是使用能够直接输出 jpeg 图像的图像传感器，例如我们所提供的 OV5640 摄像头模
+块，实时输出 jpeg 图像数据流，经由 FPGA 写入到 FX2 的端点 6 中。
+      在本实验手册中，我们针对这两种方案都提供了参考设计。本章实验将采用第一种方
+式通过电脑将 jpg 的图像转换为.coe 格式文件，然后将.coe 的文件写入 ROM 中，最后将
+ROM 中的图像数据通过 USB 进行传输，下图 69-1 为该系统的基本结构。
+
+                                                                          ROM
+
+
+                                                                         FIFO
+
+
+               接收        USB 电缆           USB             In           SlaveFIFO
+               Buf                        引擎             端点6          Write Logic
+
+                                                   FX2                   FPGA
+         PC上位机
+
+                        图 69-1 PC 上位机 USB 接口读取 JPEG 图像数据流图
+
+
+店铺：https://xiaomeige.taobao.com                                官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                         技术群组：
+                 小梅哥 FPGA 团队                武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力             开发板 培训 项目研发三位一体
+
+
+
+69.2 代码设计
+    本章节的代码设计是在“USB2.0 接口 FPGA 控制 Stream_In 测试”一节的基础之上，增加
+一个 ROM 用于存储图像数据，然后通过 USB 传输图像数据，最后由 PC 端的上位机显示
+ROM 存储的图像数据，下面将讲解本章节需要进行的代码设计。
+
+
+69.2.1 usb_stream_in 模块代码设计
+
+    usb_stream_in 模块是在 FX2_Stream_IN 模块的基础之上，增加一个单时钟 FIFO IP 用
+于缓存需要通过 USB 传输的数据，FIFO 的深度设置为 1024，位宽为 16，设置界面如下图
+69-2 所示。
+
+
+
+
+                                  图 69-2FIFO 配置界面示意图
+
+
+     然后将 FIFO 的写数据信号 fifo_wrdata、写使能信号 fifo_wrreq 以及数据计数信号
+
+店铺：https://xiaomeige.taobao.com                        官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                 技术群组：
+                     小梅哥 FPGA 团队                   武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                    开发板 培训 项目研发三位一体
+
+
+usedw 引出，fx2_clear 信号交由顶层处理，最终得到的 usb_stream_in 模块图如下图 69-3 所
+示，
+
+                                                                   [1:0]fx2_faddr
+
+                     reset_n                                          fx2_sloe
+                    fx2_flagb                                         fx2_slwr
+                    fx2_flagc                                         fx2_slrd
+
+                    fx2_ifclk         usb_stream_in                 fx2_pkt_end
+             [15:0]fifo_wrdata                                        fx2_slcs
+
+                    fifo_wrreq                                     [15:0]fx2_fdata
+
+                                                                  [10:0]fifo_usedw
+
+
+                                      图 69-3 usb_stream_in 模块图
+
+
+     usb_stream_in 模块的信号说明如下表 69-1 所示。
+                                   表 69-1usb_stream_in 模块信号说明表
+
+       信号名称                I/O   信号意义
+       reset_n             I     复位信号，低电平有效
+       fx2_flagb           I     FX2 型 USB2.0 芯片的端点 2 空标志
+       fx2_flagc           I     FX2 型 USB2.0 芯片的端点 6 满标志
+       fx2_ifclk           I     FX2 型 USB2.0 芯片的接口时钟信号
+       fifo_wrdata[15:0]   I     usb_stream_in 模块内部 FIFO 的写数据信号
+       fifo_wrreq          I     usb_stream_in 模块内部 FIFO 的写使能信号
+       fx2_fdata[15:0]     O     FX2 型 USB2.0 芯片的 SlaveFIFO 的数据线
+       fx2_faddr[1:0]      O     FX2 型 USB2.0 芯片的 SlaveFIFO 的 FIFO 地址线
+       fx2_sloe            O     FX2 型 USB2.0 芯片的 SlaveFIFO 的输出使能信号，低电平有效
+       fx2_slwr            O     FX2 型 USB2.0 芯片的 SlaveFIFO 的写控制信号，低电平有效
+       fx2_slrd            O     FX2 型 USB2.0 芯片的 SlaveFIFO 的读控制信号，低电平有效
+       fx2_clear           O     FX2 型 USB2.0 芯片的清除信号
+       fx2_pkt_end         O     数据包结束标志信号
+       fx2_slcs            O     FX2 型 USB2.0 芯片的 SlaveFIFO 的片选信号
+       fifo_usedw          O     usb_stream_in 模块内部 FIFO 的数据计数信号
+
+    关于该模块的详细的代码设计，请参看“FX2_Stream_IN 代码设计”一节的内容。
+
+
+69.2.2 添加 ROM IP
+
+    关于 ROM IP 的详细介绍请参看“IP 核使用之 ROM”一节的内容，这里我们添加一个位
+
+店铺：https://xiaomeige.taobao.com                                  官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                           技术群组：
+                 小梅哥 FPGA 团队                  武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力               开发板 培训 项目研发三位一体
+
+
+宽为 16，深度为 10240 的 ROM IP，ROM IP 的配置界面如下图 69-4 所示。
+
+
+
+
+                                     图 69-4 配置 ROM IP
+
+
+     然后将.mi 的图像数据存放至工程目录的 sources 文件夹下，在 ROM IP 的配置界面下
+将图像数据存入 ROM 中，操作如下图 69-5 所示。
+
+
+
+
+                                     图 69-5 导入图像数据
+店铺：https://xiaomeige.taobao.com                         官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                  技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+
+     然后将 ROM IP 和 usb_stream_in 模块例化至顶层模块 FX2_Stream_IN_JPEG 中，代码
+如下所示：
+      //例化 USB Stream in 数据发送模块
+      usb_stream_in usb_stream_in(
+          .fx2_fdata(fx2_fdata),
+          .fx2_faddr(fx2_faddr),
+          .fx2_slrd(fx2_slrd),
+          .fx2_slwr(fx2_slwr),
+          .fx2_sloe(fx2_sloe),
+          .fx2_flagc(fx2_flagc),
+          .fx2_flagb(fx2_flagb),
+          .fx2_ifclk(fx2_ifclk),
+          .fx2_pkt_end(fx2_pkt_end),
+          .fx2_slcs(fx2_slcs),
+          .reset_n(reset_n),
+          .fifo_wrdata(fifo_wrdata),
+          .fifo_wrreq(fifo_wrreq),
+          .fifo_usedw(fifo_usedw)
+      );
+          Gowin_pROM Gowin_pROM(
+              .dout(fifo_wrdata), //output [10239:0] dout
+              .clk(fx2_ifclk), //input clk
+              .oce(1'b1), //input oce
+              .ce(1'b1), //input ce
+              .reset(~reset_n), //input reset
+              .ad(rom_address) //input [3:0] ad
+          );
+    当 USB 发送模块中 FIFO 中的数据小于 512 字节（USB 数据包大小）的时候，产生 FIFO
+的写使能信号 fifo_wrreq，并且依次递增 ROM 的地址信号 rom_address，当 rom_address 的
+值大于 10239（达到 ROM 的最大深度）的时候，使 rom_address 等于 0，从 ROM 的初始
+地址开始读取数据，代码如下所示：
+      always@(posedge fx2_ifclk, negedge reset_n)
+      if(!reset_n)begin
+          fifo_wrreq <= 0;
+          rom_address <= 0;
+      end
+      else if(fifo_usedw < 512)begin
+          fifo_wrreq <= 1;
+          if(rom_address >= 10239)
+              rom_address <= 0;
+          else
+              rom_address <= rom_address + 1'b1;
+      end
+      else
+店铺：https://xiaomeige.taobao.com                      官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/               技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+
+          fifo_wrreq <= 0;
+    至此，我们就完成了本次实验的代码设计，接下来便可以进行板级验证了。
+
+
+69.3 JPEG 格式图像转换成 COE 格式
+     为了能够将 jpeg 图像的数据存储到 FPGA 的片上 ROM（RAM）中，需要先将 JPEG
+图像转换为 coe 格式。实现此操作的方法非常多，使用 Winhex，Notepad++等软件协同操作
+可以实现，只是这些操作都挺繁琐。为了简化实验过程，我们可以使用电脑软件“MIF 精
+灵.exe”
+     ，该文件在提供资料的“常用软件”路径下。该软件主界面如下图 69-6 所示：
+
+
+
+
+                           图 69-6 使用 MIF 精灵生成需读取的图像数据
+
+
+     使用时，双击打开该软件，然后点击 Xilinx 按钮，Type 里面下拉框选择 image，然后
+在出来的空白框内双击，选择一个 jpg 格式的图片文件，然后点击 OK 按钮，即可在该软件
+的路径下生成一个名为“image.coe”的文件。对于本次实验，其中用于存放 jpg 图像数据的
+ROM 尺寸为 10240*16bit，所以，只有文件尺寸不超过 20480 字节的 jpeg 图像转换得到的
+coe 文件才能用作该 ROM 的初始化文件。在该工程中的图片素材文件夹的目录下，我们也
+提供了两个尺寸在 20480 字节以内的 jpg 图像方便用户测试，如下图 69-7 所示：
+
+
+
+
+店铺：https://xiaomeige.taobao.com                   官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/            技术群组：
+                 小梅哥 FPGA 团队                    武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                 开发板 培训 项目研发三位一体
+
+                            图 69-7 USB 图像读取数据工程和图片素材
+
+
+     得益于 jpg 图像的高度压缩性，第一张图片分辨率为 528*539 像素，但是却仅占用
+19.2K 字节的存储空间，第二张图片分辨率为 480*480 像素，仅占用 19.6K 字节的存储空间，
+都小于 FPGA 中的 ROM 存储空间。因此这两张图片转换得到的 coe 文件是能够用来初始化
+ROM 的。
+
+
+69.4 板级验证
+     经过以上工作，代码设计部分的任务已经全部完成，接下来将进行板级验证，读者将
+USB 线、下载器、电源线依次连接在开发板上，硬件连接如下图 69-8 所示。
+
+
+
+
+                                         图 69-8 硬件连接图
+
+
+     随后编译本工程，将生成的 fs 文件下载至 ACX720-GW5A138 开发板中，如下图 69-9
+
+所示。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                         官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                  技术群组：
+                 小梅哥 FPGA 团队                 武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力               开发板 培训 项目研发三位一体
+
+
+
+
+                                     图 69-9 下载 fs 文件
+
+
+    然后打开“USB_Display.exe”软件，该软件位于：小梅哥 ACX720-GW138 国产高云
+FPGA 开发板资料\05_配套软件和驱动\小软件文件夹下，点击设备→连接，软件会实时接
+收到图像数据，并显示在图像显示区域，如下图 69-10 所示。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                        官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                 技术群组：
+                 小梅哥 FPGA 团队              武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+                               图 69-10 USB 图像读取数据效果图
+
+
+    从上述图中可以看出，USB_Display 上位机显示的图像没有错位，丢失数据的情况，
+
+说明我们本次实验成功。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                        官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                 技术群组：
+

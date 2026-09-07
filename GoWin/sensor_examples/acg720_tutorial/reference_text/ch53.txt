@@ -1,0 +1,462 @@
+                 小梅哥 FPGA 团队                     武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                   开发板 培训 项目研发三位一体
+
+
+
+             53 IP 协议介绍与 IP 校验和算法实现
+                 |----02_设计实例
+ 工程源码
+                 |----ch53_IP_checksum
+ 相关视频课程
+ 说明
+
+      章节导读
+
+      本章将讲解千兆以太网网络层 IP 协议的内容及算法实现。IP 层的实质是在
+MAC 层的基础上将原有协议进行一个更加细化的定义而得。它最核心的意义，就
+是让 IP 地址参与到网络数据传输中，让硬件和硬件的通信传输，从网卡号作为
+唯一的身份识别标志，变为以 IP 地址作为身份识别标志。而 IP 层最核心的内
+容，就是 IP 协议数据字段的格式。
+
+
+53.1IP 协议数据字段格式
+      IP 是 TCP/IP 协议族中最核心的协议，所有的 TCP、UDP、ICMP、IGMP 数
+据都以 IP 数据报的格式传输。IP 仅提供尽力而为的传输服务，如果发生某种错
+误，IP 会丢失该数据，然后发送 ICMP 消息给信源端。另外，IP 数据报可以不
+按发送顺序接收。
+      IP 数据报的格式如图 53-1 所示，IP 数据报的长度／类型段的数值为 0x0800，
+数据和填充段包括 IP 头部数据和 IP 数据两个部分。
+       前同步码        SFD    目的地址            源地址      长度/类型           数据和填充           FCS
+
+        7字节       1字节       6字节            6字节       2字节           46~1500字节       4字节
+
+
+
+
+                                   0x0800     IP 报文头部              IP 报文数据
+
+                                    2字节                    46~1500字节
+
+                                         图 53-1 IP 数据报格式
+
+
+      其中，和以太网帧具有帧头一样，IP 数据报也包含了一个 IP 报头部分，与
+IP 协议相关的一些信息如 IP 地址，数据包长度等会被打包进 IP 报头中，然后再
+与需要传输的 IP 报文数据一起，作为 MAC 帧的数据和填充字段送往 MAC 层发
+送，接下来，将着重介绍 IP 协议首部的详细信息。
+
+店铺：https://xiaomeige.taobao.com                               官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                        技术群组：
+                  小梅哥 FPGA 团队                    武汉芯路恒科技
+            专注于培养您的 FPGA 独立开发能力                  开发板 培训 项目研发三位一体
+
+
+53.2IP 协议首部详解
+       IP 数据报的格式如下表 53-1 所示。
+                                  表 53-1 IP 数据报格式说明表
+
+ 0~3       4~7       7~15                16~18                19~31
+ 版本        首部长度      服务类型                总长度
+ 分段标识，标识属于同一数据报                          NC      DF   MF      段偏移
+ 生存周期 TTL(秒)         上层协议                报头校验和
+ 源 IP 地址
+ 目的 IP 地址
+ 可选字段（可无）
+ IP 数据报数据部分，N 个字节
+
+       其中每个字段的功能简介如下表 53-2 所示。
+                                表 53-2 每个字段功能简介说明表
+
+                                                      版本就是 IPV4 或者 IPV6，一般选择
+       版本度             4位     IP 协议版本
+                                                      IPV4，即版本值为 4。
+                                                      IP 首部长度即有多少个 32 位数，当 IP 首
+       首部长             4位     IP 首部长度                 部长度为 20 时（即无可选字段）
+                                                                      ，该值为
+                                                      5。
+                                                       （5*4 =20）
+                              指示了报文的优先权
+       服务类型            8位                             简单的发送可以全部置 0 即可
+                              等
+       总长度             16 位   IP 报文长度                 IP 报文（报头+数据）长度
+       分段标识            16 位   是否属于同一数据段               IP 报文的分段 ID
+       段标识和段偏移         16 位   可设为 0                   简单的发送可以全部置 0 即可
+                                                      生存时间字段设置了数据报可以经过的最
+                                                      多路由器数,表示数据包在网络上生存多久
+                                                      ｡TTL 的初始值由源主机设置(通常为 32、
+ IP
+ 字                                                    64 或 128)，一旦经过一个处理它的路由
+       生存周期                   可以经过的最大路由
+ 段                     8位                             器,它的值就减去 1｡当该字段的值为 0 时,
+       （TTL）                  数
+                                                      数据报就被丢弃,并发送 ICMP 消息通知源
+                                                      主机｡这样当封包在传递过程中由于某些
+                                                      原因而未能抵达目的地的时候就可以避免
+                                                      其一直充斥在网路上面｡
+
+                              指该 IP 包中数据段             常用协议号：
+                              内容所使用的网络协               00：IP
+       上层协议类型          8位                             01：ICMP
+                              议类型，如 ICMP､
+                                                      06：TCP
+                              DNS 等｡
+                                                      17：UDP
+       报头校验和           2      IP 报头的校验和               对 IP 报头计算得出
+       源 IP 地址         4      发送端的 IP 地址              如 192.168.0.2
+       目的 IP 地址        4      接收端的 IP 地址              如 192.168.0.3
+
+
+店铺：https://xiaomeige.taobao.com                                   官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                            技术群组：
+                 小梅哥 FPGA 团队                     武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                   开发板 培训 项目研发三位一体
+
+     可选字段                       可选                没有的时候长度可以为 0
+
+     下表 53-3 为 IP 数据报中上层协议字段常见协议与其对应的协议号。
+                              表 53-3 IP 数据报协议字段与其对应的协议号
+
+                         协议号     协议         协议号    协议
+                         00      IP         22     XNS-IDP
+                         01      ICMP       27     RDP
+                         02      IGMP       29     ISO-TP4
+                         03      GGP        36     XTP
+                         04      IP-ENCAP   37     DDP
+                         05      ST         39     IDPR-CMTP
+                         06      TCP        73     RSPF
+                         08      EGP        81     VMTP
+                         12      PUP        89     OSPFIGP
+                         17      UDP        94     IPIP
+                         20      HMP        98     ENCAP
+
+     在 IP 报头中，前 20 字节和紧接其后的选项部分是 IP 数据报的首部。前 20
+个字节是固定的，可选字段则可有可无。首部的每一行是一个 32 位字的单位，
+最高位在左边，为 0bit，最低位在右边，为 31bit。4 字节的 32bit 值按照以下次
+序传输：首先 0-7bit，其次 8-15 bit，然后 16-23bit，最后是 24-31bit，这种传输
+次序称为 big endian 字节序(我们在 C 语言写位操作的算法时常用到该词)。
+TCP/IP 首部中的所有二进制整数在网络中传输时都要求以这种次序，因此它又
+称作网络字节序，其他形式存储的二进制数据，如 little endian 格式，则必须在
+传输数据之前把首部转化成网络字节序。以下对 IP 报头中各个字段的内容详细
+介绍。
+
+              版本为当前使用的 IP 协议版本号，大家最熟悉，用的最多的是
+         IPv4 版本，当然现在 IPv6 版本用的也越来越多了。本实验使用的是
+         IPv4 版本，所以在版本字段为 4 就表示版本号为 IPv4。
+
+              首部长度是指首部占 32bit 字的数目，因为 4 位的最大值为 15，
+         因此首部最长为 60 字节，也即是说选项部分的最大值为 40 字节，不够
+         4 的倍数，要用 0 填充，使数据部分的起始地址为 4 的倍数。
+
+              服务类型：略。
+
+              总长度指整个 IP 数据报的长度，包括首部和数据部分，16bit，
+         最长可达 65535 字节。尽管理论上可以传送一个长达 65535 的 IP 数据
+         报，但实际上还要考虑网络的最大承载能力等因素。
+
+              3 个标志位主要用来标识分片的 IP 数据报，片位移为分片的数据
+         报的首个字节偏离整个原始数据报的位置。
+店铺：https://xiaomeige.taobao.com                           官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                    技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+              源 IP 地址和目的 IP 地址则是该 IP 报文的发送方和接收方的网络
+         地址，例如在我们前面的实验中，说 FPGA 的 IP 地址为 192.168.0.2，
+         电脑的 IP 地址为 192.168.0.3，那么 FPGA 在向电脑发送数据包时，源
+         IP 地址就是 192.168.0.2，目的 IP 地址为 192.168.0.3。
+
+53.3IP 首部校验和算法介绍
+     首部检验和字段是根据 IP 首部计算的检验和码，不对首部后面的数据进行
+计算。具体的计算和实现方法将在后文详细介绍。其计算方法为：
+     将校验和字段置为 0，然后将 IP 包头按 16 比特分成多个单元，如包头长度
+不是 16 比特的倍数，则用 0 比特填充到 16 比特的倍数；
+     对各个单元采用反码加法运算(即高位溢出位会加到低位，通常的补码运算
+是直接丢掉溢出的高位)，将得到的和的反码填入校验和字段；
+     例如，我们使用 IP 协议发送一个数据长度为 30 个字节的数据包，发送端 IP
+为 192.168.0.2，接收端 IP 为 192.168.0.3。则 IP 报头可如下图 53-2 中阴影部分
+标记内容所示：
+
+
+
+
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                    小梅哥 FPGA 团队                    武汉芯路恒科技
+            专注于培养您的 FPGA 独立开发能力                   开发板 培训 项目研发三位一体
+
+
+
+
+                                           图 53-2 IP 报头内容
+
+
+        IP 报头中每个字段的内容详细如下表 53-4 所示。
+                                表 53-4 IP 报头每个字段内容详细说明表
+
+ 协议类型        服务类型       IP 报文长度                                          分段和偏移
+                                                分段标识 id
+ 报头长度        tos        total_len                                        offset
+ 0x45        0x00       0x00        0x32        0x00         0x00        0x00     0x00
+ v4; 20B     普通         50 字节
+ 生存周期        上层协议       报头校验和
+                                                源地址 src_ip
+ ttl         protocol   checksum
+ 0x40        0x11       0xf9        0x65        0xc0         0xa8        0x00     0x02
+ 64 级        17 UDP                             192          168         0        2
+ 目标地址 dst_ip
+ 0xc0        0xa8       0x00        0x03
+ 192         168        0           3
+
+        按照上述提到的 IP 首部校验和的方法计算 IP 首部校验和，即：
+        0x4500 + 0x0032 + 0x0000 + 0x0000 + 0x4011 + 0x0000(计算时强制置 0) +
+0xc0a8 + 0x0002 + 0xc0a8 + 0x0003 = 0x20698。
+
+店铺：https://xiaomeige.taobao.com                                     官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                              技术群组：
+                     小梅哥 FPGA 团队                武汉芯路恒科技
+             专注于培养您的 FPGA 独立开发能力               开发板 培训 项目研发三位一体
+
+
+        0x0002 + 0x0698 = 0x069a
+        checksum = ~0x069a = 0xf965
+        计算结果与实际发包软件计算的一致。
+        该部分使用 Verilog 编写计算单元非常的方便，可以用纯组合逻辑实现，也
+可以用时序逻辑实现。以下为使用 Verilog 编写的 checksum 的逻辑代码。
+ module checksum(
+        input [3:0]ver, //版本
+        input [3:0]hdr_len,//首部长度
+        input [7:0]tos, //服务类型
+        input [15:0]total_len,        //IP 报文总长
+        input [15:0]id, //分段标识
+        input [15:0]offset, //偏移
+        input [7:0]ttl, //生存周期
+        input [7:0]protocol, //上层协议类型
+        input [31:0]src_ip, //源 IP 地址
+        input [31:0]dst_ip, //目的 IP 地址
+
+
+        output [15:0]checksum_result //校验和
+ );
+
+        wire [31:0]sum;
+
+        assign sum = {ver,hdr_len,tos} + total_len + id
+                      + offset + {ttl,protocol} + src_ip[31:16]
+                      + src_ip[15:0] + dst_ip[31:16] + dst_ip[15:0];
+
+        assign checksum_result = ~(sum[31:16] + sum[15:0]);
+
+ endmodule
+        该实现方法看似简单且合理，但是在实际使用过程中，有读者反映在某些
+情况下会发生错误，该读者举了一个例子，假设某帧数据的 IP 报头如下表 53-5
+所示：
+                                     表 53-5 某帧的 IP 报头说明表
+
+ 协议类型         服务类型       IP 报文长度                                      分段和偏移
+                                             分段标识 id
+ 报头长度         tos        total_len                                    offset
+ 0x45         0x00       0x05        0xd6    0x70         0xf6        0x40     0x00
+ v4; 20B      普通         50 字节
+ 生存周期         上层协议       报头校验和
+                                             源地址 src_ip
+ ttl          protocol   checksum
+ 0x80         0x11                           0xc0         0xa8        0x01     0x6e
+店铺：https://xiaomeige.taobao.com                                  官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                           技术群组：
+                    小梅哥 FPGA 团队            武汉芯路恒科技
+            专注于培养您的 FPGA 独立开发能力            开发板 培训 项目研发三位一体
+
+ 64 级        17 UDP                      192    168        0        2
+ 目标地址 dst_ip
+ 0xc0        0xa8      0x01      0x64
+ 192         168       0         3
+
+        该数据帧中，如果按照上述方法计算：
+        第一步：4500+05D6+70F6+4000+8011+C0A8+016E+C0A8+0164=2FFFF
+        第二步：ffff + 2 = 1
+        第三步：~1 = fffe
+        既此算法得到的结果为 0xfffe，而使用以太网发送时（或者使用小兵以太网
+测试仪），实际的值为 0xfffd。
+        出错的原因在于 ffff + 2 会发生溢出，而上述设计没有考虑到该情况。解决
+方案很简单，对第二步的计算结果再根据高 16 位的值判断是否需要再执行一次
+加法操作。
+        因此可将设计改进如下：
+ module checksum(
+        input [3:0]ver, //版本
+        input [3:0]hdr_len,//首部长度
+        input [7:0]tos, //服务类型
+        input [15:0]total_len,     //IP 报文总长
+        input [15:0]id, //分段标识
+        input [15:0]offset, //偏移
+        input [7:0]ttl, //生存周期
+        input [7:0]protocol, //上层协议类型
+        input [31:0]src_ip, //源 IP 地址
+        input [31:0]dst_ip, //目的 IP 地址
+
+
+        output [15:0]checksum_result //校验和
+ );
+
+
+
+        wire [31:0]suma,sumb;
+
+        assign suma = {ver,hdr_len,tos} + total_len + id
+                            + offset + {ttl,protocol} + src_ip[31:16]
+                            + src_ip[15:0] + dst_ip[31:16] + dst_ip[15:0];
+
+        assign sumb = (suma[31:16] + suma[15:0]);
+
+        assign checksum_result = sumb[31:16]?
+
+店铺：https://xiaomeige.taobao.com                       官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                技术群组：
+                 小梅哥 FPGA 团队                 武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力              开发板 培训 项目研发三位一体
+
+                                   ~(sumb[31:16] + sumb[15:0]):
+                                   ~sumb[15:0];
+ endmodule
+     根据 IP 头部校验计算步骤，代码中 suma 就是经过步骤 1 计算的结果，sumb
+是步骤 2 计算的和。checksum_result 为根据步骤 3 需要根据高 16bit 是否为零来
+判断是否需要继续相加求和并取反输出的值。
+     部分网友在看到这里后产生了疑问，表示既然在第二步的时候出现了相加
+溢出的情况，那么现在加了一步，在步骤三中再根据步骤 2 结果的高 16 位是否
+不为 0 执行了再一次的相加操作，那么这一次的相加操作有没有可能继续溢出
+呢，是否还需要再循环加下去，直到高 16 位不为 0 了再输出呢，事实上这种担
+心是多余的，该结果完全可以使用理论计算的方式验证。
+     对于 sumb = suma[31:16]+suma[15:0]来说，该公式包含了高 16bit 不为 0 继
+续相加求和，高 16bit 为 0 情况下，低 16bit 数据加 0。不管哪种情况 2 个 16bit
+数据相加的结果取值范围为 17’h00001~17’h1fffe（当 16’hffff+16’hffff 时，
+求和值最大），也就是说在第三步再次进行求和时，出现的结果最大时候的情况
+就是 ffffe+1，其值为 ffff，高 16 位不可能再大于 0，所以无需再继续求和。
+     设计完成后，可以编写 testbench 对该算法进行计算，testbench 如下所示。
+ `timescale 1ns/1ns
+ module checksum_tb;
+
+      reg [3:0]ver;
+      reg [3:0]hdr_len;
+      reg [7:0]tos;
+      reg [15:0]total_len;
+      reg [15:0]id;
+      reg [15:0]offset;
+      reg [7:0]ttl;
+      reg [7:0]protocol;
+      reg [31:0]src_ip;
+      reg [31:0]dst_ip;
+
+      wire [15:0]checksum_result;
+
+      checksum checksum
+      (
+          .ver(ver),
+          .hdr_len(hdr_len),
+          .tos(tos),
+          .total_len(total_len),
+店铺：https://xiaomeige.taobao.com                         官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                  技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+           .id(id),
+           .offset(offset),
+           .ttl(ttl),
+           .protocol(protocol),
+           .src_ip(src_ip),
+           .dst_ip(dst_ip),
+           .checksum_result(checksum_result)
+      );
+
+      initial begin
+          ver = 0;
+          hdr_len = 0;
+          tos = 0;
+          total_len = 0;
+          id = 0;
+          offset = 0;
+          ttl = 0;
+          protocol = 0;
+          src_ip = 0;
+          dst_ip = 0;
+          #200;
+
+           ver = 4'h4;
+           hdr_len = 4'h5;
+           tos = 8'h0;
+           total_len = 16'h0032;
+           id = 16'h0000;
+           offset = 16'h0000;
+           ttl = 8'h40;
+           protocol = 8'h11;
+           src_ip = 32'hc0a80002;
+           dst_ip = 32'hc0a80003;
+           #300;
+
+           ver = 4'h4;
+           hdr_len = 4'h5;
+           tos = 8'h0;
+           total_len = 16'h0032;
+           id = 16'h0000;
+           offset = 16'h0000;
+           ttl = 8'h40;
+           protocol = 8'h11;
+           src_ip = 32'hc0a80005;
+           dst_ip = 32'hc0a80008;
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                    小梅哥 FPGA 团队             武汉芯路恒科技
+            专注于培养您的 FPGA 独立开发能力             开发板 培训 项目研发三位一体
+
+            #300;
+
+            ver = 4'h4;
+            hdr_len = 4'h5;
+            tos = 8'h0;
+            total_len = 16'h0032;
+            id = 16'h0000;
+            offset = 16'h0000;
+            ttl = 8'h40;
+            protocol = 8'h11;
+            src_ip = 32'hc0a80105;
+            dst_ip = 32'hc0a80108;
+            #300;
+            $stop;
+      end
+
+ endmodule
+     使用 Modelsim 仿真，整体的仿真波形如下图 53-3 所示。
+
+
+
+
+                                 图 53-3 Modelsim 仿真波形图
+
+
+     通过上图可以看出，逻辑计算的结果与使用小兵以太网测试仪计算出的 IP
+首部校验和一致，所以证明该算法实现是正确的。
+     另外，有读者曾经表示担忧，整个算法实现全部使用的是组合逻辑，这样
+的情况会不会影响整个设计的时序性能。能否影响设计的时序性能，主要看该
+计算产生到该结果被使用时的时间差。通过时序仿真可知，从输入数据变化到
+输出结果稳定，至少需要 10.263ns。从 IP 首部所有数据确定，到开始发送校验
+和字段，千兆以太网 RGMII 接口是 10 个时钟周期(10*8ns = 80ns)，即完全满足
+时序要求。
+
+53.4总结
+     至此，我们就完成了 IP 数据报中最重要的部分，IP 报头校验和的计算逻辑
+设计，同时，相信大家已经了解了 IP 报头的具体内容，IP 数据包就是紧跟再 IP
+报头后面的。然后，IP 的数据部分也还并不是单纯的用户数据，我们在网络应
+用时，还需要将我们的用户数据进一步打包到比 IP 协议更上一层的协议中，再
+店铺：https://xiaomeige.taobao.com                          官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                   技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+
+通过 IP 协议发送，该内容我们将在下一节内容讲到。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+

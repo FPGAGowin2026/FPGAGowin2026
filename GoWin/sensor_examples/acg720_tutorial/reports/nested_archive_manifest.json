@@ -1,0 +1,26 @@
+[
+  {
+    "chapter": 33,
+    "role": "board_project",
+    "archive": "raw/ch33/ch33_uart_eeprom/A.rar",
+    "sha256": "b5ade8af8edd046c48faaac73e8532dde78a01d765fcb4aa35ec6636908e0278",
+    "status": "PASS",
+    "extracted_files": 76,
+    "hdl_files": 18,
+    "gowin_projects": 1,
+    "output": "raw/ch33/ch33_uart_eeprom/nested_A",
+    "log": "reports/nested_extract_logs/ch33_A.log"
+  },
+  {
+    "chapter": 33,
+    "role": "simulation_project",
+    "archive": "raw/ch33/ch33_uart_eeprom/B.rar",
+    "sha256": "2739d817e60f5a89b107f84abf251fb11a1d06741223d99314a9714da91bd705",
+    "status": "PASS",
+    "extracted_files": 80,
+    "hdl_files": 11,
+    "gowin_projects": 1,
+    "output": "raw/ch33/ch33_uart_eeprom/nested_B",
+    "log": "reports/nested_extract_logs/ch33_B.log"
+  }
+]

@@ -1,0 +1,1474 @@
+                    小梅哥 FPGA 团队                                               武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                                              开发板 培训 项目研发三位一体
+
+
+
+                    千兆以太网传输 ACM7606 数据采集
+                    |----02_设计实例
+ 工程源码
+                    |----ch62_ad7606_ddr3_rgmii
+ 相关视频课程
+                    如果您手头的硬件不支持本实验，您可以学习本实验的理论内容，也可以跳过本节
+ 说明
+                    内容，继续后续内容的学习。
+
+      章节导读
+
+      本节实验结合 ADI 公司的 16 位 8 通道并行采样 ADC 芯片 AD7606，并利用
+ACX720 开发板上一片 Realtek 的 RTL8211 以太网收发器，实现了对 AD7606 型 8
+通道 16 位 ADC 的数据转换控制并输出到电脑。FPGA 采用 RGMII 接口与以太网
+PHY 芯片通信，接收以太网数据包，并提取出以太网数据包中 UDP 协议报文的数
+据内容，然后将数据转化成控制命令，最终实现对 AD7606 的采样频率、数据采
+样个数以及采样通道的合理配置，采集完成后的数据存放至 DDR3 中，然后通过
+网口以 UDP 协议传输到电脑。用户可以在电脑上通过网口调试工具进行指令的
+下发，并对采样到的数据进行导出，然后使用 MATLAB 软件进行进一步的数据处
+理分析。
+
+
+62.1系统整体设计
+      在整个设计中，首先通过电脑上的网络调试助手，将命令帧进行发送，然
+后通过 ACX720 开发板上的以太网芯片接收，随后将接收到的数据转换成命令，
+最终实现对 AD7606 采样频率、数据采样个数以及采样通道的配置。配置完成
+之后，AD7606 开始采集数据，将 AD7606 采集的数据存储至 DDR3 中，最后数
+据通过网口传输至电脑，电脑端将采集到的数据通过 MATLAB 进行进一步的分
+析，系统的整体设计框图如下所示。
+
+                               rgmii_rx_clk_i               rgmii_rx_clk                                     clk_200M
+                                                  eth_pll                          clk50m       Gowin_PLL
+                                                                                                            loc_clk50m
+
+
+
+
+                          rgmii_to_gmii         eth_cmd              state_ctrl             eth_send_ctrl      eth_udp_tx_gmii
+          以太网
+          芯片
+          RTL8211
+                         eth_udp_rx_gmii                          ad7606_driver
+
+
+
+                             fifo_rx            cmd_rx           ddr3_ctrl_2port               fifo_tx          gmii_to_rgmii
+
+
+
+
+                                                                       DDR3
+
+
+
+店铺：https://xiaomeige.taobao.com                                                                          官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                                                                   技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+                      图 62-1 千兆以太网传输 ACM7606 数据采集整体设计框图
+
+
+     下面对上述图中的各个模块的功能进行简要说明：
+
+              1.Gowin_PLL 模块：锁相环模块，输入时钟 50M，由开发板上的晶
+         振提供；输出 200M 的时钟给到 DDR3 控制器使用；输出 50M 的时钟
+         给其他模块使用。
+
+              2.eth_pll 模块：锁相环模块，将 rgmii 接口时钟信号 rgmii_rx_clk_i
+         偏移 270°得到 rgmii_rx_clk 时钟信号，这样做是为了在时钟上升沿/下
+         降沿取数据时，取得的数据是最准确和稳定的，具体的偏移角度是实
+         际使用时，不断调试得到的，在我们的 ACX720 开发板上，偏移 270°
+         是最合适的。
+
+              3.eth_udp_rx_gmii 模块：GMII 以太网接收模块，接收用户在电脑
+         上通过网络助手或者上位机发送的包含指令数据的数据帧。
+
+              4.fifo_rx 模块：FIFO IP 核，用来缓存通过以太网下发的指令，解
+         决跨时钟域的问题。
+
+              5.eth_cmd 模块：接收转命令模块，对接收到的以太网数据进行分
+         析，提取出每个控制命令帧。
+
+              6.cmd_rx 模块：指令转控制模块，将从接收转命令模块接收到的
+         数据转换为相应的控制数据并分别输出到对应的模块。
+
+              7.ad7606_driver 模块：AD7606 控制器驱动模块，该控制器实现了
+         对 AD7606 型 8 通道 16 位 ADC 的数据转换控制并输出。使用该控制器
+         时，用户无需关心 AD7606 的具体控制时序，一切都在控制器内部完成，
+         用户只需要像使用并行 ADC 一样取用数据即可。
+
+              8.state_ctrl 模块：ADC 采集数据 DDR3 缓存以太网发送状态控制模
+         块，协调各个模块的信号控制，程序状态的总控制模块。
+
+              9.ddr3_ctrl_2port 模块：DDR3 双端口模块，用来缓存 ACM7606 采
+         集到的数据。
+
+              10.fifo_tx 模块：以太网发送 FIFO，从 DDR3 中读取数据进入该
+         FIFO 中，然后从该模块中读出交由以太网发送模块发出，主要是解决
+         跨时钟的问题。
+
+              11.eth_send_ctrl 模块：以太网发送控制模块，该模块主要控制网口
+         发送模块的使能控制信号以及对以太网数据帧数据长度的控制。
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                 小梅哥 FPGA 团队                 武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力              开发板 培训 项目研发三位一体
+
+              12.eth_udp_tx_gmii 模块：网口发送模块，将采集到的数据以以太
+         网帧的形式进行发送。
+
+              13.gmii_to_rgmii 模块：以太网发送 gmii 转 rgmii，将 gmii 接口信号
+         转换成 rgmii 接口。
+
+     除去使用 IP 和前面章节讲过的模块外，还需要设计的模块包括eth_cmd 模
+块、cmd_rx 模块、state_ctrl 模块、ad7606_driver 模块和 eth_send_ctrl 模块。
+
+62.2ACM7606 模块介绍
+     ACM7606 数据采集模块使用的是 ADI 公司的 16 位 8 通道同步采样模数转
+换器 AD7606，模块图如下图 62-2 所示。
+
+
+
+
+                                   图 62-2 ACM7606 模块图
+
+
+     AD7606 是 16 位 8 通道同步采样模数数据采集系统（DAS）。内置模拟输入
+箝位保护、二阶抗混叠滤波器、跟踪保持放大器、16 位电荷再分配逐次逼近型
+模数转换器（ADC）、灵活的数字滤波器、2.5V 基准电压源、基准电压缓冲以
+及高速串行和并行接口。AD7606 采用 5V 单电源供电，可以处理±10V 和±5V
+真双极性输入信号。同时所有通道均能以高达 200kSPS 的吞吐速率采样。输入
+箝位保护电路可以耐受最高达±16.5V 的电压。无论以何种采样频率工作，其模
+拟输入阻抗均为 1MΩ。采用单电源工作方式，具有片内滤波和高输入阻抗，因
+此无需驱动运算放大器和外部双极性电源。AD7606 抗混叠滤波器的 3dB 截止频
+率为 22kHz；当采样频率为 200Ksps 时，它具有 40dB 的抗混叠抑制特性。
+     芯片对外提供 SPI 和并行的数字接口。当 AD7606 的 8 个通道全部以 200KPS
+的最高速率进行转换时，数据输出速率达到 25.6Mbps，需要使用高性能 MCU
+的 SPI 外设才能勉强该速率要求。因此可以使用 16 位并口来进行数据的传输，
+提高数据传输速率。当 AD7606 应用在 FPGA 系统中的时候，使用 SPI 串行接口
+
+店铺：https://xiaomeige.taobao.com                         官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                  技术群组：
+                 小梅哥 FPGA 团队                 武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力              开发板 培训 项目研发三位一体
+
+
+和并行接口都能够轻松的满足数据传输的速率需求。当在 FPGA 系统上应用
+AD7606 时，可以通过在 FPGA 上设计 AD7606 控制转换逻辑，将转换结果数据
+直接存储到片上的存储器如 FIFO 或者 RAM 中，也可以存储到 FPGA 片外的存
+储器如 SRAM 或 SDRAM 中，然后由其他主控芯片如 MCU 或 DSP 读出，或者
+直接在 FPGA 内部进行数据的运算和处理。当然，由于 FPGA 片上可以设计软
+核控制器，也可以直接使用软核控制器完成数据的处理和传输工作。
+
+62.2.1功能框图
+     AD7606 的功能框图如下所示。
+
+
+
+
+                                   图 62-3 AD7606 功能框图
+
+
+     如上图所示，采集到的数据在经过稳压滤波和采样保持后通过 8 选 1 多路
+选择器被分别送入到 16 位逐次逼近型 ADC 芯片 AD7606 中进行转换，最后经由
+数字滤波后输出，当数据以串行模式输出时，数据会从 DoutA、DoutB 中输出，
+如果数据是以并行方式输出，那么数据将从 DB[15:0]中输出。
+
+62.2.2模拟输入
+     AD7606 可处理真双极性、单端输入电压。RANGE 引脚的逻辑电平决定所
+有模拟输入通道的模拟输入范围。如果此引脚与逻辑高电平相连，则所有通道
+的模拟输入范围为±10V。如果此引脚与逻辑低电平相连，则所有通道的模拟
+输入范围为±5V。AD7606 的模拟输入阻抗为 1MΩ。这是固定输入阻抗，不随
+
+店铺：https://xiaomeige.taobao.com                         官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                  技术群组：
+                   小梅哥 FPGA 团队                   武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                   开发板 培训 项目研发三位一体
+
+
+AD7606 采样频率而变化。AD7606 的输入结构如下图 62-4 所示，其各路模拟输
+入均含有箝位保护电路。虽然采用 5V 单电源供电，但此模拟输入箝位保护允许
+输入过压达到±16.5V。
+
+
+
+
+                                    图 62-4 AD7606 模拟输入结构
+
+
+62.2.3数字滤波器与过采样
+       AD7606 内置一个可选的数字一阶 sinc 滤波器，在使用较低吞吐率或需要更
+高信噪比或更宽动态范围的应用中，应使用该滤波器。数字滤波器的过采样引
+脚 OS[2:0]控制（具体参考 AD7606 数据手册）。OS2 为 MSB 控制位。OS0 为
+LSB 控制位，下表 62-1 提供了用来选择不同过采样倍率的过采样位解码。
+                             表 62-1 不同过采样倍率的过采样位解码
+
+ OS[2:0]   过采样     5V 范 围    10V 范 围      5V 范围 3dB 带   10V 范 围 3dB     最 大 吞 吐 量
+           倍率      SNR(dB)   SNR(dB)      宽(kHz)        带宽(kHz)         CONVST   频 率
+                                                                        (kHz)
+ 000       No OS   89        90           15            22              200
+ 001       2       91.2      92           15            22              100
+ 010       4       92.6      93.6         13.7          18.5            50
+ 011       8       94.2      95           10.3          11.9            25
+ 100       16      95.5      96           6             6               12.5
+ 101       32      96.4      96.7         3             3               6.25
+ 110       64      96.9      97           1.5           1.5             3.125
+ 111       无效
+
+       OS 引脚在 BUSY 下降沿锁存，从而设置下一个转换的过采样倍率，如下图
+62-5 所示，如果 OS 引脚选择过采样倍率 8，则下一个 CONVST x 上升沿采集各
+通道的第一个采样点，一个内部产生的采样信号采集所有通道的其余 7 个样点，
+然后对这些样点求平均值，以改进 SNR 性能。开启过采样时，CONVST A 和
+CONVST B 引脚必须连在一起驱动，转换过程中 BUSY 保持高电平的时间会延
+长。BUSY 保持高电平的实际时间取决于所选的过采样倍率，过采样倍率越高，
+则 BUSY 保持高电平的时间或总转换时间越长。
+
+
+
+店铺：https://xiaomeige.taobao.com                                官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                         技术群组：
+                 小梅哥 FPGA 团队              武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+
+
+
+                         图 62-5 OS 引脚在 BUSY 下降沿锁存时序示意图
+
+
+62.2.4工作时序
+     AD7606 根据采样方式不同具有多种驱动时序，本次实验采用的为并行输出
+（即 8 个 16 位的数据通过 16 根并行线一个接着一个输出），转换后读取模式。
+其时序图由两部分组成：完成 AD 转换和读取 AD 数据。其中的时间可以参考
+ADI 公司的手册。当 CONVST A 和 CONVST B 通道都变为上升沿时，BUSY 信
+号转变为高电平，代表转换开始，直到 BUSY 的下降沿到来，代表数据已经转
+                   ̅̅̅变为下降沿时，数据将会被输送
+换完成，正在锁存至输出数据寄存器中，当CS
+              ̅̅̅和RD
+到总线上。并行工作模式下，当CS  ̅̅̅̅都为低电平时，会使能总线，将转换结
+果输出到并行数据总线上，当 V1 转换结果开始输出之后，FRSTDATA 会随后转
+变为高电平，表示输出数据总线可以提供 V1 的结果。并行模式下，每次数据的
+输出为 16 位，对应一个通道。
+
+
+
+
+                              图 62-6 CONVST 时序—转换之后读取
+
+
+
+
+店铺：https://xiaomeige.taobao.com                    官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/             技术群组：
+                 小梅哥 FPGA 团队               武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力            开发板 培训 项目研发三位一体
+
+
+
+
+                                             ̅̅̅和RD
+                              图 62-7 并行模式，独立的CS  ̅̅̅̅脉冲
+
+
+62.3模块设计
+
+62.3.1fifo_rx 模块
+     FIFO IP 核，以太网接收模块的工作时钟为 125Mhz，命令解析模块以及后
+续的 AD7606 控制器的工作时钟为 50Mhz，两者速率不匹配，使用该 IP 核解决
+采集过程中会出现的跨时钟域数据交互问题。
+     我们这里配置读写位宽为 8 位（与以太网接收模块的数据位宽保持一致），
+写深度为 256，配置模式选择“First-Word Fall-Through”，使用同步复位，整体
+的配置界面如下所示。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                      官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/               技术群组：
+                 小梅哥 FPGA 团队                  武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                开发板 培训 项目研发三位一体
+
+
+
+
+                                    图 62-8 fifo_rx 配置界面
+
+
+62.3.2eth_cmd 模块
+     接收转命令模块 eth_cmd，将以太网传输过来的指令数据帧进行拆解，得到
+需要的指令数据传送给别的模块进行处理，该模块的结构框图如下图 62-9 所示。
+
+
+                      clk                                  fifo_rd_req
+                    reset_n                                  cmdvalid
+                [7:0]fifodout            eth_cmd           [7:0]address
+                   rx_empty                               [31:0]cmd_data
+
+
+
+
+                                  图 62-9 接收转命令模块框图
+
+店铺：https://xiaomeige.taobao.com                            官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                     技术群组：
+                 小梅哥 FPGA 团队                               武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                             开发板 培训 项目研发三位一体
+
+
+     模块信号说明如下表 62-2 所示。
+                                      表 62-2 接收转命令模块信号说明表
+
+                      信号名称               I/O      信号意义
+                      clk                I        模块工作时钟
+                      reset_n            I        模块复位信号，低电平复位
+                      fifodout[7:0]      I        从 FIFO 中读出的 8 位数据
+                      rx_empty           I        FIFO 为空标志信号
+                      fifo_rd_req        O        FIFO 的读请求信号
+                      cmdvalid           O        输出命令有效标志信号
+                      address[7:0]       O        配置 AD7606 的寄存器地址信号
+                      cmd_data[31:0]     O        写入到寄存器中的数据
+
+     网口一次发送的命令数据内容为 32 个字节，为了实现通过网口修改这些寄
+存器的值，需要对发送一次的数据进行拆解才能实现，对于设计的数据帧，一
+帧数据一共 8 个字节，包含帧头、帧尾、地址段、数据段。帧格式如下表 62-3
+所示。
+                                             表 62-3 帧格式说明表
+
+   数据    D0      D1         D2               D3            D4            D5           D6          D7
+   功能    帧头 0    帧头 1       地址 address       data[31:24]   data[23：16]   data[15:8]   data[7:0]   帧尾
+   值     0x55    0xA5       XX               XX            XX            XX           XX          0xF0
+
+     从上表中可以看出，每帧数据一共 8 个字节，分别用 D0~D7 表示，其中，
+D0 和 D1 两个数据作为帧头，其值固定为 0x55、0xA5，D7 作为帧尾，其值固
+定为 0xF0。帧头和帧尾的作用是为了准确识别数据帧，确保接收的数据是我们
+需要分析的。D2 代表的是要操作的寄存器地址，D3 为要写入寄存器的数据的
+24~31 位，D4 为要写入寄存器的数据的 16~24 位，D5 为要写入寄存器的数据的
+8~15 位，D6 为要写入寄存器的数据的 0~7 位。
+     该模块的作用就是将网口接收的数据拆解成上述帧格式，将 D2 作为地址
+address 输出，指定修改哪个寄存器，D3~D6 共 32 位作为数据 data 输出，控制
+AD7606 进行相应的配置。下面将对模块中的部分代码进行说明：
+     首先，产生 FIFO 的读请求信号。当检测到 FIFO 非空的时候，产生 FIFO 读
+请求信号，代码如下所示：
+ always@(posedge clk or negedge reset_n)
+ if(!reset_n)
+   fifo_rd_req <= 1'b0;
+ else if(!rx_empty)
+   fifo_rd_req <= 1'b1;
+ else
+   fifo_rd_req <= 1'b0;
+
+店铺：https://xiaomeige.taobao.com                                          官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                                   技术群组：
+                 小梅哥 FPGA 团队                武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力             开发板 培训 项目研发三位一体
+
+
+     然后得到帧命令数据，每产生一次读请求，将会从 FIFO 中读取一个 8 位的
+数据，连续存储 8 个字节的数据就得到一帧命令数据。代码如下所示：
+ always@(posedge clk)
+ if(fifo_rd_req)begin
+   data_0[7] <= #1 fifodout;
+   data_0[6] <= #1 data_0[7];
+   data_0[5] <= #1 data_0[6];
+   data_0[4] <= #1 data_0[5];
+   data_0[3] <= #1 data_0[4];
+   data_0[2] <= #1 data_0[3];
+   data_0[1] <= #1 data_0[2];
+   data_0[0] <= #1 data_0[1];
+ end
+     最后是判断得到的帧命令数据是否正确，当数据符合 D0 为 8’h55，D1 为
+8’hA5，D7 为 8’hF0， 则 代 表 该 数 据 格式正 确 ， 会 生 成 一 个指令 正 确 信 号
+cmdvalid 输出到指令转控制模块，并将数据进行输出，代码如下所示：
+ always@(posedge clk or negedge reset_n)
+ if(!reset_n)begin
+     address <= 0;
+     cmd_data <= 32'd0;
+     cmdvalid <= 1'b0;
+ end
+ else if(fifo_rx_done)begin
+ if((data_0[0] == 8'h55)&&(data_0[1]==8'hA5)&&(data_0[7]==8'hF0))
+ begin
+         cmd_data[7:0] <= #1 data_0[6];
+         cmd_data[15:8] <= #1 data_0[5];
+         cmd_data[23:16] <= #1 data_0[4];
+         cmd_data[31:24] <= #1 data_0[3];
+         address <= #1 data_0[2];
+         cmdvalid <= #1 1;
+     end
+ else
+         cmdvalid <= #1 0;
+ end
+ else
+     cmdvalid <= #1 0;
+
+62.3.3cmd_rx 模块
+     指令转控制模块（cmd_rx）将从接收转命令模块接收到的数据转换为相应
+的控制数据，首先将对寄存器进行说明，其功能和地址分别如下所示。
+                                     表 62-4 寄存器说明表
+
+
+店铺：https://xiaomeige.taobao.com                      官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/               技术群组：
+                      小梅哥 FPGA 团队                      武汉芯路恒科技
+              专注于培养您的 FPGA 独立开发能力                      开发板 培训 项目研发三位一体
+
+ 名称               地址            位宽      功能简介
+ RestartReq       0             1       重新开始采集请求寄存器，向该寄存器写入任意值即可启动新一轮
+                                        的采样存储传输
+ ChannelSel       1             8       通道设置寄存器，共 8 位， 对应了 8 个通道的数据存储开关，如果
+                                        某通道对应的设置为 1，则该通道的采样结果就会被存入 FIFO 并通
+                                        过网口发送，注意对应的 2 进制的位，不是 10 进制，比如设置通道
+                                        3，对应 01 地址需要写入的值为 04(100)，而不是 03(011)。
+ DataNum          2             32      数据个数寄存器，设定总共采集传输多少个数据。注意，该寄存器
+                                        设置的 是总 共采集 的数 据个 数， 假设设 置采集 100 个数据，
+                                        ChannelSel 为 0000_0011b， 则实际每个通道采样的次数就是 50， 2
+                                        个通道的数据加起来是 100 个。假设设置采集 100 个数据，而且设
+                                        置了 ChannelSel 为 0011_0011b，则实际每个通道采样的次数就是
+                                        25，4 个通道加起来采集 100 个数据
+ ADC_Speed_Set    3             32      ADC 采样速率设置寄存器。该寄存器用来设置 ADC 每多久执行一
+                                        次转换。 由于 ADC 的最大采样速率为 200Ksps，所以可以通过设
+                                        置该寄存器的值来让 ADC 的采样速率在 1~200Ksps 范围内调整，
+                                        以适应不同的应用场景。ADC_Speed_Set=1000000000/20/speed-1，
+                                        其中 speed 就是实际要设置的采样速率。
+
+      指令转控制模块结构框图如下图 62-10 所示。
+
+                 clk
+                                                           [7:0]ChannelSel
+              reset_n
+                                                            [31:0]DataNum
+        [31:0]cmd_data
+                                         cmd_rx          [31:0]ADC_Speed_Set
+              cmdvalid
+                                                              RestartReq
+         [7:0]cmd_addr
+
+
+                                        图 62-10 指令转控制模块结构框图
+
+
+      模块信号说明如下所示。
+                                        表 62-5 指令转控制模块信号说明表
+
+                      信号名称                       I/O     信号意义
+                      clk                        I       模块时钟信号
+                      reset_n                    I       模块复位信号，低电平复位
+                      cmd_data[31:0]             I       写入到寄存器中的值
+                      cmdvalid                   I       命令有效标志信号
+                      cmd_addr[7:0]              I       寄存器地址信号
+                      ChannelSel[7:0]            O       通道设置寄存器
+                      DataNum[31:0]              O       数据个数寄存器
+                      ADC_Speed_Set[31:0]        O       ADC 采样速率控制寄存器
+                      RestartReq                 O       重新开始采集请求信号
+
+      根据表 62-4 中的内容，地址 cmd_addr 为 0 时，产生 RestartReq；cmd_addr
+店铺：https://xiaomeige.taobao.com                                  官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                           技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+
+为 1 时，得到通道设置数据 cmd_data[7:0]；cmd_addr 为 2 时，得到需要采样的
+数量 cmd_data[31:0]；cmd_addr 为 3 时，得到设置的采样速率的值，代码如下所
+示：
+ always@(posedge clk or negedge reset_n)
+ if(!reset_n)begin
+     ChannelSel <= 8'b1111_1111;
+     DataNum <= 16'd32;
+     ADC_Speed_Set <= 32'd9999;
+     RestartReq <= 1'b0;
+ end
+ else if(cmdvalid)begin
+   case(cmd_addr)
+       0: RestartReq <= 1'b1;
+       1: ChannelSel <= cmd_data[7:0];
+       2: DataNum <= cmd_data[31:0];
+       3: ADC_Speed_Set <= cmd_data[31:0];
+   default:;
+   endcase
+ end
+ else
+   RestartReq <= 1'b0;
+
+62.3.4ad7606_driver 模块
+     AD7606 控制器驱动模块（ad7606_driver），该控制器实现了对 AD7606 型 8
+通道 16 位 ADC 的数据转换控制并输出。使用该控制器时，用户无需关心
+AD7606 的具体控制时序，一切都在控制器内部完成，用户只需要像使用并行
+ADC 一样取用数据即可。该模块的内部结构框图如下图 62-11 所示。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                    小梅哥 FPGA 团队                 武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                 开发板 培训 项目研发三位一体
+
+
+
+                                                                Conv_Done
+
+                                                                   Conv
+
+                   Clk                                        ad7606_cs_n_o
+                                                              ad7606_rd_n_o
+              Reset_n
+                                                            [2:0]ad7606_os_o
+                   Go
+                                                             ad7606_reset_o
+        [24:0]Speed_Set
+                                 ad7606_driver               ad7606_convst_o
+          ad7606_busy_i
+                                                             [7:0]data_flag
+       [15:0]ad7606_db_i                                   [15:0]data_mult_ch
+                                                               [15:0]data1
+
+
+                                                               [15:0]data8
+
+
+
+
+                               图 62-11 AD7606 控制器驱动模块结构框图
+
+
+     该控制器接口分为四个类，第一类为时序逻辑工作所必须的时钟和复位信
+号（Clk、Reset_n），第二类是 AD7606 控制器与 AD7606 芯片管脚相连的各种
+功能控制和数据信号，第三类是设置控制器工作状态/工作数据的用户控制接口，
+第四类是控制器的结果输出接口。对于用户来说，只需要关注第三类和第四类
+接口的使用，即可快速高效的使用该控制器来控制 AD7606 芯片完成数据转换。
+对于该模块的信号说明如下所示。
+                                表 62-6 AD7606 控制器模块信号说明表
+
+ 类           信号名称                  I/O   信号意义
+ 系统信号        Clk                   I     模块系统时钟， 为了让采样速率准确，要求为 50MHz
+             Reset_n               I     模块复位信号，低电平复位
+ 控制信号        Go                    I     采样使能信号，为高电平就使能采样，低电平则在已经
+                                         开始的一轮采样结束后，停止下一次采样
+             Speed_Set[24:0]       I     采样速率控制端口，Speed_Set = 1000000000/20/speed - 1
+             Conv_Done             O     一次采样完成标志信号，单时钟周期脉冲信号。每次 8
+                                         个通道结果都输出后，产生一个高脉冲信号
+             Conv                  O     采样标志信号，采样过程中拉高，采样结束拉低
+ 数据结果输       data_flag[7:0]        O     转换结果有效标志信号，因为 AD7606 有 8 个通道，转换
+ 出端口和标                                   结果是依次输出，并非同时的，所以设置 8 个 Flag 信
+
+店铺：https://xiaomeige.taobao.com                              官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                       技术群组：
+                  小梅哥 FPGA 团队                     武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                   开发板 培训 项目研发三位一体
+
+ 志信号                                       号，每个通道的结果就绪之后，就产生一个 Flag 信号，
+                                           通知外部可以取用。另外，如果只关心其中的部分通
+                                           道， 则只需要关心 data_flag 中对应的位即可
+             data_mult_ch[15:0]        O   多通道数据输出端口，该通道 16 位，在不同的时刻，输
+                                           出不同通道的转换结果，使用时，与 data_flag 信号配
+                                           合 ， data_flag 的 哪 一 位 出 现 高 脉 冲 ， 则 代 表 当 前
+                                           data_mult_ch 的值为该通道的转换结果。该端口设计的目
+                                           的是用于往 FIFO、RAM 等存储器中存储结果时使用。
+             data1[15:0]…data8[15:0]   O   8 个通道的采样结果输出端口，每个端口分别对应一个模
+                                           拟通道的采样结果， 使用时与 data_flag 信号配合，每当
+                                           data_flag 中的某一位为 1 时，则对应的通道上的 16 位采
+                                           样结果已经就绪，可以使用。这些端口主要用于每个通
+                                           道的数据需要分别应用的场合。
+ ADC 芯 片     ad7606_busy_i             I   ad7606 转换状态标志信号，为高电平则表明 ad7606 当前
+ 控制信号                                      仍处于转换状态，结果没有更新，如果此时读取，读取
+                                           的结果就还是前一次的采样转换结果。需要待该信号变
+                                           为低电平之后，再读取 ad7606 中的数据
+             ad7606_db_i[15:0]         I   ad7606 的 16 位数据线，读取时，输出对应通道的转换结
+                                           果
+             ad7606_cs_n_o             O   ad7606 芯片选中控制信号，可以从 AD7606 中读取转换
+                                           结果时，需要使该信号为低电平
+             ad7606_rd_n_o             O   ad7606 转换结果读取信号，该信号的下降沿，AD7606 将
+                                           特定通道的采样结果送到 16 位数据线上，供外部读取。
+                                           外部可以在 rd_n 信号的上升沿读取 16 位数据线上的结果
+             ad7606_os_o[2:0]          O   ad7606 过采样控制信号，使用过采样可以进一步提高
+                                           ad7606 的采样精度，使用过采样会降低 ad7606 的有效转
+                                           换速率，关于过采样的功能和使用方法，可以参考
+                                           ad7606 的 datasheet，默认为 0，则表示不使用过采样。能
+                                           够运行在最高的转换速率（200Ksps）
+             ad7606_reset_o            O   ad7606 的复位信号，复位 ad7606 内部各个功能单元的工
+                                           作状态
+             ad7606_convst_o           O   ad7606 转换开始信号，该信号的上升沿启动 ad7606 内部
+                                           的采样转换逻辑开始新一轮的采样转换
+
+     该控制器在工作时会根据主机的指令对采样频率进行修改，当信号转换完
+成 后 便 对 ADC 写 控 制 器 发 出 data_flag 信 号 ， 控 制 其 将 转 换 完 成 数 据
+data_mult_ch 写入 FIFO 或者 RAM 的同时，也指出了该信号来自哪个通道。通
+过这两个信号，我们可以实现让 ADC 以特定的采样速率多次采样一个或多个通
+道的数据。每当 data_flag 中任意一位为 1，则将 data_mult_ch 中的值写入 FIFO
+或者 RAM 中。由于 FIFO 和 RAM 等存储器，只有一个数据输入接口，所以这
+个时候用一个 data_mult_ch 端口分时输出不同通道的采样结果，就比使用
+data1~data8 这 8 个 16 位的数据端口分别输出各自通道的采样结果要方便。
+     例如，将通道 1、2、5、8 的采样结果存入 FIFO。就可以使用下面的写法：
+店铺：https://xiaomeige.taobao.com                               官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                        技术群组：
+                 小梅哥 FPGA 团队                      武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                    开发板 培训 项目研发三位一体
+
+ module adc_wr_fifo(
+   input Clk,
+   input Reset_n,
+   input [7:0]data_flag;
+   input [15:0]data_mult_ch;
+   output reg fifo_wrreq,
+   output reg [15:0]fifo_data
+ );
+     always@(posedge Clk or negedge Reset_n)
+     if(!Reset_n)begin
+         fifo_wrreq <= 0;
+         fifo_data <= 0;
+     else if(data_flag == 8'b1001_0011)begin
+         fifo_wrreq <= 1'd1;
+         fifo_data <= data_mult_ch;
+     end
+     else begin
+         fifo_wrreq <= 0;
+         fifo_data <= fifo_data;
+     end
+ endmodule
+
+62.3.5state_ctrl 模块
+     DDR3 双端口转换模块控制信号的产生以及 ADC 何时启动数据传输都是通
+过 state_ctrl 模块控制的，该模块的结构框图如下所示：
+                        clk
+                      reset                                          rd_load
+                 [7:0]adc_ch_sel                                   rdfifo_rden
+                   start_sample                                      wr_load
+              [31:0]set_sample_num                                ad_sample_en
+                   rdfifo_empty             state_ctrl            eth_fifo_wrreq
+                 [15:0]rdfifo_dout
+                    wrfifo_full                              [15:0]eth_fifo_wrdata
+
+                [7:0]adc_data_flag                                  ddrwrreq
+
+                      Conv
+
+
+
+
+                                   图 62-12 state_ctrl 模块基本结构框图
+
+
+     对于该模块的信号说明如下表 62-7 所示。
+                                     表 62-7 state_ctrl 模块信号说明表
+
+ 信号名称                   I/O   信号意义
+
+店铺：https://xiaomeige.taobao.com                                  官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                           技术群组：
+                       小梅哥 FPGA 团队               武汉芯路恒科技
+                专注于培养您的 FPGA 独立开发能力             开发板 培训 项目研发三位一体
+
+ clk                      I      模块时钟信号，与 ADC 采集模块的时钟信号保持一致（50M）
+ reset                    I      模块复位信号，高电平复位
+ start_sample             I      ADC 模块开始采样标志信号
+ set_sample_num [31:0]    I      采样数量命令信号
+ rdfifo_empty             I      读 FIFO 为空标识信号，用于标识当前 FIFO 是否为空（即 FIFO 内有无
+                                 数据）
+ rdfifo_dout[15:0]        I      读 FIFO 的数据输出，数据位宽为 16 位
+ wrfifo_full              I      写 FIFO 的写满标识信号，用于标识当前 FIFO 是否有被写满
+ adc_ch_sel[7:0]          I      采样通道命令信号
+ adc_data_flag[7:0]       I      AD7606 控制器输出的转换结果有效标志信号
+ rd_load                  O      DDR3 双端口模块读出源更新信号
+ rdfifo_rden              O      读 FIFO 的读数据使能控制信号，给高电平表示往 FIFO 读数据，为避
+                                 免读数据的丢失，确保在 FIFO 非空（rdfifo_empty =0）情况下读数据
+ wr_load                  O      DDR3 双端口模块写入源更新信号
+ ad_sample_en             O      ADC 采样使能标志信号
+ eth_fifo_wrreq           O      以太网发送缓存 FIFO 的写请求信号
+ eth_fifo_wrdata [15:0]   O      写入以太网发送缓存 FIFO 的 16 位数据
+ Conv                     I      采样信号，采样过程中拉低
+ ddrwrreq                 O      ddr 写请求信号
+
+         DDR3 双 端 口 模 块 需 要 的 控 制 信 号 有 ：rd_load、wr_load、wrfifo_clk、
+wrfifo_wren、wrfifo_din、rdfifo_clk、rdfifo_rden。
+         上述信号中 wrfifo_clk、rdfifo_clk 应该与 state_ctrl 模块的工作时钟保持一
+致，也就是和 ADC 数据采集模块（ad7606_driver）工作时钟一样为 50M；
+wrfifo_wren 信号由 AD7606 控制器模块输出的 adc_data_flag 信号与通道命令
+ChannelSel 按位与之后，再和采样使能信号 ad_sample_en 相与得到；除去上述
+已经得到的控制信号外，state_ctrl 模块还需要产生的控制信号包括：rd_load、
+wr_load、rdfifo_rden。
+         根据上述描述，我们可以通过状态机实现该模块的功能。定义状态如下所
+示：
+ localparam IDLE                             = 4'd0;   //空闲状态
+ localparam DDR_WR_LOAD                      = 4'd1;   //DDR 写入数据更新状态
+ localparam ADC_CONV                         = 4'd2;    //等待采样结束
+ localparam ADC_SAMPLE                       = 4'd3;   //ADC 采样数据状态
+ localparam DDR_RD_LOAD                      = 4'd4;   //DDR 读出数据更新状态
+ localparam DATA_SEND_START                  = 4'd5;   //数据发送状态
+ localparam DATA_SEND_WORKING                = 4'd6;   //数据发送完成状态
+         下面编写每个状态对应的代码。
+
+                     1.IDLE 状态
+
+         当处于空闲状态时，对 start_sample 采样起始位进行寄存，同时限定其只工
+
+店铺：https://xiaomeige.taobao.com                            官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                     技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+
+作在状态 IDLE，代码如下所示：
+ always@(posedge clk or posedge reset)begin
+ if(reset)
+     start_sample_rm <= 1'b0;
+ else if(state==IDLE && ddr3_init_done==1'b1)
+     start_sample_rm <= start_sample;
+ else
+     start_sample_rm <= 1'b0;
+ end
+     当产生 start_sample_rm 信号之后跳转到 DDR_WR_FIFO_CLEAR 状态，代
+码如下所示：
+ begin
+     if(start_sample_rm) begin   //DDR 初始化完成并且产生启动采样信号
+         state <= DDR_WR_LOAD; //进入写 FIFO 清除状态
+     end
+     else begin
+         state <= state;
+     end
+ end
+              2.DDR_WR_LOAD
+
+     进入 DDR 写入数据更新状态之后，开始清除写入 DDR 内的原始数据。设
+置清除 DDR 内数据的计数器，经过验证，进行 10 拍的延时之后，能够完全清
+除之前存储在 DDR 内的数据，不影响下一次的传输，代码如下所示：
+ always@(posedge clk or posedge reset)begin
+ if(reset)
+     wr_load_cnt<=0;
+ else if(state==DDR_WR_LOAD)
+ begin
+     if(wr_load_cnt==9)
+         wr_load_cnt<=4'd9;
+     else
+         wr_load_cnt<=wr_load_cnt+1'b1;
+ end
+ else
+     wr_load_cnt<=1'b0;
+ end
+     我们向 DDR 写入数据时，首先是经过了一个写端的 FIFO 存储的，所以我
+们写的时候，需要等待 wrfifo_full（写端 FIFO 满信号）的信号拉低，拉低之后，
+表示可以往 FIFO 里写入数据。DDR 写入数据更新状态代码如下所示：
+ begin
+     if(!wrfifo_full && (wr_load_cnt==9))
+         state<=ADC_SAMPLE;
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+       else
+           state<=state;
+ end
+       当处于 DDR_WR_LOAD 状态时，我们需要产生 wr_load 信号，由三拍延时
+信号拉高提供，之所以提供延迟信号时间为 3 拍，是为了能够准确清除已经写
+入的数据，代码如下所示：
+ always@(posedge clk or posedge reset)begin
+ if (reset)
+     wr_load<=0;
+ else if(ddr3_init_done==1'b0)
+     wr_load<=1'b1;
+ else if(state==DDR_WR_LOAD)
+     begin
+         if(wr_load_cnt==0||wr_load_cnt==1||wr_load_cnt==2)
+             wr_load<=1'b1;
+         else
+             wr_load<=1'b0;
+     end
+ else
+     wr_load<=1'b0;
+ end
+
+              3.ADC_CONV 状态
+
+       等待采样结束后进入下一状态，防止数据正好在采样过程中读取，造成数
+据错位。
+
+              4.ADC_SAMPLE 状态
+
+       进 入 ADC 采 样 数 据 状 态 之 后 ， 首 先 设 置 ADC 采 样 个 数 计 数 器
+adc_sample_cnt， 当 对 应 采 样 通 道 有 效 时 ， 也 就 是 adc_data_flag 信 号 与
+adc_ch_sel 信号相与为高电平时，我们就将 adc_sample_cnt 计数值加 1，对 ADC
+采集的数据进行计数。代码如下所示：
+ always@(posedge clk or posedge reset)begin
+ if(reset)
+     adc_sample_cnt<=1'b0;
+ else if(state==ADC_SAMPLE)begin
+     if(adc_data_flag & adc_ch_sel)
+         adc_sample_cnt<=adc_sample_cnt+1'b1;
+     else
+         adc_sample_cnt<=adc_sample_cnt;
+ end
+ else
+     adc_sample_cnt<=1'b0;
+
+店铺：https://xiaomeige.taobao.com                   官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/            技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+ end
+       当 adc_sample_cnt 达到设定的采样数据个数，ADC 模块数据采集完成，跳
+转到读出数据更新状态：
+ begin
+     if(adc_sample_cnt>=set_sample_num) begin
+         state<=DDR_RD_LOAD;
+     end
+     else
+         state<=state;
+ end
+       当处于 ADC_SAMPLE 状态时，我们还需要产生采样使能信号 ad_sample_en
+给到其他模块使用，代码如下所示：
+ always@(posedge clk or posedge reset)begin
+ if(reset)
+     ad_sample_en<=0;
+ else if(state==ADC_SAMPLE)
+     ad_sample_en<=1;
+ else
+     ad_sample_en<=0;
+ end
+
+              5.DDR_RD_LOAD 状态
+
+       进入 DDR 读出数据更新状态之后，首先设置读取数据更新状态计数器
+rd_load_cnt，设置 10 拍的延时，代码如下所示：
+ always@(posedge clk or posedge reset)begin
+ if(reset)
+     rd_load_cnt<=0;
+ else if(state==DDR_RD_LOAD)
+ begin
+     if(rd_load_cnt==9)
+         rd_load_cnt<=4'd9;
+     else
+         rd_load_cnt<=rd_load_cnt+1'b1;
+ end
+ else
+     rd_load_cnt<=1'b0;
+ end
+       然后等待 rdfifo_empty（读端 FIFO 的空信号）信号拉低，拉低后，表示
+FIFO 里已经有被写入数据，此时进入下一状态。在清空（复位）FIFO 的时候，
+FIFO 的 empty 信号会变高，可以认为在复位 FIFO 时是不允许对 FIFO 进行读操
+作的，即使读也是不可靠的，等 FIFO 的复位结束后，FIFO 被写入数据后，
+empty 信 号 会 变 低 ， 就 允 许 对 FIFO 进 行 读 操 作 ， 然 后 跳 转 到
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+
+DATA_SEND_START 状态，DDR_RD_LOAD 状态对应的代码如下所示：
+ begin
+     if(!rdfifo_empty && (rd_load_cnt==9))begin
+         state<=DATA_SEND_START;
+     end
+     else
+         state<=state;
+ end
+     当处于 DDR_RD_LOAD 状态时，我们需要产生 rd_load 信号，有三拍的延
+时信号拉高提供，之所以提供的延迟信号时间为 3 拍，是为了保证 rd_load 指令
+的可靠，代码如下所示：
+
+ always@(posedge clk or posedge reset)begin
+ if (reset)
+     rd_load<=0;
+ else if(ddr3_init_done==1'b0)
+     rd_load<=1'b1;
+ else if(state==DDR_RD_LOAD)
+ begin
+     if(rd_load_cnt==0||rd_load_cnt==1||rd_load_cnt==2)
+         rd_load<=1'b1;
+     else
+         rd_load<=1'b0;
+ end
+ else
+     rd_load<=1'b0;
+ end
+
+              6.DATA_SEND_START 状态
+
+     进入 DATA_SEND_START 状态之后，state 直接跳转到数据发送状态，代码
+如下所示；
+ begin
+     state <= DATA_SEND_WORKING;
+ end
+
+              7.DATA_SEND_WORKING 状态
+
+     进入数据发送状态之后，产生 rdfifo_rden 信号，将 DDR 中的数据读取出来，
+当读出的数据达到需要采集的数据信号时，跳转到 IDLE 状态，完成一次数据传
+输，代码如下所示：
+ begin
+     if(send_data_cnt >= set_sample_num-1'b1) begin
+         rdfifo_rden <= 1'b0;
+
+店铺：https://xiaomeige.taobao.com                   官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/            技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+          state <= IDLE;
+       end
+       else begin
+           rdfifo_rden <= 1'b1;
+           state <= DATA_SEND_WORKING;
+       end
+ end
+       send_data_cnt 在 rdfifo_rden 有效的情况下进行计数，从而统计从 DDR 中读
+取的数据个数，代码如下所示：
+ always@(posedge clk or posedge reset)begin
+     if(reset)
+         send_data_cnt<=32'd0;
+     else if(state==IDLE)
+         send_data_cnt<=32'd0;
+     else if(rdfifo_rden)
+         send_data_cnt<=send_data_cnt+1;
+     else
+         send_data_cnt<=send_data_cnt;
+ end
+       最后，当 rdfifo_rden 信号为高电平的时候，将 DDR 读出的数据存放至以太
+网发送缓存 FIFO 中，代码如下所示：
+ always@(posedge clk or posedge reset)
+ if(reset) begin
+     eth_fifo_wrreq <= 1'b0;
+     eth_fifo_wrdata <= 'd0;
+ end
+ else if(rdfifo_rden) begin
+     eth_fifo_wrreq <= 1'b1;
+     eth_fifo_wrdata <= rdfifo_dout;
+ end
+ else begin
+     eth_fifo_wrreq <= 1'b0;
+     eth_fifo_wrdata <= 'd0;
+ end
+
+62.3.6fifo_tx 模块
+       FIFO 双端口 IP 核（fifo_tx），该模块需要接收从 DDR 读出的 16 位数据，
+数 据 经 由 fifo_tx 缓 存 后 转 换 成 8 位 数 据 由 以 太 网 发 送 模 块 发 送 出 去 。
+ddr3_ctrl_2port 模块中 FIFO IP 的工作时钟为 50M，以太网发送模块的工作时钟
+125M，两者数据速率不匹配，使用 FIFO IP 核进行数据存储可以解决过程中会
+出现的跨时钟域数据交互问题。
+
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                 小梅哥 FPGA 团队                  武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力               开发板 培训 项目研发三位一体
+
+
+
+     在 GOWIN 软件中点击               ，然后在搜索栏中输入 FIFO，在下面搜索结果中
+
+找到 FIFO 并双击，操作如下图 62-13 所示。
+
+
+
+
+                                    图 62-13 搜索 FIFO IP
+
+
+     双击 FIFO Generator 之后，进入 FIFO 配置界面。
+     首先将 File Name 和 Module Name 的名称修改为 fifo_tx，然后按照如下步骤
+进行配置：
+
+              1.写数据位宽设置为 16，写入深度设置为 1024。因为 ADC 模块输
+         出的数据是 16 位的，所以位宽设置为 16。写入深度用户可以修改，理
+         论上只要大于以太网最大帧长度 1472（写入深度大于 1472/2）就可以。
+
+              2.读出位宽设置为 8。设置为 8 是因为以太网发送模块的数据位宽
+         是 8 位的。
+
+              3.读模式选择为“First-Word Fall-Through（FWFT）”，FWFT 模式
+         可以不需要读命令，自动将最新的数据放在 Q 上。
+
+              4.勾选“Read Data Num”和“Write Data Num”。FIFO 数据量计数
+         信号输出，Read Data Num 和 Write Data Num 分别同步于写时钟和读时
+         钟。
+
+              5.勾选“En_Reset”和“Reset_Synchronization”，使能同步复位。
+
+     最终配置界面如下图 62-14 所示：
+
+
+
+
+店铺：https://xiaomeige.taobao.com                          官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                   技术群组：
+                 小梅哥 FPGA 团队                  武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力               开发板 培训 项目研发三位一体
+
+
+
+
+                                   图 62-14 fifo_tx 配置界面
+
+
+62.3.7eth_send_ctrl 模块
+     网口发送控制模块（eth_send_ctrl）主要负责配置控制网口发送模块的使能
+控制信号 pkt_tx_en，并通过 pkt_length 信号对以太网数据帧长度进行控制，该
+模块的结构框图如下所示。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                           官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                    技术群组：
+                     小梅哥 FPGA 团队                武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                 开发板 培训 项目研发三位一体
+
+
+
+                     clk125M
+
+                     reset_n                                    [15:0]pkt_length
+
+           [10:0]fifo_rd_cnt
+
+         [31:0]total_data_num               eth_send_ctrl
+               restart_req                                          pkt_tx_en
+               eth_tx_done
+
+
+
+
+                                     图 62-15 网口发送控制模块
+
+
+     对该模块的信号说明如下所示：
+                                   表 62-8 网口发送控制模块信号说明表
+
+           信号名称                       I/O     信号意义
+           clk125M                    I       模块时钟信号信号，以太网工作时钟 125M
+           reset_n                    I       模块复位信号，低电平复位
+           fifo_rd_cnt [10:0]         I       FIFO 读数据计数
+           total_data_num [31:0]      I       需要采集的数据个数
+           restart_req                I       开始采样请求信号
+           eth_tx_done                I       以太网一个包传输完成标志信号
+           pkt_length [15:0]          O       以太网需要传输的数据长度
+           pkt_tx_en                  O       以太网传输使能信号
+
+     以太网帧最大长度 1518 字节（数据段 1500 字节），其中数据段 1500 字节，
+还包括 20 字节 IP 报文头部和 8 字节 UDP 报文头部，所以以太网帧发送的
+ACM7606 采集的数据最大长度为 1472 字节（1500-20-8）。
+     该模块可以通过编写状态机代码方式实现功能，下面将对每个状态的代码
+进行介绍。
+     状态 0，得到 pkt_length 信号的初始值。这里需要注意的是经过数据位扩展
+模块输出的数据是 16 位的，每个数据占据 2 个字节，所以发送 N 个采样数据，
+则以太网需要发送 2*N 个字节数据。当产生开始采样请求 restart_req 之后，系
+统开始采样，同时，将需要采集的数据个数 total_data_num 左移一位（相当于乘
+以 2），得到实际需要以太网传输的数据，当数据大于 16’d1472 时，设置
+pkt_length 为 最 大 传 输 长 度 1472； 当 数 据 大 于 0 时 ，pkt_length 等 于
+total_data_num 乘以 2。给 pkt_length 赋初值之后，跳转到状态 1，代码如下所示：
+
+店铺：https://xiaomeige.taobao.com                            官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                     技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+ begin
+     if(restart_req)begin
+         data_num <= total_data_num;
+         if((total_data_num << 1) >= 16'd1472)begin
+             pkt_length <= 16'd1472; //一个数据 2 个字节
+             state <= 1;
+         end
+         else if((total_data_num << 1) > 0)begin
+             pkt_length <= total_data_num << 1; //一个数据 2 个字节
+             state <= 1;
+         end
+         else begin
+             state <= 0;
+         end
+     end
+ end
+     状态 1，当 FIFO 计数信号 fifo_rd_cnt 的数值满足一帧数据帧长度时，产生
+pkt_tx_en 信号，以太网发送模块开始读取 FIFO 中的数据，代码如下所示：
+ begin
+     if(fifo_rd_cnt >= (pkt_length -2)) begin
+         pkt_tx_en <= 1'd1;
+         state <= 2;
+     end
+     else begin
+         state <= 1;
+         pkt_tx_en <= 1'd0;
+     end
+ end
+     状态 2，当以太网一个包传输完成之后，产生 eth_tx_done 信号，此时剩下
+需要传输的数据 data_num 应该减去 pkt_length 的一半，这是因为 ADC 采集的数
+据是 16 位的，但是以太网每次只传送 8 位数据，所以以太网实际传输的数据应
+该是 ADC 采集到的数据的一半，代码如下所示：
+ begin
+     pkt_tx_en <= 1'd0;
+     if(eth_tx_done)begin
+         data_num <= data_num - pkt_length/2;
+         state <= 3;
+     end
+ end
+     状态 3，设置以太网的帧间隙时间间隔。本次实验使用的千兆以太网，其相
+邻的两帧之间的最小间隔时间为 96ns，在设置的时候只要大于 96ns 就行，本次
+实验设置 128 个时钟周期，也就是 1024ns。当设置的时间比较小的时候，虽然
+
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+
+以太网传输速率会加快，但是会增加电脑端解析数据包的压力，当时间过大，
+又会影响以太网船速速率，所以在设置的时候需要设定一个比较合理的值。
+ if(cnt_dly_time >= cnt_dly_min)begin
+     state <= 4;
+     cnt_dly_time <= 28'd0;
+ end
+ else begin
+     cnt_dly_time <= cnt_dly_time + 1'b1;
+     state <= 3;
+ end
+     状态 4，进行连续的包传输。当剩下的需要以太网传输的数据（data_num*2）
+大于包传输最大数据 1472 时，使 pkt_length 为 1472，使 pkt_length 为 1472，然
+后回到状态 1 继续传输；当剩下需要传输的数据不足包传输最大数据 1472 时，
+pkt_length 为剩下的需要传输的数据 data_num*2，然后回到状态 1 传输剩下的数
+据，代码如下所示：
+ begin
+     if(data_num * 2 >= 16'd1472)begin
+         pkt_length <= 16'd1472;
+         state <= 1;
+     end
+     else if(data_num * 2 > 0)begin
+         pkt_length <= data_num * 2;
+         state <= 1;
+     end
+     else begin
+         state <= 0;
+     end
+ end
+     模块设计完成之后，只需要在顶层文件中对各个模块之间的接口信号进行
+连接，完整的顶层文件代码请自行查看例程文件。
+
+62.4板级验证
+     经过以上工作，代码设计部分的任务已经全部完成，接下来就可以进行板
+级验证了。本次实验的板级验证环节，主要验证：通过电脑上的网络调试助手，
+将命令帧进行发送， 然后通过 ACX720 开发板上的以太网芯片接收，随后将接
+收到的数据转换命令，从而实现对 AD7606 采样频率、数据采样个数以及采样
+通道的配置。配置完成之后，AD7606 开始采集数据，将 AD7606 采集的数据通
+过网口传输到电脑。电脑端将接收到的数据进行保存，然后通过 MATLAB 进行
+
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                 小梅哥 FPGA 团队                武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力             开发板 培训 项目研发三位一体
+
+
+进一步的分析。针对本次实验，我们也提供有专门的上位机软件，用户只需要
+在软件界面进行参数配置，便可以实时观察到数据波形变化，使用起来非常方
+便。
+
+62.4.1硬件连接
+     将 ACM7606 模块、网线、下载器、电源线依次连接在开发板上，需要注意
+ACM7606 模块连接正确后右边会多出 6 组排针，由于视觉缘故，这里很容易连
+接错误，，还需要给 AD7606 连接信号源，这里我们连接的是 AD7606 的通道 1，
+信号源给的是 200hz，vpp=5V 的正弦波，整体的硬件连接图如下图 62-16 所示。
+
+
+
+
+                                     图 62-16 硬件连接图
+
+
+     连接完成之后，下载生成的 fs 文件。
+
+62.4.2修改电脑 IP 地址
+     本次实验设定了目标 IP 地址（PC 端）为 192.168.0.3，用户需要将自己电脑
+上的以太网 IP 地址修改为该地址，在本地连接状态中，点击属性，并在弹出的
+店铺：https://xiaomeige.taobao.com                      官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/               技术群组：
+                 小梅哥 FPGA 团队                 武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力              开发板 培训 项目研发三位一体
+
+
+属性对话框中双击【Internet 协议版本 4 （TCP/Ipv4）】选项，然后在弹出的属性
+对话框中设置静态 IP 地址。如下图 62-17 所示。
+
+
+
+
+                                   图 62-17 修改电脑 IP 地址
+
+
+62.4.3绑定 ARP
+     本工程不支持 ARP 协议，只能通过静态绑定的方式来强制将开发板的 IP 地
+址和 MAC 地址关联在一起。这样，当 PC 发送给 192.168.0.2 的数据包的时候，
+目标 MAC 地址自动为开发板的 MAC 地址。
+     关于 ARP 的绑定请查看以下帖子内容：
+     以太网通信静态 ARP 绑定方法与常见问题解决方案
+     http://www.corecourse.cn/forum.php?mod=viewthread&tid=28645
+     (出处: 芯路恒电子技术论坛)
+
+62.4.4网络调试助手通信
+     完成上述操作之后，首先需要打开网络调试助手发送指令去配置，按照如
+下所述设置各项参数。网络调试助手软件读者可以在常用软件文件夹下找到。
+
+              1.选择协议类型为 UDP。
+
+              2.设置本地 IP 地址为 192.168.0.3。
+
+              3.设置本地端口号为 6102。
+
+              4.点击【连接】按钮以创建连接，连接上后该按钮为红色“断开”
+
+店铺：https://xiaomeige.taobao.com                         官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                  技术群组：
+               小梅哥 FPGA 团队                武汉芯路恒科技
+         专注于培养您的 FPGA 独立开发能力              开发板 培训 项目研发三位一体
+
+        字样。
+
+             5.连接上后，设置目标主机为 192.168.0.2，目标端口为 5000。
+
+             6.发送设置中数据类型设置为 hex 格式
+
+             7.点击“接收保存到文件”这几个字，在弹出的界面中设置文件路
+        径、文件名称，如下图 62-18 所示。这样在数据接收完成之后会保存一
+        个数据文件。方便后面进行分析。
+
+
+
+
+                                 图 62-18 设置保存文件
+
+
+    在前面接收转命令模块中介绍到数据帧格式对 AD7606 的四个寄存器进行
+配置。
+    例 如 ，PC 端 要 设 置 采 样 数 据 个 数(DataNum 寄 存 器 ， 地 址 为 2)为
+16384(0x4000)个，发送数据帧内容：0x55 0xA5 0x02 0x00 0x00 0x40 0x00 0xF0。
+    PC 端要设置采样速率(ADC_Speed_Set 寄存器，地址为 3)为 200K，则对应
+的 ADC_Speed_Set 值为 1000000000/20/200000 - 1 = 249（0x000000F9）个， 则
+发送的数据帧内容为：0x55 0xA5 0x03 0x00 0x00 0x00 0xF9 0xF0。
+    当上述设置都设置完成后，就可以向 0 号寄存器写入任意值，来开始一次
+采样传输了。数据帧内容可以为 0x55 0xA5 0x00 0x00 0x00 0x00 0x00 0xF0，这
+里需要注意的是 0 号寄存器必须放在最后，因为 0 号寄存器负责启动 ADC，
+ADC 在未配置完全的情况下开始启动，数据很容易输出错误值。
+    开始传输数据帧命令发送完成之后，AD7606 就能实现以 200K 的采样速率，
+对 1 个通道进行采样（本次实验以通道 1 为例），共采集 16384 个数据。四个寄
+存器对应的配置如下表 62-9 所示。
+                                表 62-9 AD7606 数据帧格式配置表
+店铺：https://xiaomeige.taobao.com                        官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                 技术群组：
+                 小梅哥 FPGA 团队                     武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                  开发板 培训 项目研发三位一体
+
+                          寄存器名称           数据帧数据
+                          DataNum         55 A5 02 00 00 40 00 F0
+                          ChannelSel      55 A5 01 00 00 00 01 F0
+                          ADC_Speed_Set   55 A5 03 00 00 00 F9 F0
+                          RestartReq      55 A5 00 00 00 00 00 F0
+
+    配置成网络调试助手发送的数据格式如下：
+ 55A50200004000F055A50100000001F055A503000000F9F055A50000000000F0
+     最终的网络助手配置界面如下图 62-19 所示：
+
+
+
+
+                                图 62-19 网络调试助手配置界面
+
+
+     点击发送之后可以看到网络调试助手在不断的接收数据，如下图 62-20 所示。
+从图中可以看出一共接收到 32768 个数据，这是因为设置的 ADC 采样数量为
+16384，ADC 采样数据是 16 位的，以太网是以字节（8 位）为单位进行发送的，
+所以通过以太网接收到字节数应该是 16384*2 个数据，这也就是说明接收到的
+数据的个数没错。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                                     官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                              技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+
+
+
+                                图 62-20 网络调试助手接收数据
+
+
+62.4.5MATLAB 图像绘制
+     前面通过网络调试助手得到了 ADC 采集到的数据文件，然后我们就需要对
+采集到的数据进行分析，本次实验使用 MATLAB 软件进行分析。使用 MATLAB
+软件需要读者电脑安装了 MTALAB，如果已经安装好了 MTALAB 软件，则可
+以 双 击 我 们 提 供 的 ADCdata_to_wave_v2_2.m 文 件 ， 在 打 开 方 式 里 选 择 以
+MATLAB 打开，该文件的路径：设计实例/ ad7606_udp_rgmii.rar，将压缩包解
+压便可以看到该文件。文件打开之后，读者需要将代码中文件路径修改为你保
+存的数据文件路径，随后点击运行便可以直观的看到数据是否正确，MATLAB
+操作如下图 62-21 所示，得到的波形图如下图 62-22 所示。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                      官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/               技术群组：
+                           小梅哥 FPGA 团队                            武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                                   开发板 培训 项目研发三位一体
+
+
+
+
+                                                图 62-21 修改文件路径并运行
+
+                                                        ADC采 集 电 压 显 示
+                           5
+               电 压 /(V)
+
+
+
+
+                           0
+
+
+
+
+                           -5
+                                0       1       2       3       4        5       6       7         8
+                                                            采 样 时 间 /(us)                              4
+                                                                                                 x 10
+
+                           2
+
+                          1.5
+             |Y(f)|
+
+
+
+
+                           1
+
+                          0.5
+
+                           0
+                                0   1       2       3       4     5      6   7       8       9      10
+                                                            Frequency (Hz)                             4
+                                                                                                 x 10
+
+
+                                                图 62-22 MATLAB 分析波形图
+
+
+     前面我们提到过本次实验提供的信号源为 200hz，Vpp 为 5V 的正弦波（正
+负 2.5V），与 MATLAB 分析出来的波形一致，说明我们本次实验成功。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                                                  官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                                           技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+
+62.4.6数据采集上位机通信
+     前面通过网络调试助手采集数据时，每次保存数据都需要重新点击“接收
+保存文件”一栏，修改寄存器参数的时候，都需要重新计算，然后发送命令，
+修改之后也不能直接实时观察到数据波形，使用起来不是很方便。基于上述问
+题，我们设计了上位机软件“小梅哥控制台 For ADC 采集”进行数据采集，上
+位机内部直接对命令进行了构建，用户只需要在界面上对采样参数进行设置，
+便可以实时观测到数据变化，读者可以在论坛上下载最新版本的软件，链接如
+下：
+     http:/www.corecourse.cn/forum.php?mod=viewthread&tid=29224(出 处:%20 芯
+路恒电子技术论坛)
+     双击上位机软件，初始界面如下图 62-23 所示。
+
+
+
+
+                               图 62-23 上位机软件初始界面显示
+
+
+     本次实验使用该软件的方式如下所示：
+
+              1.点击 ADC，选择 ACM7606。
+
+              2.点击方式，选择网口，可以看到主机 IP（PC 端）和目的 IP
+         （FPGA）以及对应的端口号。主机 IP：192.168.0.2，主机端口号：
+         6102；目的 IP：192.168.0.3，目的端口号：5000。
+
+              3.选择完成之后，可以看到对采样通道、采样数量等都已经设置了
+         初始值（默认设置的采样率为 ADC 模块的最大采样率），用户可以根据
+         自己的需求进行修改。
+
+店铺：https://xiaomeige.taobao.com                      官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/               技术群组：
+                 小梅哥 FPGA 团队                                     武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                                  开发板 培训 项目研发三位一体
+
+              4.点击网络连接。
+
+              5.点击开始传输之后，可以看到在右边采样电压波形图界面可以直
+         观看到波形图，如下图 62-24 所示。需要注意的是波形图的横坐标对应
+         的不是频率，而是采样数量。
+
+
+
+
+                                              图 62-24 数据采集上位机显示图
+
+
+     通过上位机采集到的数据文件保存在 d:/ MFC_Data 文件夹下，后续可以通
+过 MATLAB 软件进行进一步的分析，通过 MATLAB 分析的波形图如下图 62-25
+所示。从图中可以看出，采集到的数据的频率为 200hz，电压在正负 2.5V 左右，
+与我们输入的信号一致。
+                                                         ADC采 集 电 压 显 示
+                              5
+                   电 压 /(V)
+
+
+
+
+                              0
+
+
+
+
+                              -5
+                                   0   0.2   0.4   0.6   0.8   1     1.2   1.4   1.6   1.8     2
+                                                           采 样 时 间 /(us)                           4
+                                                                                             x 10
+
+                              3
+
+
+                              2
+                     |Y(f)|
+
+
+
+
+                              1
+
+
+                              0
+                                   0    1     2     3     4     5      6     7     8     9      10
+                                                          Frequency (Hz)                           4
+                                                                                             x 10
+
+
+                                             图 62-25 MATLAB 进一步波形分析图
+
+店铺：https://xiaomeige.taobao.com                                                  官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                                           技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+
+62.5思考与总结
+     本次实验介绍了基于 AD7606 的千兆以太网收发，用户通过网口调试助手
+以太网帧向开发板发送指令数据配置 AD7606 的四个寄存器，以此控制 ADC 进
+行采样，并将数据缓存后再组成以太网帧，经由网口发送至电脑，借由网口调
+试工具对数据进行查看。如果使用我们提供的上位机软件，则不需要自己设置
+命令，只需要在界面上修改相关参数，便可以在右边的波形显示界面实时观察
+到波形变化。
+     本次实验涉及时钟域的转换，以及采集数据位宽的转换，完成这些转换需
+要对 FIFO 有一定的了解，想要对 FIFO 进一步了解可以参看前面“IP 核使用之
+FIFO”一章的内容。本次实验也要求读者对以太网协议有足够的认识，想要进
+一步理解以太网功能原理可参看前面以太网相关章节的内容。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+

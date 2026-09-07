@@ -1,0 +1,603 @@
+                 小梅哥 FPGA 团队                           武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                        开发板 培训 项目研发三位一体
+
+
+
+ 42 灰度图像高斯滤波设计实现(HDMI 和 TFT 显示)
+                 |----02_设计实例
+ 工程源码
+                 |----ch42_uart_ddr3_tft_hdmi_gaussian_filter
+ 相关视频课程
+ 说明
+
+      章节导读
+
+      本节主要是在上一节的基础上，更换图像处理模块，更换为高斯滤波处理
+模块，实现在 PC 端通过上位机下发尺寸为 400*480 大小的彩色图像数据到 FPGA
+的串口，FPGA 通过串口接收的彩色图像数据并进行实时彩色图像灰度化处理，
+同时进行高斯滤波的处理，然后将高斯滤波处理前和处理后的图像拼接在一起
+并缓存在 DDR3 中，最终在 TFT 屏和 HDMI 显示器上同时显示高斯滤波处理前的
+灰度图像和处理后的灰度图像。
+
+
+42.1系统整体设计
+      在本节内容中，基于灰度图像的均值滤波，我们希望得到如下实验效果。
+最终 TFT 和 HDMI 的显示要求如下。
+                                                                   TFT屏
+
+
+                                                                处理前彩   处理后灰
+                                                                色图像    度图像
+
+
+
+                                              高云开发板
+                                                                   HDMI屏
+
+
+                                                                处理前彩   处理后灰
+                                                                色图像    度图像
+
+
+
+
+                                       图 42-1 高斯滤波实验目标
+
+
+      系统整体设计框图如下图 42-2。大体结构与“基于 FPGA 的灰度图像中值
+滤波的设计实现”基本一致，将中值滤波模块更换成了高斯滤波处理模块。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                          技术群组：
+                 小梅哥 FPGA 团队                               武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                             开发板 培训 项目研发三位一体
+
+
+                        FPGA
+                                         gaussian_filter                          dvi_encoder
+
+
+
+
+                      bit8_trans_bit16     rgb2gray        image_stitche_x        disp_driver
+
+
+
+
+                       uart_byte_rx
+
+                                                                  ddr3_ctrl_2port
+                       image_rx_ctrl
+
+
+
+
+                                                                        DDR3存储器
+
+
+
+
+                                            图 42-2 系统设计框图
+
+
+     除了高斯滤波模块，其他各模块介绍与前面一样，这里不再重复介绍。
+
+42.2灰度图像高斯滤波处理模块的设计
+
+42.2.1基本原理
+     高斯滤波是一种线性平滑滤波，适用于消除高斯噪声，广泛应用于图像处
+理的减噪过程。通俗的来讲，高斯滤波就是对整幅图像进行加权平均的过程，
+每一个像素点的值，都由其本身和邻域内的其他像素值经过加权平均后得到。
+高斯滤波的具体操作是：用一个模板（或称卷积、掩模）扫描图像中的每一个
+像素，用模板确定的邻域内像素的加权平均灰度值去替代模板中心像素点的值。
+     一维高斯分布：
+
+
+
+
+                                          图 42-3 一维高斯分布图
+
+
+     二维高斯分布：
+
+
+
+
+店铺：https://xiaomeige.taobao.com                                              官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                                       技术群组：
+                 小梅哥 FPGA 团队                             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                           开发板 培训 项目研发三位一体
+
+
+
+
+                                        图 42-4 二维高斯分布图
+
+
+     高斯滤波后图像被平滑的程度取决于标准差。它的输出是邻域像素的加权
+平均，同时离中心越近的像素权重越高。因此，相对于均值滤波（mean filter）
+它的平滑效果更柔和，而且边缘保留的也更好。
+     高斯滤波被用作平滑滤波器的本质原因是因为它是一个低通滤波器，而且
+大部分基于卷积平滑滤波器都是低通滤波器。
+     GAUSS 滤波算法克服了边界效应，因而滤波后的图像较好。
+
+42.2.2实现方法
+     均值滤波算法中所有参与运算像素点权重一致，而高斯滤波算法则不同。
+高斯滤波以中心像素点为圆心，按距离中心像素点的距离，给邻域点赋予权重
+值。距离越近则权重值越高，距离越远则权重值越低。根据权重公式，5*5 高斯
+滤波算子权重表格如下表 42-1：
+                                       表 42-1 高斯滤波 5*5 算子
+
+                                            1   4         7    4    1
+                                            4   16        26   16   4
+                      (1/273) *             7   26        41   26   7
+                                            4   16        26   16   4
+                                            1   4         7    4    1
+
+     而 3*3 高斯滤波算子权重表格如下表 42-2：
+                                       表 42-2 高斯滤波 3*3 算子
+
+                                                     1    2    1
+                                  (1/16)*            2    4    2
+                                                     1    2    1
+                                     表 42-3 串行像素形成 3*3 矩阵
+
+店铺：https://xiaomeige.taobao.com                                     官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                              技术群组：
+                 小梅哥 FPGA 团队                       武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                     开发板 培训 项目研发三位一体
+
+                        (x-1,y-1)        (x,y-1)     (x+1,y-1)
+                        (x-1,y)          (x,y)       (x+1,y)
+                        (x-1,y+1)        (x,y+1)     (x+1,y+1)
+
+     如果用 f(x,y)表示待处理像素(x,y)点的像素值；而用 g(x,y)表示(x,y)点经过
+高斯滤波处理后的值；
+     用模板确定的邻域内像素的加权平均灰度值去替代模板中心像素点的值计
+算公式可以如下表示：
+ g(x,y)=（1/16）* ( f(x-1,y-1)+2f(x,y-1)+f(x+1,y-1)+2f(x-1,y)+4f(x,y)
+ + 2f(x+1,y)+ f(x-1,y+1)+2f(x,y+1)+f(x+1,y+1) )
+     如果用模板扫描图像中的每一个像素，就可以完成整幅图像的高斯滤波。
+
+
+
+
+                                    图 42-5 模板扫描像素点示意图
+
+
+     如图 42-5 所示，如果使用高斯滤波模板依次（从左到右，从上到下）划过
+每一个屏幕图像待输出点的对应存储空间，则就最终可以完成一帧图像的高斯
+滤波。因为原始图像，是按逐行扫描，每扫完一行换下一行的规律进行的图像
+输出，所以高斯滤波模板的滑动，也可以按这一输出规则，同步对这些数据进
+行处理而实现。
+     FPGA 实现该算法的步骤如下：
+     第一步：形成 3*3 矩阵像素，这个在中值滤波设计中已经有讲过，这节可
+以直接使用。
+     第二步：根据公司计算乘加和
+     第三步：将第二部结果右移 4 位（即除以 16）得到结果
+店铺：https://xiaomeige.taobao.com                                  官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                           技术群组：
+                      小梅哥 FPGA 团队                  武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                    开发板 培训 项目研发三位一体
+
+
+42.2.3模块接口设计
+     和前面的章节讲解内容一致，高斯滤波数据输入接口为 16 位灰度值，输出
+接口位滤波后得到的 data_out 值。
+                                  clk
+                                reset_p                   data_out
+                                data_in                   data_out_valid
+                          data_in_valid gaussian_filter   data_out_hs
+                              data_in_hs                  data_out_vs
+                              data_in_vs
+
+
+                                          图 42-6 高斯滤波输入输出接口
+
+                                          表 42-4 模块端口描述如下表
+
+         端口名称             I/O    端口说明
+         clk              I      图像像素时钟
+         reset_p          I      模块复位信号，高电平有效
+         data_in          I      图像像素数据，数据位宽可自定义，对于灰度图像，位宽为 8
+         data_in_valid    I      图像像素数据有效标识，为 1 表示当前 data_in 有效
+         data_in_hs       I      图像行信号
+         data_in_vs       I      图像场信号
+         data_out         O      图像处理后数据输出，数据位宽与 data_in 相同
+         data_out_valid   O      图像处理后像素数据有效标识，为 1 表示当前 data_out 有效
+         data_out_hs      O      图像处理后行信号
+         data_out_vs      O      图像处理后场信号
+
+
+42.2.4实现过程
+     3*3 模板数据的产生在上节中值滤波处理已经讲解，根据算法的步骤，只需
+要计算乘加和，然后除以 16 即可。具体代码实现如下。
+ module gaussian_filter
+ #(
+   parameter DATA_WIDTH = 8
+ )
+ (
+   input                      clk,    //pixel clk
+   input                      reset_p,
+   input     [DATA_WIDTH-1:0] data_in,
+   input                      data_in_valid,
+   input                      data_in_hs,
+   input                      data_in_vs,
+
+
+店铺：https://xiaomeige.taobao.com                                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                          技术群组：
+                 小梅哥 FPGA 团队                  武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                开发板 培训 项目研发三位一体
+
+   output reg[DATA_WIDTH-1:0] data_out,
+   output reg                 data_out_valid,
+   output reg                 data_out_hs,
+   output reg                 data_out_vs
+ );
+ //line data
+ wire [DATA_WIDTH-1:0] line0_data;
+ wire [DATA_WIDTH-1:0] line1_data;
+ wire [DATA_WIDTH-1:0] line2_data;
+ //matrix 3x3 data
+ reg [DATA_WIDTH-1:0] row0_col0;
+ reg [DATA_WIDTH-1:0] row0_col1;
+ reg [DATA_WIDTH-1:0] row0_col2;
+
+ reg   [DATA_WIDTH-1:0] row1_col0;
+ reg   [DATA_WIDTH-1:0] row1_col1;
+ reg   [DATA_WIDTH-1:0] row1_col2;
+
+ reg [DATA_WIDTH-1:0] row2_col0;
+ reg [DATA_WIDTH-1:0] row2_col1;
+ reg [DATA_WIDTH-1:0] row2_col2;
+ //
+ reg   data_in_valid_dly1;
+ reg   data_in_hs_dly1;
+ reg   data_in_vs_dly1;
+ reg [DATA_WIDTH+3:0] sum_data;
+
+ //3xline data
+ shift_register_2taps
+ #(
+   .DATA_WIDTH ( DATA_WIDTH )
+ )shift_register_2taps(
+   .clk           (clk           ),
+   .shiftin       (data_in       ),
+   .shiftin_valid (data_in_valid ),
+
+   .shiftout         (                   ),
+   .taps0x           (line0_data         ),
+   .taps1x           (line1_data         )
+ );
+
+ assign line2_data = data_in;
+
+ //----------------------------------------------------
+ // matrix 3x3 data
+ // row0_col0   row0_col1   row0_col2
+ // row1_col0   row1_col1   row1_col2
+店铺：https://xiaomeige.taobao.com                      官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/               技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+ // row2_col0   row2_col1   row2_col2
+ //----------------------------------------------------
+ always @(posedge clk or posedge reset_p) begin
+   if(reset_p) begin
+     row0_col0 <= 'd0;
+     row0_col1 <= 'd0;
+     row0_col2 <= 'd0;
+
+      row1_col0 <= 'd0;
+      row1_col1 <= 'd0;
+      row1_col2 <= 'd0;
+
+     row2_col0 <= 'd0;
+     row2_col1 <= 'd0;
+     row2_col2 <= 'd0;
+   end
+   else if(data_in_hs && data_in_vs)
+     if(data_in_valid) begin
+       row0_col2 <= line0_data;
+       row0_col1 <= row0_col2;
+       row0_col0 <= row0_col1;
+
+        row1_col2 <= line1_data;
+        row1_col1 <= row1_col2;
+        row1_col0 <= row1_col1;
+
+        row2_col2 <= line2_data;
+        row2_col1 <= row2_col2;
+        row2_col0 <= row2_col1;
+      end
+      else begin
+        row0_col2 <= row0_col2;
+        row0_col1 <= row0_col1;
+        row0_col0 <= row0_col0;
+
+        row1_col2 <= row1_col2;
+        row1_col1 <= row1_col1;
+        row1_col0 <= row1_col0;
+
+       row2_col2 <= row2_col2;
+       row2_col1 <= row2_col1;
+       row2_col0 <= row2_col0;
+     end
+   else begin
+     row0_col0 <= 'd0;
+     row0_col1 <= 'd0;
+     row0_col2 <= 'd0;
+店铺：https://xiaomeige.taobao.com                   官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/            技术群组：
+                 小梅哥 FPGA 团队              武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+
+
+      row1_col0 <= 'd0;
+      row1_col1 <= 'd0;
+      row1_col2 <= 'd0;
+
+     row2_col0 <= 'd0;
+     row2_col1 <= 'd0;
+     row2_col2 <= 'd0;
+   end
+ end
+
+ always @(posedge clk)
+ begin
+   data_in_valid_dly1 <= data_in_valid;
+   data_in_hs_dly1     <= data_in_hs;
+   data_in_vs_dly1     <= data_in_vs;
+ end
+
+ //----------------------------------------------------
+ //result
+ //----------------------------------------------------
+ always @(posedge clk or posedge reset_p) begin
+   if(reset_p)
+     sum_data <= 'd0;
+   else if(data_in_valid_dly1)
+     sum_data <= (row0_col0    + row0_col1*2 + row0_col2 +
+                  row1_col0*2 + row1_col1*4 + row1_col2*2 +
+                  row2_col0    + row2_col1*2 + row2_col2);
+ end
+
+ assign data_out = sum_data>>4;
+
+ always @(posedge clk)
+ begin
+   data_out_valid <= data_in_valid_dly1;
+   data_out_hs    <= data_in_hs_dly1;
+   data_out_vs    <= data_in_vs_dly1;
+ end
+
+ endmodule
+
+42.2.5仿真验证
+     高斯滤波处理模块设计完成后，编写仿真验证 testbench 文件，仿真验证代
+码与中值滤波基本是一样的，将例化的中值滤波模块替换成均值滤波模块即可，
+具体代码如下。
+店铺：https://xiaomeige.taobao.com                   官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/            技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+            专注于培养您的 FPGA 独立开发能力          开发板 培训 项目研发三位一体
+
+ `timescale 1ns/1ns
+ `define CLK_PERIOD 20
+
+ module gaussian_filter_tb();
+
+   reg       clk;     //pixel clk
+   reg       reset_p;
+   reg [7:0] data_in;
+   reg       data_in_valid;
+   reg       data_in_hs;
+   reg       data_in_vs;
+   wire[7:0] data_out;
+   wire      data_out_valid;
+   wire      data_out_hs;
+   wire      data_out_vs;
+
+ initial clk = 1'b1;
+ always #(`CLK_PERIOD/2) clk = ~clk;
+
+ initial begin
+   reset_p = 1'b1;
+   data_in = 8'd0;
+   data_in_valid = 1'b0;
+   data_in_hs = 1'b0;
+   data_in_vs = 1'b0;
+   #201;
+   reset_p = 1'b0;
+   #200;
+
+   data_in_vs = 1'b1;
+   repeat(480) begin
+     #500;
+     data_in_hs = 1'b1;
+     #500;
+     repeat(400*2) begin
+       data_in_valid = ~data_in_valid;
+       data_in = $random % 256;
+       #(`CLK_PERIOD);
+     end
+     #500;
+     data_in_hs = 1'b0;
+   end
+   data_in_vs = 1'b0;
+   #(`CLK_PERIOD);
+   data_in_vs = 1'b1;
+
+   #2000;
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                 小梅哥 FPGA 团队                    武汉芯路恒科技
+            专注于培养您的 FPGA 独立开发能力                开发板 培训 项目研发三位一体
+
+   $stop;
+ end
+
+ gaussian_filter
+ #(
+   .DATA_WIDTH ( 8 )
+ )gaussian_filter
+ (
+   .clk            (clk          ),               //pixel clk
+   .reset_p        (reset_p      ),
+   .data_in        (data_in      ),
+   .data_in_valid (data_in_valid ),
+   .data_in_hs     (data_in_hs   ),
+   .data_in_vs     (data_in_vs   ),
+
+   .data_out       (data_out      ),
+   .data_out_valid (data_out_valid),
+   .data_out_hs    (data_out_hs   ),
+   .data_out_vs    (data_out_vs   )
+ );
+
+ endmodule
+     运行仿真，任意找到一个仿真地方进行放大观察，仿真波形如下图 42-7。
+
+
+
+
+                                         图 42-7 仿真波形图
+
+
+     从上面波形数据可以看出，当前 3*3 的模板图像数据如下图 42-8。
+
+                            9c               b9            a9
+
+                            f4               a0            d0
+
+                            4f               04            9f
+
+                                  图 42-8 3*3 的模板图像数据
+
+
+
+店铺：https://xiaomeige.taobao.com                             官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                      技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+
+     根 据 FPGA 计 算 公 式 可 得 ， 高 斯 滤 波 处 理 后 的 数 据 计 算 结 果 为
+（1*0x9c+2*0xb9+1*0xa9+2*0xf4+4*0xa0+2*0xd0+1*0x4f+2*0x04+1*0x9f）
+=0x9B5，然后右移 4 位得到 0x9B，仿真中 sum_data 和 data_out 与该计算结果一
+致。验证了设计的正确性。
+
+42.2.6系统板级测试
+     各个子模块设计完成后，顶层的设计就相对容易些，根据整体设计框图对
+子模块端口信号进行连接即可。顶层的仿真与“基于 FPGA 的灰度图像中值滤
+波的设计实现”类似，这里就不做详细讲解，读者自己建立仿真文件完成顶层
+的仿真。
+
+42.2.7灰度图像高斯滤波工程的 TFT 显示
+     在顶层设计分析综合没有错误并且顶层仿真确认设计功能没有问题后，进
+行上板验证。
+     由于本工程涉及管脚数量较多，我们也就不以列表的形式展示本章例程的
+管脚绑定了。如需参考，读者可以直接从例程中复制本工程的管脚绑定 cst 文件
+到自己设计的工程中对自己的设计进行验证。
+     对工程的管脚和时钟进行约束后，生成 fs 文件。上板调试硬件平台基于
+ACX720-GW5A138 开发板，使用一个数据线，一端接入 ACX720-GW5A138 开
+发板的 UART 接口，另一端接入 PC 机的 USB 口，显示屏使用的是 TFT5.0 寸屏
+幕，开发板连接示意图与“基于 DDR3 的串口传图帧缓存系统”一样。
+     硬 件 连 接 好 并 上 电 后 ， 然 后 下 载 fs 文 件 。 下 载 完 成 后 ， 开 发 板 上
+LED0~LED2 会亮，TFT5.0 寸屏上显示花屏状态。
+     双击打开串口传图工具，通过点击“打开图片”按钮设置图片存放路径；
+图片宽度设置成与显示屏分辨率宽度一半，高度设置成与显示屏分辨率高度一
+致（TFT5.0 寸屏是 800*480，上位机上宽度设置为 400，高度设置为 480；）。
+     下图 42-9 是待传的图片（带有高斯噪声）。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                 小梅哥 FPGA 团队                    武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                 开发板 培训 项目研发三位一体
+
+
+
+
+                                         图 42-9 待传的图片
+
+
+     关于图片的信息可通过右键图片查看其属性，在属性的详细信息窗口可以
+看到图片大小，位深度等信息。注：这里提供的上位机要求图片为位深度为 24
+的 bmp 格式图片，图片的宽度和高度需要为 400*480（插 5 寸屏情况下）。
+     串口波特率设置与 FPGA 串口接收波特率一致（FPGA 串口接收波特率是
+1562500bps），串口端口号根据实际连接电脑的串口号进行设置（这里使用的是
+COM9），设置好传图工具后，点击“连接设备”。
+
+
+
+
+                               图 42-10 串口传图工具连接开发板
+
+
+     连接成功后，“连接设备”会变成“断开设备”，通过点击“发送图片”按
+钮开始发送图片数据。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                         官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                  技术群组：
+                 小梅哥 FPGA 团队                    武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                 开发板 培训 项目研发三位一体
+
+
+
+
+                                         图 42-11 启动传图
+
+
+     传图过程中，可以看到 TFT 屏上开始显示发送的图片。图片传送完成后，
+TFT 屏显示效果如下。
+
+
+
+
+                    图 42-12 高斯滤波处理前（左）后（右）效果对比图（TFT）
+
+
+     通过对比可以看出，TFT 屏上左右两边分别显示的是彩色图像灰度化图像
+数据和经过高斯滤波处理之后的灰度图像。采用高斯滤波处理后有一定的滤除
+噪声的效果。
+
+42.2.8灰度图像高斯滤波工程添加 HDMI 显示
+     结合前面讲解的 HDMI 章节知识点，该显示内容还可以通过 HDMI 接口输
+出到 HDMI 显示器上。关于本小节对工程输出端口改造的方法，可参考串口传
+图章节对应：串口传图工程添加双 HDMI 显示的内容，这里就不再重复讲解了。
+     最终，添加双 HDMI 工程显示的效果如下图 42-13 所示：
+店铺：https://xiaomeige.taobao.com                         官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                  技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+
+
+
+                    图 42-13 高斯滤波处理前（左）后（右）效果对比图（HDMI）
+
+
+42.3总结
+     将彩色模块的数据流经过灰度处理，得到灰度图像，将灰度图像的数据流
+经过高斯滤波模板的处理，得到高斯滤波后的图像。从设计来看，高斯滤波相
+对于均值滤波（mean filter）它的平滑效果更柔和，而且边缘保留的也更好。高
+斯滤波算法克服了边界效应，因而滤波后的图像较好。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+

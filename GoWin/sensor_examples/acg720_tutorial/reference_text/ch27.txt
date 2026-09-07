@@ -1,0 +1,587 @@
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+
+
+             27 多分辨率适配型 VGA 控制器设计
+ 工程源码            无
+ 相关视频课程
+ 说明
+
+      章节导读
+
+      上一节，我们详细讲解了 VGA 时序标准的由来、发展，并在 FPGA 中设计实
+现了一个针对标准 VGA 分辨率（640*480）的 VGA 控制器，且通过仿真和板级验
+证的方式验证了其正确性。然而，相信很多读者也都知道，在当今这个 4K 分辨
+率都快要普及的时代，640*480 这种低分辨率的显示屏，不仅技术上显得落后，
+而且显示效果也很差，很难满足日益苛刻的人眼审美。
+
+      鉴于 TFT 屏显示系统在数字系统中应用实在是非常广泛，掌握 TFT 屏幕的
+驱动和应用，是非常有实用意义的，所以本节将学习如何使用 FPGA 来进行 RGB
+接口的 TFT 屏幕驱动设计。
+
+
+27.1多分辨率适配的 VGA 控制器设计目的
+      要实现 4K 分辨率的输出，使用传统的 VGA 驱动和传输方式已经几乎不可
+能实现，而对于稍微低一点的 1080p(1920*1080 分辨率)、720p(1280*720 分辨率)
+来说，使用 VGA 接口和传输方式还是能够满足其应用需求的。而这两个分辨率
+当前在多媒体和工控行业也都还有非常广泛的应用。所以本节，我们将设计一
+个能够支持从 480*272 分辨率直到 1920*1080 分辨率的可配置型 VGA 控制器。
+      本节所要设计的 VGA 控制器能够通过简单的代码配置，实现对多种分辨率
+的驱动时序的支持。本节内容的目的主要有两个，一是在上一节内容的基础上，
+为大家设计并展示一个支持多种分辨率的实用型 VGA 控制器，二是通过本节内
+容，让大家进一步熟悉 Verilog 设计中参数化设计的方法。
+      本节内容将在上一节内容的基础上通过修改得到。在上一节“各常见分辨
+率时序参数”中，给出了若干个常见分辨率对应的时序参数的数值。同时，在
+设计 640*480 分辨率 VGA 控制器的时候，也分析了各个时序参数在控制器逻辑
+中的作用。所以，在实现时，只需要根据不同的分辨率来修改这些时序参数的
+parameter 的值即可。
+      这里再把各个常见分辨率的时序参数值列出来一遍，方便大家进一步熟悉。
+
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                 小梅哥 FPGA 团队                        武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                     开发板 培训 项目研发三位一体
+
+
+行相关的参数都是都是以像素的更新频率，也就是像素时钟作为单位，而场相
+关的参数，则是以行作为单位。
+                                表 27-1 常见分辨率时序参数表
+
+                               480   640   800    800    1024   1024   1280   1920
+                               272   480   480    600    600    768    720    1080
+             H Right Border    0     8     0      0      0      0      0      0
+             H Front Porch     2     8     40     40     24     24     110    88
+             H Sync Time       41    96    128    128    136    136    40     44
+             H Back Porch      2     40    88     88     160    160    220    148
+             H Left Border     0     8     0      0      0      0      0      0
+             H Data Time       480   640   800    800    1024   1024   1280   1920
+             H Total Time      525   800   1056   1056   1344   1344   1650   2200
+             V Bottom Border   0     8     8      0      0      0      0      0
+             V Front Porch     2     2     2      1      1      3      5      4
+             V Sync Time       10    2     2      4      4      6      5      5
+             V Back Porch      2     25    25     23     23     29     20     36
+             V Top Border      0     8     8      0      0      0      0      0
+             V Data Time       272   480   480    600    600    768    720    1080
+             V Total Time      286   525   525    628    628    806    750    1125
+
+     更多其他分辨率的时序参数值，大家可以查询视频电子标准协会（Video
+Electronics Standards Association） 制 定 的 显 示 器 时 序 标 准 （Monitor Timing
+Standard）的文档，该文档在 www.corecourse.cn 论坛上搜索 VGA 关键词即可下
+载。
+     在 “640*480 分 辨 率 VGA 控 制 器 时 序 分 析 ” 小 节 中 ， 我 们 通 过 定 义
+VGA_HS_end、hdat_begin、hdat_end、hpixel_end、VGA_VS_end、vdat_begin、
+vdat_end、vline_end 这些时间节点参数来实现了 VGA 控制器的各个信号的产生
+和数据的准确输出。而这些时间节点参数，又是通过 VGA 分辨率中的各种
+Border、Porch、time 参数通过简单的相加运算得到的，所以，可配置参数化设
+计的第一步，就是要将各个时间节点参数值用 VGA 时序标准中的时序参数值表
+示。以下为几个时间节点参数与 VGA 时序标准参数的关系。
+ hdat_begin = H_Sync_Time + H_Back_Porch + H_Left_Border - 1'b1;
+ hdat_end = H_Total_Time - H_Right_Border - H_Front_Porch - 1'b1;
+ vdat_begin = V_Sync_Time + V_Back_Porch + V_Top_Border - 1'b1;
+ vdat_end = V_Total_Time - V_Bottom_Border - V_Front_Porch - 1'b1;
+     由于 VGA_HS_end = H_Sync_Time – 1，VGA_VS_end = V_Sync_Time –
+1，hpixel_end = H_Total_Time – 1，vline_end = V_Total_Time – 1，所以这几个时
+间节点参数值没有再单独列出，而是直接使用时序参数值。
+     有了上述关系表达式，我们只需在使用不同的分辨率时让各个 Border、
+Porch、time 参数值为对应分辨率的数值即可。为了最简单的实现这种设计，我
+店铺：https://xiaomeige.taobao.com                                    官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                             技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+
+们可以通过预定义加条件编译的方式来实现。
+
+27.2条件编译原理
+     所谓条件编译，就是当设计中满足某个条件时，将该条件下的一段代码编
+译进设计中。因此，我们只需要合理设置编译条件，并在对应的编译条件下编
+写正确的代码，就可以实现条件编译。以一个最简单的例子来说明。
+     对于一个最简单的 16 位计数器，我们可以根据不同的需求，设置其计数的
+最大值，从而来设置其计数一周所占用的时间。假设这个计数最大值用
+CNT_MAX 表示，如果定义了工作在条件一（CASE_A）的情况下，该计数最
+大值为 2000，如果定义了工作在条件二（CASE_B）的情况下，该计数最大值
+为 2500，则该代码可以按照如下方式编写。
+ `define CASE_A
+ //`define CASE_B
+
+ `ifdef CASE_A
+     `define CNT_MAX 2000
+ `elsif CASE_B
+     `define CNT_MAX 2500
+ `endif
+     实际使用时，只需要在代码中定义工作在条件一还是条件二，就能选择让
+CNT_MAX 为对应的值。在 Verilog 代码中，只需要直接使用 CNT_MAX 这个参
+数即可，如下所示：
+ always@(posedge Clk or negedge Rst_n)
+ if(!Rst_n)
+     cnt <= 0;
+ else if(cnt == `CNT_MAX)
+     cnt <= 0;
+ else
+     cnt <= cnt + 1'b1;
+
+27.3基于条件编译的 VGA 时序参数
+     同样的，我们只需要定义各个分辨率的标志作为条件编译中的条件，并在
+每个条件下编写该分辨率的各个时序参数的值，那么使用时，只要让代码中某
+一个分辨率的标志生效，就能让该条件下的所有时序参数值生效，实现“一键”
+修改分辨率了。以下为实现该参数内容定义的代码：
+ //以下 7 行预定义根据实际使用的分辨率，选择一个使能，另外 6 个使用注释的方式屏
+ 蔽
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+
+
+ //`define Resolution_480x272 1 //时钟为 9MHz
+ `define Resolution_640x480 1     //时钟为 25.175MHz
+ //`define Resolution_800x480 1 //时钟为 33MHz
+ //`define Resolution_800x600 1 //时钟为 40MHz
+ //`define Resolution_1024x768 1 //时钟为 65MHz
+ //`define Resolution_1280x720 1 //时钟为 74.25MHz
+ //`define Resolution_1920x1080 1    //时钟为 148.5MHz
+
+ //定义不同分辨率的时序参数
+ `ifdef Resolution_480x272
+     `define H_Total_Time 12'd525
+     `define H_Right_Border 12'd0
+     `define H_Front_Porch 12'd2
+     `define H_Sync_Time 12'd41
+     `define H_Back_Porch 12'd2
+     `define H_Left_Border 12'd0
+
+      `define V_Total_Time 12'd286
+      `define V_Bottom_Border 12'd0
+      `define V_Front_Porch 12'd2
+      `define V_Sync_Time 12'd10
+      `define V_Back_Porch 12'd2
+      `define V_Top_Border 12'd0
+
+ `elsif Resolution_640x480
+     `define H_Total_Time 12'd800
+     `define H_Right_Border 12'd8
+     `define H_Front_Porch 12'd8
+     `define H_Sync_Time 12'd96
+     `define H_Back_Porch 12'd40
+     `define H_Left_Border 12'd8
+
+      `define V_Total_Time 12'd525
+      `define V_Bottom_Border 12'd8
+      `define V_Front_Porch 12'd2
+      `define V_Sync_Time 12'd2
+      `define V_Back_Porch 12'd25
+      `define V_Top_Border 12'd8
+
+ `elsif Resolution_800x480
+     `define H_Total_Time 12'd1056
+     `define H_Right_Border 12'd0
+     `define H_Front_Porch 12'd40
+     `define H_Sync_Time 12'd128
+     `define H_Back_Porch 12'd88
+     `define H_Left_Border 12'd0
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+
+
+      `define V_Total_Time 12'd525
+      `define V_Bottom_Border 12'd8
+      `define V_Front_Porch 12'd2
+      `define V_Sync_Time 12'd2
+      `define V_Back_Porch 12'd25
+      `define V_Top_Border 12'd8
+
+ `elsif Resolution_800x600
+     `define H_Total_Time 12'd1056
+     `define H_Right_Border 12'd0
+     `define H_Front_Porch 12'd40
+     `define H_Sync_Time 12'd128
+     `define H_Back_Porch 12'd88
+     `define H_Left_Border 12'd0
+
+      `define V_Total_Time 12'd628
+      `define V_Bottom_Border 12'd0
+      `define V_Front_Porch 12'd1
+      `define V_Sync_Time 12'd4
+      `define V_Back_Porch 12'd23
+      `define V_Top_Border 12'd0
+
+ `elsif Resolution_1024x768
+     `define H_Total_Time 12'd1344
+     `define H_Right_Border 12'd0
+     `define H_Front_Porch 12'd24
+     `define H_Sync_Time 12'd136
+     `define H_Back_Porch 12'd160
+     `define H_Left_Border 12'd0
+
+      `define V_Total_Time 12'd806
+      `define V_Bottom_Border 12'd0
+      `define V_Front_Porch 12'd3
+      `define V_Sync_Time 12'd6
+      `define V_Back_Porch 12'd29
+      `define V_Top_Border 12'd0
+
+ `elsif Resolution_1280x720
+     `define H_Total_Time 12'd1650
+     `define H_Right_Border 12'd0
+     `define H_Front_Porch 12'd110
+     `define H_Sync_Time 12'd40
+     `define H_Back_Porch 12'd220
+     `define H_Left_Border 12'd0
+
+      `define V_Total_Time 12'd750
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+      `define V_Bottom_Border 12'd0
+      `define V_Front_Porch 12'd5
+      `define V_Sync_Time 12'd5
+      `define V_Back_Porch 12'd20
+      `define V_Top_Border 12'd0
+
+ `elsif Resolution_1920x1080
+     `define H_Total_Time 12'd2200
+     `define H_Right_Border 12'd0
+     `define H_Front_Porch 12'd88
+     `define H_Sync_Time 12'd44
+     `define H_Back_Porch 12'd148
+     `define H_Left_Border 12'd0
+
+      `define V_Total_Time 12'd1125
+      `define V_Bottom_Border 12'd0
+      `define V_Front_Porch 12'd4
+      `define V_Sync_Time 12'd5
+      `define V_Back_Porch 12'd36
+      `define V_Top_Border 12'd0
+
+ `endif
+     在该代码中，定义了 7 种支持的分辨率，分别用 Resolution_480x272、Reso
+lution_640x480、Resolution_800x480、Resolution_800x600、Resolution_1024x76
+8、Resolution_1280x720、Resolution_1920x1080 表示，每个标识后面的数字就
+是该标识对应的分辨率。使用时，一次在这 7 个标识中选择一个生效，其他 6 个
+通过注释的方式屏蔽掉，就能唯一确定一个分辨率。然后在后续代码中，在根
+据是否定义了这些标识来分别定义时序参数中每个物理量的具体数值。
+
+27.4基于条件编译的多分辨率支持 VGA 控制器设计
+     通过这种方式，在 VGA 控制器的代码中实际使用时，只需要再定义
+VGA_HS_end、hdat_begin、hdat_end、hpixel_end、VGA_VS_end、vdat_begin、
+vdat_end、vline_end 与这些时序参数的关系，就能实现对不同分辨率的支持了。
+完整的控制器代码如下所示：
+ `include "disp_parameter_cfg.v"
+
+ module disp_driver(
+     ClkDisp,
+     Rst_n,
+
+      Data,
+店铺：https://xiaomeige.taobao.com                  官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/           技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+      DataReq,
+
+      H_Addr,
+      V_Addr,
+
+      Disp_HS,
+      Disp_VS,
+      Disp_Red,
+      Disp_Green,
+      Disp_Blue,
+      Disp_DE,
+      Disp_PCLK
+ );
+
+      input ClkDisp;
+      input Rst_n;
+      input [`Red_Bits + `Green_Bits + `Blue_Bits - 1:0] Data;
+      output DataReq;
+
+      output [11:0] H_Addr;
+      output [11:0] V_Addr;
+
+      output reg Disp_HS;
+      output reg Disp_VS;
+
+      output reg [`Red_Bits - 1 :0]Disp_Red;
+      output reg [`Green_Bits - 1 :0]Disp_Green;
+      output reg [`Blue_Bits - 1 :0]Disp_Blue;
+
+      output reg Disp_DE;
+      output Disp_PCLK;
+
+      wire hcount_ov;
+      wire vcount_ov;
+
+      //----------------内部寄存器定义----------------
+      reg [11:0] hcount_r;  //行扫描计数器
+      reg [11:0] vcount_r;  //场扫描计数器
+
+      assign Disp_PCLK = ~ClkDisp;
+      assign DataReq = Disp_DE;
+
+     parameter hdat_begin = `H_Sync_Time + `H_Back_Porch +
+ `H_Left_Border - 1'b1;
+     parameter hdat_end = `H_Total_Time - `H_Right_Border -
+ `H_Front_Porch - 1'b1;
+
+
+店铺：https://xiaomeige.taobao.com                    官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/             技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+     parameter vdat_begin    = `V_Sync_Time + `V_Back_Porch +
+ `V_Top_Border - 1'b1;
+     parameter vdat_end = `V_Total_Time - `V_Bottom_Border -
+ `V_Front_Porch - 1'b1;
+
+      assign H_Addr = Disp_DE?(hcount_r - hdat_begin):12'd0;
+      assign V_Addr = Disp_DE?(vcount_r - vdat_begin):12'd0;
+
+      //行扫描
+      assign hcount_ov = (hcount_r >= `H_Total_Time - 1);
+
+      always@(posedge ClkDisp or negedge Rst_n)
+      if(!Rst_n)
+          hcount_r <= 0;
+      else if(hcount_ov)
+          hcount_r <= 0;
+      else
+          hcount_r <= hcount_r + 1'b1;
+
+      //场扫描
+      assign vcount_ov = (vcount_r >= `V_Total_Time - 1);
+
+      always@(posedge ClkDisp or negedge Rst_n)
+      if(!Rst_n)
+          vcount_r <= 0;
+      else if(hcount_ov) begin
+          if(vcount_ov)
+              vcount_r <= 0;
+          else
+              vcount_r <= vcount_r + 1'd1;
+      end
+      else
+          vcount_r <= vcount_r;
+
+     always@(posedge ClkDisp)
+         Disp_DE <= ((hcount_r >= hdat_begin)&&(hcount_r <
+ hdat_end))&&((vcount_r >= vdat_begin)&&(vcount_r < vdat_end));
+
+      always@(posedge ClkDisp)    begin
+          Disp_HS <= (hcount_r > `H_Sync_Time - 1);
+          Disp_VS <= (vcount_r > `V_Sync_Time - 1);
+          {Disp_Red,Disp_Green,Disp_Blue} <= (Disp_DE)?Data:1'd0;
+      end
+
+ endmodule
+     为了让代码的可读性较强，对于各个分辨率的时序参数值，单独写在了名
+
+店铺：https://xiaomeige.taobao.com                    官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/             技术群组：
+                 小梅哥 FPGA 团队                  武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力               开发板 培训 项目研发三位一体
+
+
+为“disp_parameter_cfg.v”的文件中，然后在使用到这些参数的文件首行使用
+`include 来包括该文件即可。
+     为了让该控制器能适用于不同的场合，不仅仅是 VGA 控制器，还可以用来
+驱动 RGB TFT 屏、HDMI 转换芯片，所以对信号的命名也做了修改，统一将
+VGA 改为了 Disp，以让该控制器的应用场景不再局限于传统的 VGA 显示器。
+
+27.5完整的条件编译配置文件
+     同时，为了让该控制器支持 RGB565 和 RGB888 两种颜色模式，在条件编
+译文件中还使用了“MODE_RGB888”和“MODE_RGB565”两个条件来指定
+RED、GREEN、BLUE 颜色的数据位宽。完整的参数化文件内容如下所示：
+ /*
+ 使用时根据实际工作需求选择几个预定义参数就可以
+
+ MODE_RGB888 和 MODE_RGB565 两个参数二选一，用来决定驱动工作在 16 位模式还是
+ 24 位模式
+ 针对小梅哥提供的一系列显示设备，各个设备参数如下所述
+     4.3 寸屏：16 位色 RGB565 模式
+     5 寸屏：16 位色 RGB565 模式
+     GM7123 模块使用 24 位色 RGB888 模式，
+
+ Resolution_xxxx 预定义用来决定显示设备分辨率，常见设备分辨率如下所述
+
+ 4.3 寸 TFT 显示屏：Resolution_480x272
+ 5 寸 TFT 显示屏：Resolution_800x480
+
+ VGA 常见分辨率：
+     Resolution_640x480
+     Resolution_800x600
+     Resolution_1024x768
+     Resolution_1280x720
+     Resolution_1920x1080
+ */
+
+ //以下两行预定义根据实际使用的模式，选择一个使能，另外一个使用注释的方式屏蔽
+
+ `define MODE_RGB888
+ //`define MODE_RGB565
+
+ //以下 7 行预定义根据实际使用的分辨率，选择一个使能，另外 6 个使用注释的方式屏
+ 蔽
+
+ //`define Resolution_480x272 1          //时钟为 9MHz
+店铺：https://xiaomeige.taobao.com                       官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+ `define Resolution_640x480 1     //时钟为 25.175MHz
+ //`define Resolution_800x480 1 //时钟为 33MHz
+ //`define Resolution_800x600 1 //时钟为 40MHz
+ //`define Resolution_1024x768 1 //时钟为 65MHz
+ //`define Resolution_1280x720 1 //时钟为 74.25MHz
+ //`define Resolution_1920x1080 1    //时钟为 148.5MHz
+
+ //定义不同的颜色深度
+ `ifdef MODE_RGB888
+     `define Red_Bits 8
+     `define Green_Bits 8
+     `define Blue_Bits 8
+
+ `elsif MODE_RGB565
+     `define Red_Bits 5
+     `define Green_Bits 6
+     `define Blue_Bits 5
+ `endif
+
+ //定义不同分辨率的时序参数
+ `ifdef Resolution_480x272
+     `define H_Total_Time 12'd525
+     `define H_Right_Border 12'd0
+     `define H_Front_Porch 12'd2
+     `define H_Sync_Time 12'd41
+     `define H_Back_Porch 12'd2
+     `define H_Left_Border 12'd0
+
+      `define V_Total_Time 12'd286
+      `define V_Bottom_Border 12'd0
+      `define V_Front_Porch 12'd2
+      `define V_Sync_Time 12'd10
+      `define V_Back_Porch 12'd2
+      `define V_Top_Border 12'd0
+
+ `elsif Resolution_640x480
+     `define H_Total_Time 12'd800
+     `define H_Right_Border 12'd8
+     `define H_Front_Porch 12'd8
+     `define H_Sync_Time 12'd96
+     `define H_Back_Porch 12'd40
+     `define H_Left_Border 12'd8
+
+      `define V_Total_Time 12'd525
+      `define V_Bottom_Border 12'd8
+      `define V_Front_Porch 12'd2
+      `define V_Sync_Time 12'd2
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+      `define V_Back_Porch      12'd25
+      `define V_Top_Border      12'd8
+
+ `elsif Resolution_800x480
+     `define H_Total_Time 12'd1056
+     `define H_Right_Border 12'd0
+     `define H_Front_Porch 12'd40
+     `define H_Sync_Time 12'd128
+     `define H_Back_Porch 12'd88
+     `define H_Left_Border 12'd0
+
+      `define V_Total_Time 12'd525
+      `define V_Bottom_Border 12'd8
+      `define V_Front_Porch 12'd2
+      `define V_Sync_Time 12'd2
+      `define V_Back_Porch 12'd25
+      `define V_Top_Border 12'd8
+
+ `elsif Resolution_800x600
+     `define H_Total_Time 12'd1056
+     `define H_Right_Border 12'd0
+     `define H_Front_Porch 12'd40
+     `define H_Sync_Time 12'd128
+     `define H_Back_Porch 12'd88
+     `define H_Left_Border 12'd0
+
+      `define V_Total_Time 12'd628
+      `define V_Bottom_Border 12'd0
+      `define V_Front_Porch 12'd1
+      `define V_Sync_Time 12'd4
+      `define V_Back_Porch 12'd23
+      `define V_Top_Border 12'd0
+
+ `elsif Resolution_1024x768
+     `define H_Total_Time 12'd1344
+     `define H_Right_Border 12'd0
+     `define H_Front_Porch 12'd24
+     `define H_Sync_Time 12'd136
+     `define H_Back_Porch 12'd160
+     `define H_Left_Border 12'd0
+
+      `define V_Total_Time 12'd806
+      `define V_Bottom_Border 12'd0
+      `define V_Front_Porch 12'd3
+      `define V_Sync_Time 12'd6
+      `define V_Back_Porch 12'd29
+      `define V_Top_Border 12'd0
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+
+
+ `elsif Resolution_1280x720
+     `define H_Total_Time 12'd1650
+     `define H_Right_Border 12'd0
+     `define H_Front_Porch 12'd110
+     `define H_Sync_Time 12'd40
+     `define H_Back_Porch 12'd220
+     `define H_Left_Border 12'd0
+
+      `define V_Total_Time 12'd750
+      `define V_Bottom_Border 12'd0
+      `define V_Front_Porch 12'd5
+      `define V_Sync_Time 12'd5
+      `define V_Back_Porch 12'd20
+      `define V_Top_Border 12'd0
+
+ `elsif Resolution_1920x1080
+     `define H_Total_Time 12'd2200
+     `define H_Right_Border 12'd0
+     `define H_Front_Porch 12'd88
+     `define H_Sync_Time 12'd44
+     `define H_Back_Porch 12'd148
+     `define H_Left_Border 12'd0
+
+      `define V_Total_Time 12'd1125
+      `define V_Bottom_Border 12'd0
+      `define V_Front_Porch 12'd4
+      `define V_Sync_Time 12'd5
+      `define V_Back_Porch 12'd36
+      `define V_Top_Border 12'd0
+
+ `endif
+     经过上述分析，使用多分辨率适配型控制器，即可较好的解决不同分辨率
+条件下各显示器的像素问题。使用 VGA 章节学到的原理，也可以较好的迁移到
+后续 TFT 和 HDMI 章节中。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+

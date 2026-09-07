@@ -1,0 +1,22 @@
+D:/work/waresoft/Gowin2/workspace/720-138K/ch34_i2c_control/src/tb/i2c_bit_shift_tb.v {1 {vlog -work work -vopt -stats=none D:/work/waresoft/Gowin2/workspace/720-138K/ch34_i2c_control/src/tb/i2c_bit_shift_tb.v
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module i2c_bit_shift_tb
+
+Top level modules:
+	i2c_bit_shift_tb
+
+} {} {}} D:/work/waresoft/Gowin2/workspace/720-138K/ch34_i2c_control/src/i2c_bit_shift.v {1 {vlog -work work -vopt -stats=none D:/work/waresoft/Gowin2/workspace/720-138K/ch34_i2c_control/src/i2c_bit_shift.v
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module i2c_bit_shift
+
+Top level modules:
+	i2c_bit_shift
+
+} {} {}} D:/work/waresoft/Gowin2/workspace/720-138K/ch34_i2c_control/src/tb/M24LC04B.v {1 {vlog -work work -vopt -stats=none D:/work/waresoft/Gowin2/workspace/720-138K/ch34_i2c_control/src/tb/M24LC04B.v
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module M24LC04B
+
+Top level modules:
+	M24LC04B
+
+} {} {}}

@@ -1,0 +1,1542 @@
+[
+  {
+    "module": "acm1030_ddr3_rgmii",
+    "declarations": 1,
+    "chapters": "63",
+    "distinct_sources": 1,
+    "sources": "raw/ch63/ch63_acm1030_ddr3_rgmii/acm1030_ddr3_rgmii.gprj:src/acm1030_ddr3_rgmii.v"
+  },
+  {
+    "module": "ad_10bit_to_16bit",
+    "declarations": 1,
+    "chapters": "63",
+    "distinct_sources": 1,
+    "sources": "raw/ch63/ch63_acm1030_ddr3_rgmii/acm1030_ddr3_rgmii.gprj:src/ad_10bit_to_16bit.v"
+  },
+  {
+    "module": "ad7606_ddr3_rgmii",
+    "declarations": 1,
+    "chapters": "62",
+    "distinct_sources": 1,
+    "sources": "raw/ch62/ch62_ad7606_ddr3_rgmii/ad7606_ddr3_rgmii.gprj:src/ad7606_ddr3_rgmii.v"
+  },
+  {
+    "module": "ad7606_driver",
+    "declarations": 1,
+    "chapters": "62",
+    "distinct_sources": 1,
+    "sources": "raw/ch62/ch62_ad7606_ddr3_rgmii/ad7606_ddr3_rgmii.gprj:src/ad7606_driver.v"
+  },
+  {
+    "module": "ADC_test",
+    "declarations": 1,
+    "chapters": "24",
+    "distinct_sources": 1,
+    "sources": "raw/ch24/ch24_ADCadc128S102/ADC_test.gprj:src/ADC_test.v"
+  },
+  {
+    "module": "adc128s102",
+    "declarations": 2,
+    "chapters": "24,25",
+    "distinct_sources": 2,
+    "sources": "raw/ch24/ch24_ADCadc128S102/ADC_test.gprj:src/adc128s102.v;raw/ch25/ch25_Dig_Volt/Dig_Volt.gprj:src/adc128s102.v"
+  },
+  {
+    "module": "arp_send_rgmii_with_crc",
+    "declarations": 1,
+    "chapters": "52",
+    "distinct_sources": 1,
+    "sources": "raw/ch52/ch52_arp_send_rgmii/arp_send_rgmii_with_crc/arp_send_rgmii_with_crc.gprj:src/arp_send_rgmii_with_crc.v"
+  },
+  {
+    "module": "async_fifo",
+    "declarations": 3,
+    "chapters": "35",
+    "distinct_sources": 3,
+    "sources": "raw/ch35/acx720_audio_loopback_master/audio_loopback.gprj:src/fifo/async_fifo.v;raw/ch35/acx720_audio_loopback_slave/audio_loopback.gprj:src/fifo/async_fifo.v;raw/ch35/ch35_Audio_loopback/CoreCourse_GHRD_I2S_RX.gprj:src/async_fifo.v"
+  },
+  {
+    "module": "async_fifo_ctrl",
+    "declarations": 3,
+    "chapters": "35",
+    "distinct_sources": 3,
+    "sources": "raw/ch35/acx720_audio_loopback_master/audio_loopback.gprj:src/fifo/async_fifo_ctrl.v;raw/ch35/acx720_audio_loopback_slave/audio_loopback.gprj:src/fifo/async_fifo_ctrl.v;raw/ch35/ch35_Audio_loopback/CoreCourse_GHRD_I2S_RX.gprj:src/async_fifo_ctrl.v"
+  },
+  {
+    "module": "audio_lookback",
+    "declarations": 2,
+    "chapters": "35",
+    "distinct_sources": 2,
+    "sources": "raw/ch35/acx720_audio_loopback_master/audio_loopback.gprj:src/top/audio_lookback.v;raw/ch35/acx720_audio_loopback_slave/audio_loopback.gprj:src/top/audio_lookback.v"
+  },
+  {
+    "module": "bcd_modify",
+    "declarations": 1,
+    "chapters": "25",
+    "distinct_sources": 1,
+    "sources": "raw/ch25/ch25_Dig_Volt/Dig_Volt.gprj:src/Binary_to_BCD.v"
+  },
+  {
+    "module": "bcd_single_modify",
+    "declarations": 1,
+    "chapters": "25",
+    "distinct_sources": 1,
+    "sources": "raw/ch25/ch25_Dig_Volt/Dig_Volt.gprj:src/Binary_to_BCD.v"
+  },
+  {
+    "module": "bin_counter",
+    "declarations": 1,
+    "chapters": "05",
+    "distinct_sources": 1,
+    "sources": "raw/ch05/ch5_bin_counter/bin_counter.gprj:src/bin_counter.v"
+  },
+  {
+    "module": "bin_counter_tb",
+    "declarations": 1,
+    "chapters": "05",
+    "distinct_sources": 1,
+    "sources": "raw/ch05/ch5_bin_counter/bin_counter.gprj:src/bin_counter_tb.v"
+  },
+  {
+    "module": "Binary_to_BCD",
+    "declarations": 1,
+    "chapters": "25",
+    "distinct_sources": 1,
+    "sources": "raw/ch25/ch25_Dig_Volt/Dig_Volt.gprj:src/Binary_to_BCD.v"
+  },
+  {
+    "module": "bit8_trans_bit16",
+    "declarations": 6,
+    "chapters": "38,39,40,41,42,43",
+    "distinct_sources": 6,
+    "sources": "raw/ch38/ch38_uart_ddr3_tft_hdmi/uart_ddr3_tft_hdmi.gprj:src/bit8_trans_bit16/bit8_trans_bit16.v;raw/ch39/ch39_uart_ddr3_tft_hdmi_rgb2gray/uart_ddr3_tft_hdmi_rgb2gray.gprj:src/bit8_trans_bit16/bit8_trans_bit16.v;raw/ch40/ch40_uart_ddr3_tft_hdmi_median_filter/uart_ddr3_tft_hdmi_median_filter.gprj:src/bit8_trans_bit16/bit8_trans_bit16.v;raw/ch41/ch41_uart_ddr3_tft_hdmi_mean_filter/uart_ddr3_tft_hdmi_mean_filter.gprj:src/bit8_trans_bit16/bit8_trans_bit16.v;raw/ch42/ch42_uart_ddr3_tft_hdmi_gaussian_filter/uart_ddr3_tft_hdmi_gaussian_filter.gprj:src/bit8_trans_bit16/bit8_trans_bit16.v;raw/ch43/ch43_uart_ddr3_tft_hdmi_sobel_filter/uart_ddr3_tft_hdmi_sobel_filter.gprj:src/bit8_trans_bit16/bit8_trans_bit16.v"
+  },
+  {
+    "module": "cache",
+    "declarations": 1,
+    "chapters": "60",
+    "distinct_sources": 1,
+    "sources": "raw/ch60/ch60_ov5640x2_udp_rgmii/ov5640x2_udp_rgmii.gprj:src/cache.v"
+  },
+  {
+    "module": "Camera_ETH_Formator",
+    "declarations": 2,
+    "chapters": "48,60",
+    "distinct_sources": 2,
+    "sources": "raw/ch48/ch48_udp_rgmii/ov5640_udp_rgmii_8_8/ov5640_udp_rgmii_8_8.gprj:src/Camera_ETH_Formator.v;raw/ch60/ch60_ov5640x2_udp_rgmii/ov5640x2_udp_rgmii.gprj:src/Camera_ETH_Formator.v"
+  },
+  {
+    "module": "camera_init",
+    "declarations": 7,
+    "chapters": "45,46,47,48,59,60,70",
+    "distinct_sources": 7,
+    "sources": "raw/ch45/ch45_ov5640_ddr3_tft/ov5640_ddr3_tft.gprj:src/camera_init/camera_init.v;raw/ch46/ch46_ov5640_ddr3_vga/ov5640_ddr3_vga.gprj:src/camera_init/camera_init.v;raw/ch47/ch47_ov5640_ddr3_hdmi/ov5640_ddr3_hdmi.gprj:src/camera_init/camera_init.v;raw/ch48/ch48_udp_rgmii/ov5640_udp_rgmii_8_8/ov5640_udp_rgmii_8_8.gprj:src/camera_init/camera_init.v;raw/ch59/ch59_ov5640_udp_rgmii/ov5640_udp_rgmii_8_16.gprj:src/camera_init/camera_init.v;raw/ch60/ch60_ov5640x2_udp_rgmii/ov5640x2_udp_rgmii.gprj:src/camera_init/camera_init.v;raw/ch70/ch70_fx2_stream_in_ov5640_rgb/fx2_stream_in_ov5640_rgb.gprj:src/camera_init/camera_init.v"
+  },
+  {
+    "module": "camera_pll",
+    "declarations": 4,
+    "chapters": "45,46,47,62",
+    "distinct_sources": 4,
+    "sources": "raw/ch45/ch45_ov5640_ddr3_tft/ov5640_ddr3_tft.gprj:src/camera_pll/camera_pll.v;raw/ch46/ch46_ov5640_ddr3_vga/ov5640_ddr3_vga.gprj:src/camera_pll/camera_pll.v;raw/ch47/ch47_ov5640_ddr3_hdmi/ov5640_ddr3_hdmi.gprj:src/camera_pll/camera_pll.v;raw/ch62/ch62_ad7606_ddr3_rgmii/ad7606_ddr3_rgmii.gprj:src/camera_pll/camera_pll.v"
+  },
+  {
+    "module": "Channel_Slect",
+    "declarations": 1,
+    "chapters": "25",
+    "distinct_sources": 1,
+    "sources": "raw/ch25/ch25_Dig_Volt/Dig_Volt.gprj:src/Channel_Slect.v"
+  },
+  {
+    "module": "char_extract",
+    "declarations": 4,
+    "chapters": "31,34",
+    "distinct_sources": 4,
+    "sources": "raw/ch31/ch31_rom_char_tft_hdmi/rom_char_tft_hdmi/rom_char_tft_hdmi.gprj:src/char_extract/char_extract.v;raw/ch31/ch31_rom_char_tft_hdmi/rom_char_tft800x480_224x64/rom_char_tft_hdmi/rom_char_tft_hdmi.gprj:src/char_extract/char_extract.v;raw/ch34/ch34_uart_rtc8563_tft/uart_rtc8563_tft_disp_driver/uart_rtc8563_tft.gprj:src/dync_char_tft/char_extract/char_extract.v;raw/ch34/ch34_uart_rtc8563_tft/uart_rtc8563_tft/uart_rtc8563_tft/uart_rtc8563_tft.gprj:src/dync_char_tft/char_extract/char_extract.v"
+  },
+  {
+    "module": "checksum",
+    "declarations": 2,
+    "chapters": "53,54",
+    "distinct_sources": 2,
+    "sources": "raw/ch53/ch53_IP_checksum/IP_checksum.gprj:src/checksum.v;raw/ch54/ch54_udp_send_rgmii/udp_send_rgmii_with_checksum/udp_send_rgmii/udp_send_rgmii.gprj:src/checksum.v"
+  },
+  {
+    "module": "cmd_rx",
+    "declarations": 2,
+    "chapters": "62,63",
+    "distinct_sources": 2,
+    "sources": "raw/ch62/ch62_ad7606_ddr3_rgmii/ad7606_ddr3_rgmii.gprj:src/cmd_rx.v;raw/ch63/ch63_acm1030_ddr3_rgmii/acm1030_ddr3_rgmii.gprj:src/cmd_rx.v"
+  },
+  {
+    "module": "color_bar",
+    "declarations": 1,
+    "chapters": "29",
+    "distinct_sources": 1,
+    "sources": "raw/ch29/ch29_hdmi_color/gao_hdmi_color.gprj:src/color_bar.v"
+  },
+  {
+    "module": "colour_bar_dat_gen",
+    "declarations": 7,
+    "chapters": "38,39,40,41,42,43,67",
+    "distinct_sources": 7,
+    "sources": "raw/ch38/ch38_uart_ddr3_tft_hdmi/uart_ddr3_tft_hdmi.gprj:src/test_dat_gen/colour_bar_dat_gen.v;raw/ch39/ch39_uart_ddr3_tft_hdmi_rgb2gray/uart_ddr3_tft_hdmi_rgb2gray.gprj:src/test_dat_gen/colour_bar_dat_gen.v;raw/ch40/ch40_uart_ddr3_tft_hdmi_median_filter/uart_ddr3_tft_hdmi_median_filter.gprj:src/test_dat_gen/colour_bar_dat_gen.v;raw/ch41/ch41_uart_ddr3_tft_hdmi_mean_filter/uart_ddr3_tft_hdmi_mean_filter.gprj:src/test_dat_gen/colour_bar_dat_gen.v;raw/ch42/ch42_uart_ddr3_tft_hdmi_gaussian_filter/uart_ddr3_tft_hdmi_gaussian_filter.gprj:src/test_dat_gen/colour_bar_dat_gen.v;raw/ch43/ch43_uart_ddr3_tft_hdmi_sobel_filter/uart_ddr3_tft_hdmi_sobel_filter.gprj:src/test_dat_gen/colour_bar_dat_gen.v;raw/ch67/ch67_usb_ddr3_tft_hdmi/usb_ddr3_tft_hdmi/uart_ddr3_tft_hdmi.gprj:src/test_dat_gen/colour_bar_dat_gen.v"
+  },
+  {
+    "module": "controller",
+    "declarations": 1,
+    "chapters": "60",
+    "distinct_sources": 1,
+    "sources": "raw/ch60/ch60_ov5640x2_udp_rgmii/ov5640x2_udp_rgmii.gprj:src/controller.v"
+  },
+  {
+    "module": "controller_top",
+    "declarations": 1,
+    "chapters": "60",
+    "distinct_sources": 1,
+    "sources": "raw/ch60/ch60_ov5640x2_udp_rgmii/ov5640x2_udp_rgmii.gprj:src/controller_top.v"
+  },
+  {
+    "module": "controller_top_tb",
+    "declarations": 1,
+    "chapters": "60",
+    "distinct_sources": 1,
+    "sources": "raw/ch60/ch60_ov5640x2_udp_rgmii/ov5640x2_udp_rgmii.gprj:src/controller_top_tb.v"
+  },
+  {
+    "module": "convert",
+    "declarations": 2,
+    "chapters": "33",
+    "distinct_sources": 2,
+    "sources": "raw/ch33/ch33_uart_eeprom/nested_A/uart_eeprom.gprj:src/convert.v;raw/ch33/ch33_uart_eeprom/nested_B/uart_eeprom.gprj:src/convert.v"
+  },
+  {
+    "module": "CoreCourse_GHRD",
+    "declarations": 1,
+    "chapters": "35",
+    "distinct_sources": 1,
+    "sources": "raw/ch35/ch35_Audio_loopback/CoreCourse_GHRD_I2S_RX.gprj:src/CoreCourse_GHRD.v"
+  },
+  {
+    "module": "counter_led_4",
+    "declarations": 1,
+    "chapters": "08",
+    "distinct_sources": 1,
+    "sources": "raw/ch08/ch8_uart_rx_ctrl_led/uart_rx_ctrl_led.gprj:src/counter_led_4.v"
+  },
+  {
+    "module": "crc32_d8",
+    "declarations": 14,
+    "chapters": "48,52,54,55,56,58,59,60,61,62,63",
+    "distinct_sources": 14,
+    "sources": "raw/ch48/ch48_udp_rgmii/eth_udp_loopback_rgmii/eth_udp_lookback_rgmii/eth_udp_lookback_rgmii.gprj:src/eth_udp_gmii/crc32_d8.v;raw/ch48/ch48_udp_rgmii/ov5640_udp_rgmii_8_8/ov5640_udp_rgmii_8_8.gprj:src/eth/CRC32_D8.v;raw/ch52/ch52_arp_send_rgmii/arp_send_rgmii_with_crc/arp_send_rgmii_with_crc.gprj:src/CRC32_D8.v;raw/ch54/ch54_udp_send_rgmii/udp_send_rgmii_with_checksum/udp_send_rgmii/udp_send_rgmii.gprj:src/CRC32_D8.v;raw/ch54/ch54_udp_send_rgmii/udp_send_rgmii/udp_send_rgmii.gprj:src/CRC32_D8.v;raw/ch55/ch55_udp_send/eth_udp_tx_rgmii/eth_udp_tx_rgmii.gprj:src/crc32_d8.v;raw/ch55/ch55_udp_send/udp_send/udp_send.gprj:src/CRC32_D8.v;raw/ch56/ch56_eth_udp_rx_rgmii/eth_udp_rx_rgmii.gprj:src/eth_udp_gmii/crc32_d8.v;raw/ch58/ch58_eth_udp_lookback_rgmii/eth_udp_lookback_rgmii.gprj:src/eth_udp_gmii/crc32_d8.v;raw/ch59/ch59_ov5640_udp_rgmii/ov5640_udp_rgmii_8_16.gprj:src/eth_udp_gmii/crc32_d8.v;raw/ch60/ch60_ov5640x2_udp_rgmii/ov5640x2_udp_rgmii.gprj:src/eth/CRC32_D8.v;raw/ch61/ch61_eth_udp_rgmii_ddr3_tft800x480/eth_udp_rgmii_ddr3_tft800x480/eth_udp_rgmii_ddr3_tft800x480.gprj:src/eth_udp_gmii/crc32_d8.v;raw/ch62/ch62_ad7606_ddr3_rgmii/ad7606_ddr3_rgmii.gprj:src/eth_udp_gmii/crc32_d8.v;raw/ch63/ch63_acm1030_ddr3_rgmii/acm1030_ddr3_rgmii.gprj:src/eth_udp_gmii/crc32_d8.v"
+  },
+  {
+    "module": "DAC_test",
+    "declarations": 1,
+    "chapters": "23",
+    "distinct_sources": 1,
+    "sources": "raw/ch23/ch23_DACtlv5618/DACtlv5618.gprj:src/DAC_test.v"
+  },
+  {
+    "module": "data_scan_ctrl",
+    "declarations": 2,
+    "chapters": "34",
+    "distinct_sources": 2,
+    "sources": "raw/ch34/ch34_uart_rtc8563_tft/uart_rtc8563_tft_disp_driver/uart_rtc8563_tft.gprj:src/dync_char_tft/data_scan_ctrl/data_scan_ctrl.v;raw/ch34/ch34_uart_rtc8563_tft/uart_rtc8563_tft/uart_rtc8563_tft/uart_rtc8563_tft.gprj:src/dync_char_tft/data_scan_ctrl/data_scan_ctrl.v"
+  },
+  {
+    "module": "dc_fifo",
+    "declarations": 1,
+    "chapters": "60",
+    "distinct_sources": 1,
+    "sources": "raw/ch60/ch60_ov5640x2_udp_rgmii/ov5640x2_udp_rgmii.gprj:src/dc_fifo/dc_fifo.v"
+  },
+  {
+    "module": "ddr_pll",
+    "declarations": 4,
+    "chapters": "45,47,62,63",
+    "distinct_sources": 4,
+    "sources": "raw/ch45/ch45_ov5640_ddr3_tft/ov5640_ddr3_tft.gprj:src/ddr_pll/ddr_pll.v;raw/ch47/ch47_ov5640_ddr3_hdmi/ov5640_ddr3_hdmi.gprj:src/ddr_pll/ddr_pll.v;raw/ch62/ch62_ad7606_ddr3_rgmii/ad7606_ddr3_rgmii.gprj:src/ddr_pll/ddr_pll.v;raw/ch63/ch63_acm1030_ddr3_rgmii/acm1030_ddr3_rgmii.gprj:src/ddr_pll/ddr_pll.v"
+  },
+  {
+    "module": "ddr3_ctrl_2port",
+    "declarations": 14,
+    "chapters": "37,38,39,40,41,42,43,45,46,47,61,62,63,67",
+    "distinct_sources": 14,
+    "sources": "raw/ch37/ch37_ddr3_ctrl_2port/ddr3_ctrl_2port.gprj:src/ddr3_ctrl_2port.v;raw/ch38/ch38_uart_ddr3_tft_hdmi/uart_ddr3_tft_hdmi.gprj:src/ddr3_ctrl_2port/ddr3_ctrl_2port.v;raw/ch39/ch39_uart_ddr3_tft_hdmi_rgb2gray/uart_ddr3_tft_hdmi_rgb2gray.gprj:src/ddr3_ctrl_2port/ddr3_ctrl_2port.v;raw/ch40/ch40_uart_ddr3_tft_hdmi_median_filter/uart_ddr3_tft_hdmi_median_filter.gprj:src/ddr3_ctrl_2port/ddr3_ctrl_2port.v;raw/ch41/ch41_uart_ddr3_tft_hdmi_mean_filter/uart_ddr3_tft_hdmi_mean_filter.gprj:src/ddr3_ctrl_2port/ddr3_ctrl_2port.v;raw/ch42/ch42_uart_ddr3_tft_hdmi_gaussian_filter/uart_ddr3_tft_hdmi_gaussian_filter.gprj:src/ddr3_ctrl_2port/ddr3_ctrl_2port.v;raw/ch43/ch43_uart_ddr3_tft_hdmi_sobel_filter/uart_ddr3_tft_hdmi_sobel_filter.gprj:src/ddr3_ctrl_2port/ddr3_ctrl_2port.v;raw/ch45/ch45_ov5640_ddr3_tft/ov5640_ddr3_tft.gprj:src/ddr3_ctrl_2port/ddr3_ctrl_2port.v;raw/ch46/ch46_ov5640_ddr3_vga/ov5640_ddr3_vga.gprj:src/ddr3_ctrl_2port/ddr3_ctrl_2port.v;raw/ch47/ch47_ov5640_ddr3_hdmi/ov5640_ddr3_hdmi.gprj:src/ddr3_ctrl_2port/ddr3_ctrl_2port.v;raw/ch61/ch61_eth_udp_rgmii_ddr3_tft800x480/eth_udp_rgmii_ddr3_tft800x480/eth_udp_rgmii_ddr3_tft800x480.gprj:src/ddr3_ctrl_2port/ddr3_ctrl_2port.v;raw/ch62/ch62_ad7606_ddr3_rgmii/ad7606_ddr3_rgmii.gprj:src/ddr3_ctrl_2port/ddr3_ctrl_2port.v;raw/ch63/ch63_acm1030_ddr3_rgmii/acm1030_ddr3_rgmii.gprj:src/ddr3_ctrl_2port/ddr3_ctrl_2port.v;raw/ch67/ch67_usb_ddr3_tft_hdmi/usb_ddr3_tft_hdmi/uart_ddr3_tft_hdmi.gprj:src/ddr3_ctrl_2port/ddr3_ctrl_2port.v"
+  },
+  {
+    "module": "DDR3_Memory_Interface_Top",
+    "declarations": 15,
+    "chapters": "36,37,38,39,40,41,42,43,45,46,47,61,62,63,67",
+    "distinct_sources": 15,
+    "sources": "raw/ch36/ch38_DDR3_MC_PHY_1vs4_5a138k/project/ddr3_1v4_hs.gprj:src/ddr3_memory_interface/ddr3_memory_interface.v;raw/ch37/ch37_ddr3_ctrl_2port/ddr3_ctrl_2port.gprj:src/ddr3_memory_interface/ddr3_memory_interface.v;raw/ch38/ch38_uart_ddr3_tft_hdmi/uart_ddr3_tft_hdmi.gprj:src/ddr3_memory_interface/ddr3_memory_interface.v;raw/ch39/ch39_uart_ddr3_tft_hdmi_rgb2gray/uart_ddr3_tft_hdmi_rgb2gray.gprj:src/ddr3_memory_interface/ddr3_memory_interface.v;raw/ch40/ch40_uart_ddr3_tft_hdmi_median_filter/uart_ddr3_tft_hdmi_median_filter.gprj:src/ddr3_memory_interface/ddr3_memory_interface.v;raw/ch41/ch41_uart_ddr3_tft_hdmi_mean_filter/uart_ddr3_tft_hdmi_mean_filter.gprj:src/ddr3_memory_interface/ddr3_memory_interface.v;raw/ch42/ch42_uart_ddr3_tft_hdmi_gaussian_filter/uart_ddr3_tft_hdmi_gaussian_filter.gprj:src/ddr3_memory_interface/ddr3_memory_interface.v;raw/ch43/ch43_uart_ddr3_tft_hdmi_sobel_filter/uart_ddr3_tft_hdmi_sobel_filter.gprj:src/ddr3_memory_interface/ddr3_memory_interface.v;raw/ch45/ch45_ov5640_ddr3_tft/ov5640_ddr3_tft.gprj:src/ddr3_memory_interface/ddr3_memory_interface.v;raw/ch46/ch46_ov5640_ddr3_vga/ov5640_ddr3_vga.gprj:src/ddr3_memory_interface/ddr3_memory_interface.v;raw/ch47/ch47_ov5640_ddr3_hdmi/ov5640_ddr3_hdmi.gprj:src/ddr3_memory_interface/ddr3_memory_interface.v;raw/ch61/ch61_eth_udp_rgmii_ddr3_tft800x480/eth_udp_rgmii_ddr3_tft800x480/eth_udp_rgmii_ddr3_tft800x480.gprj:src/ddr3_memory_interface/ddr3_memory_interface.v;raw/ch62/ch62_ad7606_ddr3_rgmii/ad7606_ddr3_rgmii.gprj:src/ddr3_memory_interface/ddr3_memory_interface.v;raw/ch63/ch63_acm1030_ddr3_rgmii/acm1030_ddr3_rgmii.gprj:src/ddr3_memory_interface/ddr3_memory_interface.v;raw/ch67/ch67_usb_ddr3_tft_hdmi/usb_ddr3_tft_hdmi/uart_ddr3_tft_hdmi.gprj:src/ddr3_memory_interface/ddr3_memory_interface.v"
+  },
+  {
+    "module": "ddr3_pll",
+    "declarations": 9,
+    "chapters": "38,39,40,41,42,43,45,61,67",
+    "distinct_sources": 9,
+    "sources": "raw/ch38/ch38_uart_ddr3_tft_hdmi/uart_ddr3_tft_hdmi.gprj:src/ddr3_pll/ddr3_pll.v;raw/ch39/ch39_uart_ddr3_tft_hdmi_rgb2gray/uart_ddr3_tft_hdmi_rgb2gray.gprj:src/ddr3_pll/ddr3_pll.v;raw/ch40/ch40_uart_ddr3_tft_hdmi_median_filter/uart_ddr3_tft_hdmi_median_filter.gprj:src/ddr3_pll/ddr3_pll.v;raw/ch41/ch41_uart_ddr3_tft_hdmi_mean_filter/uart_ddr3_tft_hdmi_mean_filter.gprj:src/ddr3_pll/ddr3_pll.v;raw/ch42/ch42_uart_ddr3_tft_hdmi_gaussian_filter/uart_ddr3_tft_hdmi_gaussian_filter.gprj:src/ddr3_pll/ddr3_pll.v;raw/ch43/ch43_uart_ddr3_tft_hdmi_sobel_filter/uart_ddr3_tft_hdmi_sobel_filter.gprj:src/ddr3_pll/ddr3_pll.v;raw/ch45/ch45_ov5640_ddr3_tft/ov5640_ddr3_tft.gprj:src/ddr3_pll/ddr3_pll.v;raw/ch61/ch61_eth_udp_rgmii_ddr3_tft800x480/eth_udp_rgmii_ddr3_tft800x480/eth_udp_rgmii_ddr3_tft800x480.gprj:src/ddr3_pll/ddr3_pll.v;raw/ch67/ch67_usb_ddr3_tft_hdmi/usb_ddr3_tft_hdmi/uart_ddr3_tft_hdmi.gprj:src/ddr3_pll/ddr3_pll.v"
+  },
+  {
+    "module": "ddr3_test1",
+    "declarations": 1,
+    "chapters": "36",
+    "distinct_sources": 1,
+    "sources": "raw/ch36/ch38_DDR3_MC_PHY_1vs4_5a138k/project/ddr3_1v4_hs.gprj:src/ddrtest.v"
+  },
+  {
+    "module": "dds_ad9767",
+    "declarations": 2,
+    "chapters": "18",
+    "distinct_sources": 2,
+    "sources": "raw/ch18/ch18_dds_ad9767/A/dds_ad9767.gprj:src/dds_ad9767.v;raw/ch18/ch18_dds_ad9767/B/dds_ad9767.gprj:src/dds_ad9767.v"
+  },
+  {
+    "module": "DDS_Module",
+    "declarations": 2,
+    "chapters": "18",
+    "distinct_sources": 2,
+    "sources": "raw/ch18/ch18_dds_ad9767/A/dds_ad9767.gprj:src/DDS_Module.v;raw/ch18/ch18_dds_ad9767/B/dds_ad9767.gprj:src/DDS_Module.v"
+  },
+  {
+    "module": "Dig_Volt",
+    "declarations": 1,
+    "chapters": "25",
+    "distinct_sources": 1,
+    "sources": "raw/ch25/ch25_Dig_Volt/Dig_Volt.gprj:src/Dig_Volt.v"
+  },
+  {
+    "module": "disp_driver",
+    "declarations": 17,
+    "chapters": "28,29,30,31,34,38,39,40,41,42,43,45,46,47,61,67",
+    "distinct_sources": 17,
+    "sources": "raw/ch28/ch28_tft_ctrl/tft_ctrl.gprj:src/disp_driver.v;raw/ch29/ch29_hdmi_color/gao_hdmi_color.gprj:src/vga/disp_driver.v;raw/ch30/ch30_rom_image_tft_hdmi/rom_image_tft_hdmi.gprj:src/disp_driver/disp_driver.v;raw/ch31/ch31_rom_char_tft_hdmi/rom_char_tft_hdmi/rom_char_tft_hdmi.gprj:src/disp_driver/disp_driver.v;raw/ch31/ch31_rom_char_tft_hdmi/rom_char_tft800x480_224x64/rom_char_tft_hdmi/rom_char_tft_hdmi.gprj:src/disp_driver/disp_driver.v;raw/ch34/ch34_uart_rtc8563_tft/uart_rtc8563_tft_disp_driver/uart_rtc8563_tft.gprj:src/disp_driver/disp_driver.v;raw/ch38/ch38_uart_ddr3_tft_hdmi/uart_ddr3_tft_hdmi.gprj:src/disp_driver/disp_driver.v;raw/ch39/ch39_uart_ddr3_tft_hdmi_rgb2gray/uart_ddr3_tft_hdmi_rgb2gray.gprj:src/disp_driver/disp_driver.v;raw/ch40/ch40_uart_ddr3_tft_hdmi_median_filter/uart_ddr3_tft_hdmi_median_filter.gprj:src/disp_driver/disp_driver.v;raw/ch41/ch41_uart_ddr3_tft_hdmi_mean_filter/uart_ddr3_tft_hdmi_mean_filter.gprj:src/disp_driver/disp_driver.v;raw/ch42/ch42_uart_ddr3_tft_hdmi_gaussian_filter/uart_ddr3_tft_hdmi_gaussian_filter.gprj:src/disp_driver/disp_driver.v;raw/ch43/ch43_uart_ddr3_tft_hdmi_sobel_filter/uart_ddr3_tft_hdmi_sobel_filter.gprj:src/disp_driver/disp_driver.v;raw/ch45/ch45_ov5640_ddr3_tft/ov5640_ddr3_tft.gprj:src/vga/disp_driver.v;raw/ch46/ch46_ov5640_ddr3_vga/ov5640_ddr3_vga.gprj:src/vga/disp_driver.v;raw/ch47/ch47_ov5640_ddr3_hdmi/ov5640_ddr3_hdmi.gprj:src/vga/disp_driver.v;raw/ch61/ch61_eth_udp_rgmii_ddr3_tft800x480/eth_udp_rgmii_ddr3_tft800x480/eth_udp_rgmii_ddr3_tft800x480.gprj:src/disp_driver/disp_driver.v;raw/ch67/ch67_usb_ddr3_tft_hdmi/usb_ddr3_tft_hdmi/uart_ddr3_tft_hdmi.gprj:src/disp_driver/disp_driver.v"
+  },
+  {
+    "module": "dpram",
+    "declarations": 3,
+    "chapters": "35",
+    "distinct_sources": 3,
+    "sources": "raw/ch35/acx720_audio_loopback_master/audio_loopback.gprj:src/fifo/dpram.v;raw/ch35/acx720_audio_loopback_slave/audio_loopback.gprj:src/fifo/dpram.v;raw/ch35/ch35_Audio_loopback/CoreCourse_GHRD_I2S_RX.gprj:src/dpram.v"
+  },
+  {
+    "module": "dvi_encoder",
+    "declarations": 14,
+    "chapters": "29,30,31,38,39,40,41,42,43,45,46,47,67",
+    "distinct_sources": 14,
+    "sources": "raw/ch29/ch29_hdmi_color/gao_hdmi_color.gprj:src/dvi_encoder.v;raw/ch30/ch30_rom_image_tft_hdmi/rom_image_tft_hdmi.gprj:src/dvi_encoder/dvi_encoder.v;raw/ch31/ch31_rom_char_tft_hdmi/rom_char_tft_hdmi/rom_char_tft_hdmi.gprj:src/dvi_encoder/dvi_encoder.v;raw/ch31/ch31_rom_char_tft_hdmi/rom_char_tft800x480_224x64/rom_char_tft_hdmi/rom_char_tft_hdmi.gprj:src/dvi_encoder/dvi_encoder.v;raw/ch38/ch38_uart_ddr3_tft_hdmi/uart_ddr3_tft_hdmi.gprj:src/dvi_encoder.v;raw/ch39/ch39_uart_ddr3_tft_hdmi_rgb2gray/uart_ddr3_tft_hdmi_rgb2gray.gprj:src/dvi_encoder.v;raw/ch40/ch40_uart_ddr3_tft_hdmi_median_filter/uart_ddr3_tft_hdmi_median_filter.gprj:src/dvi_encoder.v;raw/ch41/ch41_uart_ddr3_tft_hdmi_mean_filter/uart_ddr3_tft_hdmi_mean_filter.gprj:src/dvi_encoder.v;raw/ch42/ch42_uart_ddr3_tft_hdmi_gaussian_filter/uart_ddr3_tft_hdmi_gaussian_filter.gprj:src/dvi_encoder.v;raw/ch43/ch43_uart_ddr3_tft_hdmi_sobel_filter/uart_ddr3_tft_hdmi_sobel_filter.gprj:src/dvi_encoder.v;raw/ch45/ch45_ov5640_ddr3_tft/ov5640_ddr3_tft.gprj:src/vga/dvi_encoder.v;raw/ch46/ch46_ov5640_ddr3_vga/ov5640_ddr3_vga.gprj:src/vga/dvi_encoder.v;raw/ch47/ch47_ov5640_ddr3_hdmi/ov5640_ddr3_hdmi.gprj:src/vga/dvi_encoder.v;raw/ch67/ch67_usb_ddr3_tft_hdmi/usb_ddr3_tft_hdmi/uart_ddr3_tft_hdmi.gprj:src/dvi_encoder.v"
+  },
+  {
+    "module": "DVI_TX_Top",
+    "declarations": 1,
+    "chapters": "47",
+    "distinct_sources": 1,
+    "sources": "raw/ch47/ch47_ov5640_ddr3_hdmi/ov5640_ddr3_hdmi.gprj:src/dvi_tx/dvi_tx.v"
+  },
+  {
+    "module": "DVP_Capture",
+    "declarations": 5,
+    "chapters": "45,46,47,59,70",
+    "distinct_sources": 5,
+    "sources": "raw/ch45/ch45_ov5640_ddr3_tft/ov5640_ddr3_tft.gprj:src/DVP_Capture/DVP_Capture.v;raw/ch46/ch46_ov5640_ddr3_vga/ov5640_ddr3_vga.gprj:src/DVP_Capture/DVP_Capture.v;raw/ch47/ch47_ov5640_ddr3_hdmi/ov5640_ddr3_hdmi.gprj:src/DVP_Capture/DVP_Capture.v;raw/ch59/ch59_ov5640_udp_rgmii/ov5640_udp_rgmii_8_16.gprj:src/DVP_Capture/DVP_Capture.v;raw/ch70/ch70_fx2_stream_in_ov5640_rgb/fx2_stream_in_ov5640_rgb.gprj:src/DVP_Capture/DVP_Capture.v"
+  },
+  {
+    "module": "dync_char_tft",
+    "declarations": 2,
+    "chapters": "34",
+    "distinct_sources": 2,
+    "sources": "raw/ch34/ch34_uart_rtc8563_tft/uart_rtc8563_tft_disp_driver/uart_rtc8563_tft.gprj:src/dync_char_tft/dync_char_tft.v;raw/ch34/ch34_uart_rtc8563_tft/uart_rtc8563_tft/uart_rtc8563_tft/uart_rtc8563_tft.gprj:src/dync_char_tft/dync_char_tft.v"
+  },
+  {
+    "module": "encode",
+    "declarations": 14,
+    "chapters": "29,30,31,38,39,40,41,42,43,45,46,47,67",
+    "distinct_sources": 14,
+    "sources": "raw/ch29/ch29_hdmi_color/gao_hdmi_color.gprj:src/dvi_encoder.v;raw/ch30/ch30_rom_image_tft_hdmi/rom_image_tft_hdmi.gprj:src/dvi_encoder/dvi_encoder.v;raw/ch31/ch31_rom_char_tft_hdmi/rom_char_tft_hdmi/rom_char_tft_hdmi.gprj:src/dvi_encoder/dvi_encoder.v;raw/ch31/ch31_rom_char_tft_hdmi/rom_char_tft800x480_224x64/rom_char_tft_hdmi/rom_char_tft_hdmi.gprj:src/dvi_encoder/dvi_encoder.v;raw/ch38/ch38_uart_ddr3_tft_hdmi/uart_ddr3_tft_hdmi.gprj:src/dvi_encoder.v;raw/ch39/ch39_uart_ddr3_tft_hdmi_rgb2gray/uart_ddr3_tft_hdmi_rgb2gray.gprj:src/dvi_encoder.v;raw/ch40/ch40_uart_ddr3_tft_hdmi_median_filter/uart_ddr3_tft_hdmi_median_filter.gprj:src/dvi_encoder.v;raw/ch41/ch41_uart_ddr3_tft_hdmi_mean_filter/uart_ddr3_tft_hdmi_mean_filter.gprj:src/dvi_encoder.v;raw/ch42/ch42_uart_ddr3_tft_hdmi_gaussian_filter/uart_ddr3_tft_hdmi_gaussian_filter.gprj:src/dvi_encoder.v;raw/ch43/ch43_uart_ddr3_tft_hdmi_sobel_filter/uart_ddr3_tft_hdmi_sobel_filter.gprj:src/dvi_encoder.v;raw/ch45/ch45_ov5640_ddr3_tft/ov5640_ddr3_tft.gprj:src/vga/dvi_encoder.v;raw/ch46/ch46_ov5640_ddr3_vga/ov5640_ddr3_vga.gprj:src/vga/dvi_encoder.v;raw/ch47/ch47_ov5640_ddr3_hdmi/ov5640_ddr3_hdmi.gprj:src/vga/dvi_encoder.v;raw/ch67/ch67_usb_ddr3_tft_hdmi/usb_ddr3_tft_hdmi/uart_ddr3_tft_hdmi.gprj:src/dvi_encoder.v"
+  },
+  {
+    "module": "es8388_Init",
+    "declarations": 2,
+    "chapters": "35",
+    "distinct_sources": 2,
+    "sources": "raw/ch35/acx720_audio_loopback_slave/audio_loopback.gprj:src/es8388_Init/es8388_Init.v;raw/ch35/ch35_Audio_loopback/CoreCourse_GHRD_I2S_RX.gprj:src/ES8388_Init.v"
+  },
+  {
+    "module": "es8388_init_table",
+    "declarations": 2,
+    "chapters": "35",
+    "distinct_sources": 2,
+    "sources": "raw/ch35/acx720_audio_loopback_slave/audio_loopback.gprj:src/es8388_Init/es8388_init_table.v;raw/ch35/ch35_Audio_loopback/CoreCourse_GHRD_I2S_RX.gprj:src/ES8388_init_table.v"
+  },
+  {
+    "module": "eth_cmd",
+    "declarations": 2,
+    "chapters": "62,63",
+    "distinct_sources": 2,
+    "sources": "raw/ch62/ch62_ad7606_ddr3_rgmii/ad7606_ddr3_rgmii.gprj:src/eth_cmd.v;raw/ch63/ch63_acm1030_ddr3_rgmii/acm1030_ddr3_rgmii.gprj:src/eth_cmd.v"
+  },
+  {
+    "module": "eth_data_buf",
+    "declarations": 2,
+    "chapters": "48,58",
+    "distinct_sources": 2,
+    "sources": "raw/ch48/ch48_udp_rgmii/eth_udp_loopback_rgmii/eth_udp_lookback_rgmii/eth_udp_lookback_rgmii.gprj:src/eth_data_buf/eth_data_buf.v;raw/ch58/ch58_eth_udp_lookback_rgmii/eth_udp_lookback_rgmii.gprj:src/eth_data_buf/eth_data_buf.v"
+  },
+  {
+    "module": "eth_dcfifo",
+    "declarations": 2,
+    "chapters": "48,60",
+    "distinct_sources": 2,
+    "sources": "raw/ch48/ch48_udp_rgmii/ov5640_udp_rgmii_8_8/ov5640_udp_rgmii_8_8.gprj:src/eth_dcfifo/eth_dcfifo.v;raw/ch60/ch60_ov5640x2_udp_rgmii/ov5640x2_udp_rgmii.gprj:src/eth_dcfifo/eth_dcfifo.v"
+  },
+  {
+    "module": "eth_msg_buf",
+    "declarations": 2,
+    "chapters": "48,58",
+    "distinct_sources": 2,
+    "sources": "raw/ch48/ch48_udp_rgmii/eth_udp_loopback_rgmii/eth_udp_lookback_rgmii/eth_udp_lookback_rgmii.gprj:src/eth_msg_buf/eth_msg_buf.v;raw/ch58/ch58_eth_udp_lookback_rgmii/eth_udp_lookback_rgmii.gprj:src/eth_msg_buf/eth_msg_buf.v"
+  },
+  {
+    "module": "eth_pll",
+    "declarations": 2,
+    "chapters": "62,63",
+    "distinct_sources": 2,
+    "sources": "raw/ch62/ch62_ad7606_ddr3_rgmii/ad7606_ddr3_rgmii.gprj:src/eth_pll/eth_pll.v;raw/ch63/ch63_acm1030_ddr3_rgmii/acm1030_ddr3_rgmii.gprj:src/eth_pll/eth_pll.v"
+  },
+  {
+    "module": "eth_rx_ctrl",
+    "declarations": 1,
+    "chapters": "61",
+    "distinct_sources": 1,
+    "sources": "raw/ch61/ch61_eth_udp_rgmii_ddr3_tft800x480/eth_udp_rgmii_ddr3_tft800x480/eth_udp_rgmii_ddr3_tft800x480.gprj:src/eth_rx_ctrl/eth_rx_ctrl.v"
+  },
+  {
+    "module": "eth_send",
+    "declarations": 4,
+    "chapters": "52,54",
+    "distinct_sources": 4,
+    "sources": "raw/ch52/ch52_arp_send_rgmii/arp_send_rgmii_with_crc/arp_send_rgmii_with_crc.gprj:src/eth_send.v;raw/ch52/ch52_arp_send_rgmii/arp_send_rgmii/arp_send_rgmii.gprj:src/eth_send.v;raw/ch54/ch54_udp_send_rgmii/udp_send_rgmii_with_checksum/udp_send_rgmii/udp_send_rgmii.gprj:src/eth_send.v;raw/ch54/ch54_udp_send_rgmii/udp_send_rgmii/udp_send_rgmii.gprj:src/eth_send.v"
+  },
+  {
+    "module": "eth_send_ctrl",
+    "declarations": 2,
+    "chapters": "62,63",
+    "distinct_sources": 2,
+    "sources": "raw/ch62/ch62_ad7606_ddr3_rgmii/ad7606_ddr3_rgmii.gprj:src/eth_send_ctrl.v;raw/ch63/ch63_acm1030_ddr3_rgmii/acm1030_ddr3_rgmii.gprj:src/eth_send_ctrl.v"
+  },
+  {
+    "module": "eth_send_test",
+    "declarations": 4,
+    "chapters": "52,54",
+    "distinct_sources": 4,
+    "sources": "raw/ch52/ch52_arp_send_rgmii/arp_send_rgmii_with_crc/arp_send_rgmii_with_crc.gprj:src/eth_send_test.v;raw/ch52/ch52_arp_send_rgmii/arp_send_rgmii/arp_send_rgmii.gprj:src/eth_send_test.v;raw/ch54/ch54_udp_send_rgmii/udp_send_rgmii_with_checksum/udp_send_rgmii/udp_send_rgmii.gprj:src/eth_send_test.v;raw/ch54/ch54_udp_send_rgmii/udp_send_rgmii/udp_send_rgmii.gprj:src/eth_send_test.v"
+  },
+  {
+    "module": "eth_send_test_rgmii",
+    "declarations": 3,
+    "chapters": "52,54",
+    "distinct_sources": 3,
+    "sources": "raw/ch52/ch52_arp_send_rgmii/arp_send_rgmii/arp_send_rgmii.gprj:src/eth_send_test_rgmii.v;raw/ch54/ch54_udp_send_rgmii/udp_send_rgmii_with_checksum/udp_send_rgmii/udp_send_rgmii.gprj:src/eth_send_test_rgmii.v;raw/ch54/ch54_udp_send_rgmii/udp_send_rgmii/udp_send_rgmii.gprj:src/eth_send_test_rgmii.v"
+  },
+  {
+    "module": "eth_tx_ctrl",
+    "declarations": 1,
+    "chapters": "59",
+    "distinct_sources": 1,
+    "sources": "raw/ch59/ch59_ov5640_udp_rgmii/ov5640_udp_rgmii_8_16.gprj:src/eth_tx_ctrl/eth_tx_ctrl.v"
+  },
+  {
+    "module": "eth_tx_fifo",
+    "declarations": 1,
+    "chapters": "59",
+    "distinct_sources": 1,
+    "sources": "raw/ch59/ch59_ov5640_udp_rgmii/ov5640_udp_rgmii_8_16.gprj:src/eth_tx_fifo/eth_tx_fifo.v"
+  },
+  {
+    "module": "eth_udp_loopback_rgmii",
+    "declarations": 2,
+    "chapters": "48,58",
+    "distinct_sources": 2,
+    "sources": "raw/ch48/ch48_udp_rgmii/eth_udp_loopback_rgmii/eth_udp_lookback_rgmii/eth_udp_lookback_rgmii.gprj:src/top/eth_udp_loopback_rgmii.v;raw/ch58/ch58_eth_udp_lookback_rgmii/eth_udp_lookback_rgmii.gprj:src/top/eth_udp_loopback_rgmii.v"
+  },
+  {
+    "module": "eth_udp_rgmii_ddr3_tft800x480",
+    "declarations": 1,
+    "chapters": "61",
+    "distinct_sources": 1,
+    "sources": "raw/ch61/ch61_eth_udp_rgmii_ddr3_tft800x480/eth_udp_rgmii_ddr3_tft800x480/eth_udp_rgmii_ddr3_tft800x480.gprj:src/eth_udp_rgmii_ddr3_tft800x480.v"
+  },
+  {
+    "module": "eth_udp_rx_gmii",
+    "declarations": 6,
+    "chapters": "48,56,58,61,62,63",
+    "distinct_sources": 6,
+    "sources": "raw/ch48/ch48_udp_rgmii/eth_udp_loopback_rgmii/eth_udp_lookback_rgmii/eth_udp_lookback_rgmii.gprj:src/eth_udp_gmii/eth_udp_rx_gmii.v;raw/ch56/ch56_eth_udp_rx_rgmii/eth_udp_rx_rgmii.gprj:src/eth_udp_gmii/eth_udp_rx_gmii.v;raw/ch58/ch58_eth_udp_lookback_rgmii/eth_udp_lookback_rgmii.gprj:src/eth_udp_gmii/eth_udp_rx_gmii.v;raw/ch61/ch61_eth_udp_rgmii_ddr3_tft800x480/eth_udp_rgmii_ddr3_tft800x480/eth_udp_rgmii_ddr3_tft800x480.gprj:src/eth_udp_gmii/eth_udp_rx_gmii.v;raw/ch62/ch62_ad7606_ddr3_rgmii/ad7606_ddr3_rgmii.gprj:src/eth_udp_gmii/eth_udp_rx_gmii.v;raw/ch63/ch63_acm1030_ddr3_rgmii/acm1030_ddr3_rgmii.gprj:src/eth_udp_gmii/eth_udp_rx_gmii.v"
+  },
+  {
+    "module": "eth_udp_rx_rgmii_test",
+    "declarations": 1,
+    "chapters": "56",
+    "distinct_sources": 1,
+    "sources": "raw/ch56/ch56_eth_udp_rx_rgmii/eth_udp_rx_rgmii.gprj:src/eth_udp_rx_rgmii_test.v"
+  },
+  {
+    "module": "eth_udp_tx_gmii",
+    "declarations": 6,
+    "chapters": "48,55,58,59,62,63",
+    "distinct_sources": 6,
+    "sources": "raw/ch48/ch48_udp_rgmii/eth_udp_loopback_rgmii/eth_udp_lookback_rgmii/eth_udp_lookback_rgmii.gprj:src/eth_udp_gmii/eth_udp_tx_gmii.v;raw/ch55/ch55_udp_send/eth_udp_tx_rgmii/eth_udp_tx_rgmii.gprj:src/eth_udp_tx_gmii.v;raw/ch58/ch58_eth_udp_lookback_rgmii/eth_udp_lookback_rgmii.gprj:src/eth_udp_gmii/eth_udp_tx_gmii.v;raw/ch59/ch59_ov5640_udp_rgmii/ov5640_udp_rgmii_8_16.gprj:src/eth_udp_gmii/eth_udp_tx_gmii.v;raw/ch62/ch62_ad7606_ddr3_rgmii/ad7606_ddr3_rgmii.gprj:src/eth_udp_gmii/eth_udp_tx_gmii.v;raw/ch63/ch63_acm1030_ddr3_rgmii/acm1030_ddr3_rgmii.gprj:src/eth_udp_gmii/eth_udp_tx_gmii.v"
+  },
+  {
+    "module": "eth_udp_tx_rgmii_test",
+    "declarations": 1,
+    "chapters": "55",
+    "distinct_sources": 1,
+    "sources": "raw/ch55/ch55_udp_send/eth_udp_tx_rgmii/eth_udp_tx_rgmii.gprj:src/eth_udp_tx_rgmii_test.v"
+  },
+  {
+    "module": "fifo",
+    "declarations": 1,
+    "chapters": "66",
+    "distinct_sources": 1,
+    "sources": "raw/ch66/ch66_FX2_Stream_OUT/FX2_Stream_OUT.gprj:src/fifo/fifo.v"
+  },
+  {
+    "module": "fifo_512x8",
+    "declarations": 1,
+    "chapters": "65",
+    "distinct_sources": 1,
+    "sources": "raw/ch65/ch65_FX2_Loopback/FX2_Loopback.gprj:src/fifo_512x8.v"
+  },
+  {
+    "module": "fifo_ddr3_adapter",
+    "declarations": 14,
+    "chapters": "37,38,39,40,41,42,43,45,46,47,61,62,63,67",
+    "distinct_sources": 14,
+    "sources": "raw/ch37/ch37_ddr3_ctrl_2port/ddr3_ctrl_2port.gprj:src/fifo_ddr3_adapter.v;raw/ch38/ch38_uart_ddr3_tft_hdmi/uart_ddr3_tft_hdmi.gprj:src/ddr3_ctrl_2port/fifo_ddr3_adapter.v;raw/ch39/ch39_uart_ddr3_tft_hdmi_rgb2gray/uart_ddr3_tft_hdmi_rgb2gray.gprj:src/ddr3_ctrl_2port/fifo_ddr3_adapter.v;raw/ch40/ch40_uart_ddr3_tft_hdmi_median_filter/uart_ddr3_tft_hdmi_median_filter.gprj:src/ddr3_ctrl_2port/fifo_ddr3_adapter.v;raw/ch41/ch41_uart_ddr3_tft_hdmi_mean_filter/uart_ddr3_tft_hdmi_mean_filter.gprj:src/ddr3_ctrl_2port/fifo_ddr3_adapter.v;raw/ch42/ch42_uart_ddr3_tft_hdmi_gaussian_filter/uart_ddr3_tft_hdmi_gaussian_filter.gprj:src/ddr3_ctrl_2port/fifo_ddr3_adapter.v;raw/ch43/ch43_uart_ddr3_tft_hdmi_sobel_filter/uart_ddr3_tft_hdmi_sobel_filter.gprj:src/ddr3_ctrl_2port/fifo_ddr3_adapter.v;raw/ch45/ch45_ov5640_ddr3_tft/ov5640_ddr3_tft.gprj:src/ddr3_ctrl_2port/fifo_ddr3_adapter.v;raw/ch46/ch46_ov5640_ddr3_vga/ov5640_ddr3_vga.gprj:src/ddr3_ctrl_2port/fifo_ddr3_adapter.v;raw/ch47/ch47_ov5640_ddr3_hdmi/ov5640_ddr3_hdmi.gprj:src/ddr3_ctrl_2port/fifo_ddr3_adapter.v;raw/ch61/ch61_eth_udp_rgmii_ddr3_tft800x480/eth_udp_rgmii_ddr3_tft800x480/eth_udp_rgmii_ddr3_tft800x480.gprj:src/ddr3_ctrl_2port/fifo_ddr3_adapter.v;raw/ch62/ch62_ad7606_ddr3_rgmii/ad7606_ddr3_rgmii.gprj:src/ddr3_ctrl_2port/fifo_ddr3_adapter.v;raw/ch63/ch63_acm1030_ddr3_rgmii/acm1030_ddr3_rgmii.gprj:src/ddr3_ctrl_2port/fifo_ddr3_adapter.v;raw/ch67/ch67_usb_ddr3_tft_hdmi/usb_ddr3_tft_hdmi/uart_ddr3_tft_hdmi.gprj:src/ddr3_ctrl_2port/fifo_ddr3_adapter.v"
+  },
+  {
+    "module": "fifo_ip_tb",
+    "declarations": 1,
+    "chapters": "16",
+    "distinct_sources": 1,
+    "sources": "raw/ch16/ch16_fifo_ip/fifo_ip.gprj:src/fifo_ip_tb.v"
+  },
+  {
+    "module": "fifo_rx",
+    "declarations": 2,
+    "chapters": "62,63",
+    "distinct_sources": 2,
+    "sources": "raw/ch62/ch62_ad7606_ddr3_rgmii/ad7606_ddr3_rgmii.gprj:src/fifo_rx/fifo_rx.v;raw/ch63/ch63_acm1030_ddr3_rgmii/acm1030_ddr3_rgmii.gprj:src/fifo_rx/fifo_rx.v"
+  },
+  {
+    "module": "fifo_top",
+    "declarations": 7,
+    "chapters": "16,55,56,66,67,69,70",
+    "distinct_sources": 7,
+    "sources": "raw/ch16/ch16_fifo_ip/fifo_ip.gprj:src/fifo_top/fifo_top.v;raw/ch55/ch55_udp_send/udp_send/udp_send.gprj:src/fifo_top/fifo_top.v;raw/ch56/ch56_eth_udp_rx_rgmii/eth_udp_rx_rgmii.gprj:src/fifo_top/fifo_top.v;raw/ch66/ch66_FX2_Stream_OUT/FX2_Stream_OUT.gprj:src/fifo_top/fifo_top.v;raw/ch67/ch67_usb_ddr3_tft_hdmi/usb_ddr3_tft_hdmi/uart_ddr3_tft_hdmi.gprj:src/fifo_top/fifo_top.v;raw/ch69/ch69_FX2_Stream_IN_JPEG/FX2_Stream_IN_JPEG/FX2_Stream_IN_JPEG.gprj:src/fifo_top/fifo_top.v;raw/ch70/ch70_fx2_stream_in_ov5640_rgb/fx2_stream_in_ov5640_rgb.gprj:src/fifo_top/fifo_top.v"
+  },
+  {
+    "module": "fifo_tx",
+    "declarations": 2,
+    "chapters": "62,63",
+    "distinct_sources": 2,
+    "sources": "raw/ch62/ch62_ad7606_ddr3_rgmii/ad7606_ddr3_rgmii.gprj:src/fifo_tx/fifo_tx.v;raw/ch63/ch63_acm1030_ddr3_rgmii/acm1030_ddr3_rgmii.gprj:src/fifo_tx/fifo_tx.v"
+  },
+  {
+    "module": "frame_check",
+    "declarations": 1,
+    "chapters": "61",
+    "distinct_sources": 1,
+    "sources": "raw/ch61/ch61_eth_udp_rgmii_ddr3_tft800x480/eth_udp_rgmii_ddr3_tft800x480/eth_udp_rgmii_ddr3_tft800x480.gprj:src/frame_check/frame_check.v"
+  },
+  {
+    "module": "fsm_hello",
+    "declarations": 1,
+    "chapters": "10",
+    "distinct_sources": 1,
+    "sources": "raw/ch10/ch10_fsm_hello/fsm_hello.gprj:src/fsm_hello.v"
+  },
+  {
+    "module": "fsm_hello_tb",
+    "declarations": 1,
+    "chapters": "10",
+    "distinct_sources": 1,
+    "sources": "raw/ch10/ch10_fsm_hello/fsm_hello.gprj:src/fsm_hello_tb.v"
+  },
+  {
+    "module": "fsm_hello_test",
+    "declarations": 1,
+    "chapters": "10",
+    "distinct_sources": 1,
+    "sources": "raw/ch10/ch10_fsm_hello/fsm_hello.gprj:src/fsm_hello_test.v"
+  },
+  {
+    "module": "FX2_SF_Loopback",
+    "declarations": 1,
+    "chapters": "65",
+    "distinct_sources": 1,
+    "sources": "raw/ch65/ch65_FX2_Loopback/FX2_Loopback.gprj:src/FX2_SF_Loopback.v"
+  },
+  {
+    "module": "FX2_Stream_IN",
+    "declarations": 1,
+    "chapters": "68",
+    "distinct_sources": 1,
+    "sources": "raw/ch68/ch68_FX2_Stream_IN/FX2_Stream_IN.gprj:src/FX2_Stream_IN.v"
+  },
+  {
+    "module": "FX2_Stream_IN_JPEG",
+    "declarations": 1,
+    "chapters": "69",
+    "distinct_sources": 1,
+    "sources": "raw/ch69/ch69_FX2_Stream_IN_JPEG/FX2_Stream_IN_JPEG/FX2_Stream_IN_JPEG.gprj:src/FX2_Stream_IN_JPEG.v"
+  },
+  {
+    "module": "fx2_stream_in_ov5640_rgb",
+    "declarations": 1,
+    "chapters": "70",
+    "distinct_sources": 1,
+    "sources": "raw/ch70/ch70_fx2_stream_in_ov5640_rgb/fx2_stream_in_ov5640_rgb.gprj:src/top/fx2_stream_in_ov5640_rgb.v"
+  },
+  {
+    "module": "gao_ov5640_ddr_hdmi",
+    "declarations": 1,
+    "chapters": "47",
+    "distinct_sources": 1,
+    "sources": "raw/ch47/ch47_ov5640_ddr3_hdmi/ov5640_ddr3_hdmi.gprj:src/ov5640_ddr3_hdmi.v"
+  },
+  {
+    "module": "gaussian_filter",
+    "declarations": 1,
+    "chapters": "42",
+    "distinct_sources": 1,
+    "sources": "raw/ch42/ch42_uart_ddr3_tft_hdmi_gaussian_filter/uart_ddr3_tft_hdmi_gaussian_filter.gprj:src/gaussian_filter/gaussian_filter.v"
+  },
+  {
+    "module": "get_pitch",
+    "declarations": 1,
+    "chapters": "20",
+    "distinct_sources": 1,
+    "sources": "raw/ch20/ch20_music_gen/music_gen.gprj:src/get_pitch.v"
+  },
+  {
+    "module": "gmii_to_rgmii",
+    "declarations": 13,
+    "chapters": "48,51,52,54,55,58,59,60,62,63",
+    "distinct_sources": 13,
+    "sources": "raw/ch48/ch48_udp_rgmii/eth_udp_loopback_rgmii/eth_udp_lookback_rgmii/eth_udp_lookback_rgmii.gprj:src/gmii_rgmii_gmii/gmii_to_rgmii.v;raw/ch48/ch48_udp_rgmii/ov5640_udp_rgmii_8_8/ov5640_udp_rgmii_8_8.gprj:src/gmii_to_rgmii.v;raw/ch51/ch51_gmii_rgmii_gmii/gmii_rgmii_gmii.gprj:src/gmii_rgmii_gmii/gmii_to_rgmii.v;raw/ch52/ch52_arp_send_rgmii/arp_send_rgmii_with_crc/arp_send_rgmii_with_crc.gprj:src/gmii_to_rgmii.v;raw/ch52/ch52_arp_send_rgmii/arp_send_rgmii/arp_send_rgmii.gprj:src/gmii_to_rgmii.v;raw/ch54/ch54_udp_send_rgmii/udp_send_rgmii_with_checksum/udp_send_rgmii/udp_send_rgmii.gprj:src/gmii_to_rgmii.v;raw/ch54/ch54_udp_send_rgmii/udp_send_rgmii/udp_send_rgmii.gprj:src/gmii_to_rgmii.v;raw/ch55/ch55_udp_send/eth_udp_tx_rgmii/eth_udp_tx_rgmii.gprj:src/gmii_to_rgmii.v;raw/ch58/ch58_eth_udp_lookback_rgmii/eth_udp_lookback_rgmii.gprj:src/gmii_rgmii_gmii/gmii_to_rgmii.v;raw/ch59/ch59_ov5640_udp_rgmii/ov5640_udp_rgmii_8_16.gprj:src/gmii_rgmii_gmii/gmii_to_rgmii.v;raw/ch60/ch60_ov5640x2_udp_rgmii/ov5640x2_udp_rgmii.gprj:src/gmii_to_rgmii.v;raw/ch62/ch62_ad7606_ddr3_rgmii/ad7606_ddr3_rgmii.gprj:src/gmii_rgmii_gmii/gmii_to_rgmii.v;raw/ch63/ch63_acm1030_ddr3_rgmii/acm1030_ddr3_rgmii.gprj:src/gmii_rgmii_gmii/gmii_to_rgmii.v"
+  },
+  {
+    "module": "Gowin_DDR",
+    "declarations": 11,
+    "chapters": "29,30,31,38,39,40,41,42,43,67",
+    "distinct_sources": 11,
+    "sources": "raw/ch29/ch29_hdmi_color/gao_hdmi_color.gprj:src/gowin_ddr/gowin_ddr.v;raw/ch30/ch30_rom_image_tft_hdmi/rom_image_tft_hdmi.gprj:src/gowin_ddr/gowin_ddr.v;raw/ch31/ch31_rom_char_tft_hdmi/rom_char_tft_hdmi/rom_char_tft_hdmi.gprj:src/gowin_ddr/gowin_ddr.v;raw/ch31/ch31_rom_char_tft_hdmi/rom_char_tft800x480_224x64/rom_char_tft_hdmi/rom_char_tft_hdmi.gprj:src/gowin_ddr/gowin_ddr.v;raw/ch38/ch38_uart_ddr3_tft_hdmi/uart_ddr3_tft_hdmi.gprj:src/gowin_ddr/gowin_ddr.v;raw/ch39/ch39_uart_ddr3_tft_hdmi_rgb2gray/uart_ddr3_tft_hdmi_rgb2gray.gprj:src/gowin_ddr/gowin_ddr.v;raw/ch40/ch40_uart_ddr3_tft_hdmi_median_filter/uart_ddr3_tft_hdmi_median_filter.gprj:src/gowin_ddr/gowin_ddr.v;raw/ch41/ch41_uart_ddr3_tft_hdmi_mean_filter/uart_ddr3_tft_hdmi_mean_filter.gprj:src/gowin_ddr/gowin_ddr.v;raw/ch42/ch42_uart_ddr3_tft_hdmi_gaussian_filter/uart_ddr3_tft_hdmi_gaussian_filter.gprj:src/gowin_ddr/gowin_ddr.v;raw/ch43/ch43_uart_ddr3_tft_hdmi_sobel_filter/uart_ddr3_tft_hdmi_sobel_filter.gprj:src/gowin_ddr/gowin_ddr.v;raw/ch67/ch67_usb_ddr3_tft_hdmi/usb_ddr3_tft_hdmi/uart_ddr3_tft_hdmi.gprj:src/gowin_ddr/gowin_ddr.v"
+  },
+  {
+    "module": "Gowin_DDR_1",
+    "declarations": 5,
+    "chapters": "45,46,47,62,63",
+    "distinct_sources": 5,
+    "sources": "raw/ch45/ch45_ov5640_ddr3_tft/ov5640_ddr3_tft.gprj:src/gowin_ddr/gowin_ddr.v;raw/ch46/ch46_ov5640_ddr3_vga/ov5640_ddr3_vga.gprj:src/gowin_ddr/gowin_ddr.v;raw/ch47/ch47_ov5640_ddr3_hdmi/ov5640_ddr3_hdmi.gprj:src/gowin_ddr/gowin_ddr.v;raw/ch62/ch62_ad7606_ddr3_rgmii/ad7606_ddr3_rgmii.gprj:src/gowin_ddr/gowin_ddr.v;raw/ch63/ch63_acm1030_ddr3_rgmii/acm1030_ddr3_rgmii.gprj:src/gowin_ddr/gowin_ddr.v"
+  },
+  {
+    "module": "Gowin_PLL",
+    "declarations": 35,
+    "chapters": "17,18,26,28,29,30,31,34,35,36,37,38,45,46,47,48,51,52,54,55,56,58,59,60,62,63,65,67,70",
+    "distinct_sources": 35,
+    "sources": "raw/ch17/ch17_pll_ip/pll_ip.gprj:src/gowin_pll/gowin_pll.v;raw/ch18/ch18_dds_ad9767/A/dds_ad9767.gprj:src/gowin_pll/gowin_pll.v;raw/ch18/ch18_dds_ad9767/B/dds_ad9767.gprj:src/gowin_pll/gowin_pll.v;raw/ch26/ch26_VGA_CTRL_GM7123/VGA_CTRL_GM7123.gprj:src/gowin_pll/gowin_pll.v;raw/ch28/ch28_tft_ctrl/tft_ctrl.gprj:src/gowin_pll/gowin_pll.v;raw/ch29/ch29_hdmi_color/gao_hdmi_color.gprj:src/gowin_pll/gowin_pll.v;raw/ch30/ch30_rom_image_tft_hdmi/rom_image_tft_hdmi.gprj:src/gowin_pll/gowin_pll.v;raw/ch31/ch31_rom_char_tft_hdmi/rom_char_tft_hdmi/rom_char_tft_hdmi.gprj:src/gowin_pll/gowin_pll.v;raw/ch31/ch31_rom_char_tft_hdmi/rom_char_tft800x480_224x64/rom_char_tft_hdmi/rom_char_tft_hdmi.gprj:src/gowin_pll/gowin_pll.v;raw/ch34/ch34_uart_rtc8563_tft/uart_rtc8563_hex8/uart_rtc8563_hex8.gprj:src/gowin_pll/gowin_pll.v;raw/ch35/acx720_audio_loopback_master/audio_loopback.gprj:src/gowin_pll/gowin_pll.v;raw/ch35/acx720_audio_loopback_slave/audio_loopback.gprj:src/gowin_pll/gowin_pll.v;raw/ch35/ch35_Audio_loopback/CoreCourse_GHRD_I2S_RX.gprj:src/gowin_pll/gowin_pll.v;raw/ch36/ch38_DDR3_MC_PHY_1vs4_5a138k/project/ddr3_1v4_hs.gprj:src/gowin_pll/gowin_pll.v;raw/ch37/ch37_ddr3_ctrl_2port/ddr3_ctrl_2port.gprj:src/gowin_pll/gowin_pll.v;raw/ch38/ch38_uart_ddr3_tft_hdmi/uart_ddr3_tft_hdmi.gprj:src/gowin_pll/gowin_pll.v;raw/ch45/ch45_ov5640_ddr3_tft/ov5640_ddr3_tft.gprj:src/gowin_pll/gowin_pll.v;raw/ch46/ch46_ov5640_ddr3_vga/ov5640_ddr3_vga.gprj:src/gowin_pll/gowin_pll.v;raw/ch47/ch47_ov5640_ddr3_hdmi/ov5640_ddr3_hdmi.gprj:src/gowin_pll/gowin_pll.v;raw/ch48/ch48_udp_rgmii/eth_udp_loopback_rgmii/eth_udp_lookback_rgmii/eth_udp_lookback_rgmii.gprj:src/gowin_pll/gowin_pll.v;raw/ch51/ch51_gmii_rgmii_gmii/gmii_rgmii_gmii.gprj:src/gowin_pll/gowin_pll.v;raw/ch52/ch52_arp_send_rgmii/arp_send_rgmii_with_crc/arp_send_rgmii_with_crc.gprj:src/gowin_pll/gowin_pll.v;raw/ch52/ch52_arp_send_rgmii/arp_send_rgmii/arp_send_rgmii.gprj:src/gowin_pll/gowin_pll.v;raw/ch54/ch54_udp_send_rgmii/udp_send_rgmii_with_checksum/udp_send_rgmii/udp_send_rgmii.gprj:src/gowin_pll/gowin_pll.v;raw/ch54/ch54_udp_send_rgmii/udp_send_rgmii/udp_send_rgmii.gprj:src/gowin_pll/gowin_pll.v;raw/ch55/ch55_udp_send/eth_udp_tx_rgmii/eth_udp_tx_rgmii.gprj:src/gowin_pll/gowin_pll.v;raw/ch56/ch56_eth_udp_rx_rgmii/eth_udp_rx_rgmii.gprj:src/gowin_pll/gowin_pll.v;raw/ch58/ch58_eth_udp_lookback_rgmii/eth_udp_lookback_rgmii.gprj:src/gowin_pll/gowin_pll.v;raw/ch59/ch59_ov5640_udp_rgmii/ov5640_udp_rgmii_8_16.gprj:src/gowin_pll/gowin_pll.v;raw/ch60/ch60_ov5640x2_udp_rgmii/ov5640x2_udp_rgmii.gprj:src/gowin_pll/gowin_pll.v;raw/ch62/ch62_ad7606_ddr3_rgmii/ad7606_ddr3_rgmii.gprj:src/gowin_pll/gowin_pll.v;raw/ch63/ch63_acm1030_ddr3_rgmii/acm1030_ddr3_rgmii.gprj:src/gowin_pll/gowin_pll.v;raw/ch65/ch65_FX2_Loopback/FX2_Loopback.gprj:src/gowin_pll/gowin_pll.v;raw/ch67/ch67_usb_ddr3_tft_hdmi/usb_ddr3_tft_hdmi/uart_ddr3_tft_hdmi.gprj:src/gowin_pll/gowin_pll.v;raw/ch70/ch70_fx2_stream_in_ov5640_rgb/fx2_stream_in_ov5640_rgb.gprj:src/gowin_pll/gowin_pll.v"
+  },
+  {
+    "module": "Gowin_PLL_MOD",
+    "declarations": 1,
+    "chapters": "58",
+    "distinct_sources": 1,
+    "sources": "raw/ch58/ch58_eth_udp_lookback_rgmii/eth_udp_lookback_rgmii.gprj:src/gowin_pll/gowin_pll_mod.v"
+  },
+  {
+    "module": "Gowin_PLLddr_pll",
+    "declarations": 1,
+    "chapters": "46",
+    "distinct_sources": 1,
+    "sources": "raw/ch46/ch46_ov5640_ddr3_vga/ov5640_ddr3_vga.gprj:src/ddr_pll/ddr_pll.v"
+  },
+  {
+    "module": "Gowin_pROM",
+    "declarations": 6,
+    "chapters": "14,20,30,31,69",
+    "distinct_sources": 6,
+    "sources": "raw/ch14/ch14_rom_ip/rom_ip.gprj:src/gowin_prom/gowin_prom.v;raw/ch20/ch20_music_gen/music_gen.gprj:src/gowin_prom/gowin_prom.v;raw/ch30/ch30_rom_image_tft_hdmi/rom_image_tft_hdmi.gprj:src/gowin_prom/gowin_prom.v;raw/ch31/ch31_rom_char_tft_hdmi/rom_char_tft_hdmi/rom_char_tft_hdmi.gprj:src/gowin_prom/gowin_prom.v;raw/ch31/ch31_rom_char_tft_hdmi/rom_char_tft800x480_224x64/rom_char_tft_hdmi/rom_char_tft_hdmi.gprj:src/gowin_prom/gowin_prom.v;raw/ch69/ch69_FX2_Stream_IN_JPEG/FX2_Stream_IN_JPEG/FX2_Stream_IN_JPEG.gprj:src/gowin_prom/gowin_prom.v"
+  },
+  {
+    "module": "Gowin_SDPB",
+    "declarations": 2,
+    "chapters": "34",
+    "distinct_sources": 2,
+    "sources": "raw/ch34/ch34_uart_rtc8563_tft/uart_rtc8563_tft_disp_driver/uart_rtc8563_tft.gprj:src/gowin_sdpb/gowin_sdpb.v;raw/ch34/ch34_uart_rtc8563_tft/uart_rtc8563_tft/uart_rtc8563_tft/uart_rtc8563_tft.gprj:src/gowin_sdpb/gowin_sdpb.v"
+  },
+  {
+    "module": "Gowin_SP",
+    "declarations": 1,
+    "chapters": "15",
+    "distinct_sources": 1,
+    "sources": "raw/ch15/ch15_ram_ip/ram_ip.gprj:src/gowin_sp/gowin_sp.v"
+  },
+  {
+    "module": "hc595_driver",
+    "declarations": 5,
+    "chapters": "13,18,25,34",
+    "distinct_sources": 5,
+    "sources": "raw/ch13/ch13_hex8_hc595/hex8.gprj:src/hc595_driver.v;raw/ch18/ch18_dds_ad9767/A/dds_ad9767.gprj:src/seg7/hc595_driver.v;raw/ch18/ch18_dds_ad9767/B/dds_ad9767.gprj:src/seg7/hc595_driver.v;raw/ch25/ch25_Dig_Volt/Dig_Volt.gprj:src/HC595_Driver.v;raw/ch34/ch34_uart_rtc8563_tft/uart_rtc8563_hex8/uart_rtc8563_hex8.gprj:src/hex8/hc595_driver.v"
+  },
+  {
+    "module": "hdmi_color",
+    "declarations": 1,
+    "chapters": "29",
+    "distinct_sources": 1,
+    "sources": "raw/ch29/ch29_hdmi_color/gao_hdmi_color.gprj:src/hdmi_color.v"
+  },
+  {
+    "module": "Hex_to_V",
+    "declarations": 1,
+    "chapters": "25",
+    "distinct_sources": 1,
+    "sources": "raw/ch25/ch25_Dig_Volt/Dig_Volt.gprj:src/Hex_to_V.v"
+  },
+  {
+    "module": "hex_top",
+    "declarations": 2,
+    "chapters": "13,25",
+    "distinct_sources": 2,
+    "sources": "raw/ch13/ch13_hex8_hc595/hex8.gprj:src/hex_top.v;raw/ch25/ch25_Dig_Volt/Dig_Volt.gprj:src/HEX_top.v"
+  },
+  {
+    "module": "hex_top_special_for_rtc",
+    "declarations": 1,
+    "chapters": "34",
+    "distinct_sources": 1,
+    "sources": "raw/ch34/ch34_uart_rtc8563_tft/uart_rtc8563_hex8/uart_rtc8563_hex8.gprj:src/hex8/hex_top_special_for_rtc.v"
+  },
+  {
+    "module": "hex8",
+    "declarations": 4,
+    "chapters": "13,18,25",
+    "distinct_sources": 4,
+    "sources": "raw/ch13/ch13_hex8_hc595/hex8.gprj:src/hex8.v;raw/ch18/ch18_dds_ad9767/A/dds_ad9767.gprj:src/seg7/hex8.v;raw/ch18/ch18_dds_ad9767/B/dds_ad9767.gprj:src/seg7/hex8.v;raw/ch25/ch25_Dig_Volt/Dig_Volt.gprj:src/HEX8.v"
+  },
+  {
+    "module": "hex8_special_for_rtc",
+    "declarations": 1,
+    "chapters": "34",
+    "distinct_sources": 1,
+    "sources": "raw/ch34/ch34_uart_rtc8563_tft/uart_rtc8563_hex8/uart_rtc8563_hex8.gprj:src/hex8/hex8_special_for_rtc.v"
+  },
+  {
+    "module": "i2c_bit_shift",
+    "declarations": 16,
+    "chapters": "32,33,34,35,45,46,47,48,59,60,70",
+    "distinct_sources": 16,
+    "sources": "raw/ch32/ch32_i2c_control/i2c_control.gprj:src/i2c_bit_shift.v;raw/ch33/ch33_uart_eeprom/nested_A/uart_eeprom.gprj:src/i2c_bit_shift.v;raw/ch33/ch33_uart_eeprom/nested_B/uart_eeprom.gprj:src/i2c_bit_shift.v;raw/ch34/ch34_uart_rtc8563_tft/uart_rtc8563_hex8/uart_rtc8563_hex8.gprj:src/pcf8563_ctrl/i2c_control/i2c_bit_shift.v;raw/ch34/ch34_uart_rtc8563_tft/uart_rtc8563_tft_disp_driver/uart_rtc8563_tft.gprj:src/pcf8563_ctrl/i2c_control/i2c_bit_shift.v;raw/ch34/ch34_uart_rtc8563_tft/uart_rtc8563_tft/uart_rtc8563_tft/uart_rtc8563_tft.gprj:src/pcf8563_ctrl/i2c_control/i2c_bit_shift.v;raw/ch35/acx720_audio_loopback_master/audio_loopback.gprj:src/WM8960_Init/i2c_bit_shift.v;raw/ch35/acx720_audio_loopback_slave/audio_loopback.gprj:src/es8388_Init/i2c_bit_shift.v;raw/ch35/ch35_Audio_loopback/CoreCourse_GHRD_I2S_RX.gprj:src/i2c_bit_shift.v;raw/ch45/ch45_ov5640_ddr3_tft/ov5640_ddr3_tft.gprj:src/camera_init/i2c_control/i2c_bit_shift.v;raw/ch46/ch46_ov5640_ddr3_vga/ov5640_ddr3_vga.gprj:src/camera_init/i2c_control/i2c_bit_shift.v;raw/ch47/ch47_ov5640_ddr3_hdmi/ov5640_ddr3_hdmi.gprj:src/camera_init/i2c_control/i2c_bit_shift.v;raw/ch48/ch48_udp_rgmii/ov5640_udp_rgmii_8_8/ov5640_udp_rgmii_8_8.gprj:src/camera_init/i2c_control/i2c_bit_shift.v;raw/ch59/ch59_ov5640_udp_rgmii/ov5640_udp_rgmii_8_16.gprj:src/camera_init/i2c_control/i2c_bit_shift.v;raw/ch60/ch60_ov5640x2_udp_rgmii/ov5640x2_udp_rgmii.gprj:src/camera_init/i2c_control/i2c_bit_shift.v;raw/ch70/ch70_fx2_stream_in_ov5640_rgb/fx2_stream_in_ov5640_rgb.gprj:src/camera_init/i2c_control/i2c_bit_shift.v"
+  },
+  {
+    "module": "i2c_control",
+    "declarations": 16,
+    "chapters": "32,33,34,35,45,46,47,48,59,60,70",
+    "distinct_sources": 16,
+    "sources": "raw/ch32/ch32_i2c_control/i2c_control.gprj:src/i2c_control.v;raw/ch33/ch33_uart_eeprom/nested_A/uart_eeprom.gprj:src/i2c_control.v;raw/ch33/ch33_uart_eeprom/nested_B/uart_eeprom.gprj:src/i2c_control.v;raw/ch34/ch34_uart_rtc8563_tft/uart_rtc8563_hex8/uart_rtc8563_hex8.gprj:src/pcf8563_ctrl/i2c_control/i2c_control.v;raw/ch34/ch34_uart_rtc8563_tft/uart_rtc8563_tft_disp_driver/uart_rtc8563_tft.gprj:src/pcf8563_ctrl/i2c_control/i2c_control.v;raw/ch34/ch34_uart_rtc8563_tft/uart_rtc8563_tft/uart_rtc8563_tft/uart_rtc8563_tft.gprj:src/pcf8563_ctrl/i2c_control/i2c_control.v;raw/ch35/acx720_audio_loopback_master/audio_loopback.gprj:src/WM8960_Init/i2c_control.v;raw/ch35/acx720_audio_loopback_slave/audio_loopback.gprj:src/es8388_Init/i2c_control.v;raw/ch35/ch35_Audio_loopback/CoreCourse_GHRD_I2S_RX.gprj:src/i2c_control.v;raw/ch45/ch45_ov5640_ddr3_tft/ov5640_ddr3_tft.gprj:src/camera_init/i2c_control/i2c_control.v;raw/ch46/ch46_ov5640_ddr3_vga/ov5640_ddr3_vga.gprj:src/camera_init/i2c_control/i2c_control.v;raw/ch47/ch47_ov5640_ddr3_hdmi/ov5640_ddr3_hdmi.gprj:src/camera_init/i2c_control/i2c_control.v;raw/ch48/ch48_udp_rgmii/ov5640_udp_rgmii_8_8/ov5640_udp_rgmii_8_8.gprj:src/camera_init/i2c_control/i2c_control.v;raw/ch59/ch59_ov5640_udp_rgmii/ov5640_udp_rgmii_8_16.gprj:src/camera_init/i2c_control/i2c_control.v;raw/ch60/ch60_ov5640x2_udp_rgmii/ov5640x2_udp_rgmii.gprj:src/camera_init/i2c_control/i2c_control.v;raw/ch70/ch70_fx2_stream_in_ov5640_rgb/fx2_stream_in_ov5640_rgb.gprj:src/camera_init/i2c_control/i2c_control.v"
+  },
+  {
+    "module": "I2C_Init_Dev",
+    "declarations": 3,
+    "chapters": "35",
+    "distinct_sources": 3,
+    "sources": "raw/ch35/acx720_audio_loopback_master/audio_loopback.gprj:src/WM8960_Init/I2C_Init_Dev.v;raw/ch35/acx720_audio_loopback_slave/audio_loopback.gprj:src/es8388_Init/I2C_Init_Dev.v;raw/ch35/ch35_Audio_loopback/CoreCourse_GHRD_I2S_RX.gprj:src/I2C_Init_Dev.v"
+  },
+  {
+    "module": "i2s_rx",
+    "declarations": 3,
+    "chapters": "35",
+    "distinct_sources": 3,
+    "sources": "raw/ch35/acx720_audio_loopback_master/audio_loopback.gprj:src/i2s/i2s_rx.v;raw/ch35/acx720_audio_loopback_slave/audio_loopback.gprj:src/i2s/i2s_rx.v;raw/ch35/ch35_Audio_loopback/CoreCourse_GHRD_I2S_RX.gprj:src/i2s_rx.v"
+  },
+  {
+    "module": "i2s_tx",
+    "declarations": 3,
+    "chapters": "35",
+    "distinct_sources": 3,
+    "sources": "raw/ch35/acx720_audio_loopback_master/audio_loopback.gprj:src/i2s/i2s_tx.v;raw/ch35/acx720_audio_loopback_slave/audio_loopback.gprj:src/i2s/i2s_tx.v;raw/ch35/ch35_Audio_loopback/CoreCourse_GHRD_I2S_RX.gprj:src/i2s_tx.v"
+  },
+  {
+    "module": "image_buffer",
+    "declarations": 5,
+    "chapters": "39,40,41,42,43",
+    "distinct_sources": 5,
+    "sources": "raw/ch39/ch39_uart_ddr3_tft_hdmi_rgb2gray/uart_ddr3_tft_hdmi_rgb2gray.gprj:src/image_buffer/image_buffer.v;raw/ch40/ch40_uart_ddr3_tft_hdmi_median_filter/uart_ddr3_tft_hdmi_median_filter.gprj:src/image_buffer/image_buffer.v;raw/ch41/ch41_uart_ddr3_tft_hdmi_mean_filter/uart_ddr3_tft_hdmi_mean_filter.gprj:src/image_buffer/image_buffer.v;raw/ch42/ch42_uart_ddr3_tft_hdmi_gaussian_filter/uart_ddr3_tft_hdmi_gaussian_filter.gprj:src/image_buffer/image_buffer.v;raw/ch43/ch43_uart_ddr3_tft_hdmi_sobel_filter/uart_ddr3_tft_hdmi_sobel_filter.gprj:src/image_buffer/image_buffer.v"
+  },
+  {
+    "module": "image_extract",
+    "declarations": 1,
+    "chapters": "30",
+    "distinct_sources": 1,
+    "sources": "raw/ch30/ch30_rom_image_tft_hdmi/rom_image_tft_hdmi.gprj:src/image_extract/image_extract.v"
+  },
+  {
+    "module": "image_rx_ctrl",
+    "declarations": 7,
+    "chapters": "38,39,40,41,42,43,67",
+    "distinct_sources": 7,
+    "sources": "raw/ch38/ch38_uart_ddr3_tft_hdmi/uart_ddr3_tft_hdmi.gprj:src/image_rx_ctrl/image_rx_ctrl.v;raw/ch39/ch39_uart_ddr3_tft_hdmi_rgb2gray/uart_ddr3_tft_hdmi_rgb2gray.gprj:src/image_rx_ctrl/image_rx_ctrl.v;raw/ch40/ch40_uart_ddr3_tft_hdmi_median_filter/uart_ddr3_tft_hdmi_median_filter.gprj:src/image_rx_ctrl/image_rx_ctrl.v;raw/ch41/ch41_uart_ddr3_tft_hdmi_mean_filter/uart_ddr3_tft_hdmi_mean_filter.gprj:src/image_rx_ctrl/image_rx_ctrl.v;raw/ch42/ch42_uart_ddr3_tft_hdmi_gaussian_filter/uart_ddr3_tft_hdmi_gaussian_filter.gprj:src/image_rx_ctrl/image_rx_ctrl.v;raw/ch43/ch43_uart_ddr3_tft_hdmi_sobel_filter/uart_ddr3_tft_hdmi_sobel_filter.gprj:src/image_rx_ctrl/image_rx_ctrl.v;raw/ch67/ch67_usb_ddr3_tft_hdmi/usb_ddr3_tft_hdmi/uart_ddr3_tft_hdmi.gprj:src/image_rx_ctrl/image_rx_ctrl.v"
+  },
+  {
+    "module": "image_stitche_x",
+    "declarations": 5,
+    "chapters": "39,40,41,42,43",
+    "distinct_sources": 5,
+    "sources": "raw/ch39/ch39_uart_ddr3_tft_hdmi_rgb2gray/uart_ddr3_tft_hdmi_rgb2gray.gprj:src/image_stitche/image_stitche_x.v;raw/ch40/ch40_uart_ddr3_tft_hdmi_median_filter/uart_ddr3_tft_hdmi_median_filter.gprj:src/image_stitche/image_stitche_x.v;raw/ch41/ch41_uart_ddr3_tft_hdmi_mean_filter/uart_ddr3_tft_hdmi_mean_filter.gprj:src/image_stitche/image_stitche_x.v;raw/ch42/ch42_uart_ddr3_tft_hdmi_gaussian_filter/uart_ddr3_tft_hdmi_gaussian_filter.gprj:src/image_stitche/image_stitche_x.v;raw/ch43/ch43_uart_ddr3_tft_hdmi_sobel_filter/uart_ddr3_tft_hdmi_sobel_filter.gprj:src/image_stitche/image_stitche_x.v"
+  },
+  {
+    "module": "ip_checksum",
+    "declarations": 8,
+    "chapters": "48,55,56,58,59,61,62,63",
+    "distinct_sources": 8,
+    "sources": "raw/ch48/ch48_udp_rgmii/eth_udp_loopback_rgmii/eth_udp_lookback_rgmii/eth_udp_lookback_rgmii.gprj:src/eth_udp_gmii/ip_checksum.v;raw/ch55/ch55_udp_send/eth_udp_tx_rgmii/eth_udp_tx_rgmii.gprj:src/ip_checksum.v;raw/ch56/ch56_eth_udp_rx_rgmii/eth_udp_rx_rgmii.gprj:src/eth_udp_gmii/ip_checksum.v;raw/ch58/ch58_eth_udp_lookback_rgmii/eth_udp_lookback_rgmii.gprj:src/eth_udp_gmii/ip_checksum.v;raw/ch59/ch59_ov5640_udp_rgmii/ov5640_udp_rgmii_8_16.gprj:src/eth_udp_gmii/ip_checksum.v;raw/ch61/ch61_eth_udp_rgmii_ddr3_tft800x480/eth_udp_rgmii_ddr3_tft800x480/eth_udp_rgmii_ddr3_tft800x480.gprj:src/eth_udp_gmii/ip_checksum.v;raw/ch62/ch62_ad7606_ddr3_rgmii/ad7606_ddr3_rgmii.gprj:src/eth_udp_gmii/ip_checksum.v;raw/ch63/ch63_acm1030_ddr3_rgmii/acm1030_ddr3_rgmii.gprj:src/eth_udp_gmii/ip_checksum.v"
+  },
+  {
+    "module": "ir_decode",
+    "declarations": 1,
+    "chapters": "22",
+    "distinct_sources": 1,
+    "sources": "raw/ch22/ch22_HT6221/HT6221.gprj:src/ir_decode.v"
+  },
+  {
+    "module": "ir_decode_tb",
+    "declarations": 1,
+    "chapters": "22",
+    "distinct_sources": 1,
+    "sources": "raw/ch22/ch22_HT6221/HT6221.gprj:src/ir_decode_tb.v"
+  },
+  {
+    "module": "key_control",
+    "declarations": 2,
+    "chapters": "18",
+    "distinct_sources": 2,
+    "sources": "raw/ch18/ch18_dds_ad9767/A/dds_ad9767.gprj:src/key_control.v;raw/ch18/ch18_dds_ad9767/B/dds_ad9767.gprj:src/key_control.v"
+  },
+  {
+    "module": "key_filter",
+    "declarations": 9,
+    "chapters": "11,12,18,25,34,43",
+    "distinct_sources": 9,
+    "sources": "raw/ch11/ch11_key_filter/key_filter.gprj:src/key_filter.v;raw/ch12/ch12_key_led/key_led.gprj:src/key_filter.v;raw/ch18/ch18_dds_ad9767/A/dds_ad9767.gprj:src/key_filter.v;raw/ch18/ch18_dds_ad9767/B/dds_ad9767.gprj:src/key_filter.v;raw/ch25/ch25_Dig_Volt/Dig_Volt.gprj:src/ key_filter.v;raw/ch34/ch34_uart_rtc8563_tft/uart_rtc8563_hex8/uart_rtc8563_hex8.gprj:src/key_filter/key_filter.v;raw/ch34/ch34_uart_rtc8563_tft/uart_rtc8563_tft_disp_driver/uart_rtc8563_tft.gprj:src/key_filter/key_filter.v;raw/ch34/ch34_uart_rtc8563_tft/uart_rtc8563_tft/uart_rtc8563_tft/uart_rtc8563_tft.gprj:src/key_filter/key_filter.v;raw/ch43/ch43_uart_ddr3_tft_hdmi_sobel_filter/uart_ddr3_tft_hdmi_sobel_filter.gprj:src/key_filter.v"
+  },
+  {
+    "module": "key_filter_tb",
+    "declarations": 1,
+    "chapters": "12",
+    "distinct_sources": 1,
+    "sources": "raw/ch12/ch12_key_led/key_led.gprj:src/key_filter_tb.v"
+  },
+  {
+    "module": "key_led_tb",
+    "declarations": 1,
+    "chapters": "12",
+    "distinct_sources": 1,
+    "sources": "raw/ch12/ch12_key_led/key_led.gprj:src/key_led_tb.v"
+  },
+  {
+    "module": "key_led_top",
+    "declarations": 1,
+    "chapters": "12",
+    "distinct_sources": 1,
+    "sources": "raw/ch12/ch12_key_led/key_led.gprj:src/key_led_top.v"
+  },
+  {
+    "module": "key_model",
+    "declarations": 1,
+    "chapters": "12",
+    "distinct_sources": 1,
+    "sources": "raw/ch12/ch12_key_led/key_led.gprj:src/key_model.v"
+  },
+  {
+    "module": "keyboard_4x4",
+    "declarations": 1,
+    "chapters": "21",
+    "distinct_sources": 1,
+    "sources": "raw/ch21/ch21_keyboard_4x4/keyboard_4x4.gprj:src/keyboard_4x4.v"
+  },
+  {
+    "module": "keyboard_4x4_model",
+    "declarations": 1,
+    "chapters": "21",
+    "distinct_sources": 1,
+    "sources": "raw/ch21/ch21_keyboard_4x4/keyboard_4x4.gprj:src/tb/keyboard_4x4_model.v"
+  },
+  {
+    "module": "led_ctrl",
+    "declarations": 1,
+    "chapters": "12",
+    "distinct_sources": 1,
+    "sources": "raw/ch12/ch12_key_led/key_led.gprj:src/led_ctrl.v"
+  },
+  {
+    "module": "led_flash",
+    "declarations": 3,
+    "chapters": "02,03,04",
+    "distinct_sources": 3,
+    "sources": "raw/ch02/ch2_led_flash/led_flash.gprj:src/led_flash.v;raw/ch03/ch3_led_flash_sim/led_flash.gprj:src/led_flash.v;raw/ch04/ch4_led_flash_gao/led_flash.gprj:src/led_flash.v"
+  },
+  {
+    "module": "led_flash_tb",
+    "declarations": 2,
+    "chapters": "03,04",
+    "distinct_sources": 2,
+    "sources": "raw/ch03/ch3_led_flash_sim/led_flash.gprj:src/led_flash_tb.v;raw/ch04/ch4_led_flash_gao/led_flash.gprj:src/led_flash_tb.v"
+  },
+  {
+    "module": "led_flip_ctrl",
+    "declarations": 1,
+    "chapters": "17",
+    "distinct_sources": 1,
+    "sources": "raw/ch17/ch17_pll_ip/pll_ip.gprj:src/led_flip_ctrl.v"
+  },
+  {
+    "module": "mdio_bit_shift",
+    "declarations": 4,
+    "chapters": "48,57,59,60",
+    "distinct_sources": 4,
+    "sources": "raw/ch48/ch48_udp_rgmii/ov5640_udp_rgmii_8_8/ov5640_udp_rgmii_8_8.gprj:src/mdio/mdio_bit_shift.v;raw/ch57/ch57_phy_config_mdio/phy_config_mdio.gprj:src/mdio_bit_shift.v;raw/ch59/ch59_ov5640_udp_rgmii/ov5640_udp_rgmii_8_16.gprj:src/mdio/mdio_bit_shift.v;raw/ch60/ch60_ov5640x2_udp_rgmii/ov5640x2_udp_rgmii.gprj:src/mdio/mdio_bit_shift.v"
+  },
+  {
+    "module": "mdio_tb",
+    "declarations": 1,
+    "chapters": "60",
+    "distinct_sources": 1,
+    "sources": "raw/ch60/ch60_ov5640x2_udp_rgmii/ov5640x2_udp_rgmii.gprj:src/mdio/mdio_tb.v"
+  },
+  {
+    "module": "mean_filter",
+    "declarations": 1,
+    "chapters": "41",
+    "distinct_sources": 1,
+    "sources": "raw/ch41/ch41_uart_ddr3_tft_hdmi_mean_filter/uart_ddr3_tft_hdmi_mean_filter.gprj:src/mean_filter/mean_filter.v"
+  },
+  {
+    "module": "median_filter",
+    "declarations": 1,
+    "chapters": "40",
+    "distinct_sources": 1,
+    "sources": "raw/ch40/ch40_uart_ddr3_tft_hdmi_median_filter/uart_ddr3_tft_hdmi_median_filter.gprj:src/median_filter/median_filter.v"
+  },
+  {
+    "module": "music_gen",
+    "declarations": 1,
+    "chapters": "20",
+    "distinct_sources": 1,
+    "sources": "raw/ch20/ch20_music_gen/music_gen.gprj:src/music_gen.v"
+  },
+  {
+    "module": "music_gen_tb",
+    "declarations": 1,
+    "chapters": "20",
+    "distinct_sources": 1,
+    "sources": "raw/ch20/ch20_music_gen/music_gen.gprj:src/music_gen_tb.v"
+  },
+  {
+    "module": "num_lib_rom",
+    "declarations": 2,
+    "chapters": "34",
+    "distinct_sources": 2,
+    "sources": "raw/ch34/ch34_uart_rtc8563_tft/uart_rtc8563_tft_disp_driver/uart_rtc8563_tft.gprj:src/gowin_prom/num_lib_rom.v;raw/ch34/ch34_uart_rtc8563_tft/uart_rtc8563_tft/uart_rtc8563_tft/uart_rtc8563_tft.gprj:src/gowin_prom/num_lib_rom.v"
+  },
+  {
+    "module": "ov5640_ddr3_tft",
+    "declarations": 2,
+    "chapters": "45,46",
+    "distinct_sources": 2,
+    "sources": "raw/ch45/ch45_ov5640_ddr3_tft/ov5640_ddr3_tft.gprj:src/ov5640_ddr3_tft.v;raw/ch46/ch46_ov5640_ddr3_vga/ov5640_ddr3_vga.gprj:src/ov5640_ddr3_vga.v"
+  },
+  {
+    "module": "ov5640_init_table_jpeg",
+    "declarations": 7,
+    "chapters": "45,46,47,48,59,60,70",
+    "distinct_sources": 7,
+    "sources": "raw/ch45/ch45_ov5640_ddr3_tft/ov5640_ddr3_tft.gprj:src/camera_init/ov5640_init_table_jpeg.v;raw/ch46/ch46_ov5640_ddr3_vga/ov5640_ddr3_vga.gprj:src/camera_init/ov5640_init_table_jpeg.v;raw/ch47/ch47_ov5640_ddr3_hdmi/ov5640_ddr3_hdmi.gprj:src/camera_init/ov5640_init_table_jpeg.v;raw/ch48/ch48_udp_rgmii/ov5640_udp_rgmii_8_8/ov5640_udp_rgmii_8_8.gprj:src/camera_init/ov5640_init_table_jpeg.v;raw/ch59/ch59_ov5640_udp_rgmii/ov5640_udp_rgmii_8_16.gprj:src/camera_init/ov5640_init_table_jpeg.v;raw/ch60/ch60_ov5640x2_udp_rgmii/ov5640x2_udp_rgmii.gprj:src/camera_init/ov5640_init_table_jpeg.v;raw/ch70/ch70_fx2_stream_in_ov5640_rgb/fx2_stream_in_ov5640_rgb.gprj:src/camera_init/ov5640_init_table_jpeg.v"
+  },
+  {
+    "module": "ov5640_init_table_rgb",
+    "declarations": 7,
+    "chapters": "45,46,47,48,59,60,70",
+    "distinct_sources": 7,
+    "sources": "raw/ch45/ch45_ov5640_ddr3_tft/ov5640_ddr3_tft.gprj:src/camera_init/ov5640_init_table_rgb.v;raw/ch46/ch46_ov5640_ddr3_vga/ov5640_ddr3_vga.gprj:src/camera_init/ov5640_init_table_rgb.v;raw/ch47/ch47_ov5640_ddr3_hdmi/ov5640_ddr3_hdmi.gprj:src/camera_init/ov5640_init_table_rgb.v;raw/ch48/ch48_udp_rgmii/ov5640_udp_rgmii_8_8/ov5640_udp_rgmii_8_8.gprj:src/camera_init/ov5640_init_table_rgb.v;raw/ch59/ch59_ov5640_udp_rgmii/ov5640_udp_rgmii_8_16.gprj:src/camera_init/ov5640_init_table_rgb.v;raw/ch60/ch60_ov5640x2_udp_rgmii/ov5640x2_udp_rgmii.gprj:src/camera_init/ov5640_init_table_rgb.v;raw/ch70/ch70_fx2_stream_in_ov5640_rgb/fx2_stream_in_ov5640_rgb.gprj:src/camera_init/ov5640_init_table_rgb.v"
+  },
+  {
+    "module": "ov5640_udp_rgmii",
+    "declarations": 2,
+    "chapters": "48,59",
+    "distinct_sources": 2,
+    "sources": "raw/ch48/ch48_udp_rgmii/ov5640_udp_rgmii_8_8/ov5640_udp_rgmii_8_8.gprj:src/top/ov5640_udp_rgmii.v;raw/ch59/ch59_ov5640_udp_rgmii/ov5640_udp_rgmii_8_16.gprj:src/top/ov5640_udp_rgmii.v"
+  },
+  {
+    "module": "ov5640x2_udp_rgmii",
+    "declarations": 1,
+    "chapters": "60",
+    "distinct_sources": 1,
+    "sources": "raw/ch60/ch60_ov5640x2_udp_rgmii/ov5640x2_udp_rgmii.gprj:src/ov5640x2_udp_rgmii.v"
+  },
+  {
+    "module": "ov7725_init_table_rgb",
+    "declarations": 4,
+    "chapters": "48,59,60,70",
+    "distinct_sources": 4,
+    "sources": "raw/ch48/ch48_udp_rgmii/ov5640_udp_rgmii_8_8/ov5640_udp_rgmii_8_8.gprj:src/camera_init/ov7725_init_table_rgb.v;raw/ch59/ch59_ov5640_udp_rgmii/ov5640_udp_rgmii_8_16.gprj:src/camera_init/ov7725_init_table_rgb.v;raw/ch60/ch60_ov5640x2_udp_rgmii/ov5640x2_udp_rgmii.gprj:src/camera_init/ov7725_init_table_rgb.v;raw/ch70/ch70_fx2_stream_in_ov5640_rgb/fx2_stream_in_ov5640_rgb.gprj:src/camera_init/ov7725_init_table_rgb.v"
+  },
+  {
+    "module": "pcf8563_ctrl",
+    "declarations": 3,
+    "chapters": "34",
+    "distinct_sources": 3,
+    "sources": "raw/ch34/ch34_uart_rtc8563_tft/uart_rtc8563_hex8/uart_rtc8563_hex8.gprj:src/pcf8563_ctrl/pcf8563_ctrl.v;raw/ch34/ch34_uart_rtc8563_tft/uart_rtc8563_tft_disp_driver/uart_rtc8563_tft.gprj:src/pcf8563_ctrl/pcf8563_ctrl.v;raw/ch34/ch34_uart_rtc8563_tft/uart_rtc8563_tft/uart_rtc8563_tft/uart_rtc8563_tft.gprj:src/pcf8563_ctrl/pcf8563_ctrl.v"
+  },
+  {
+    "module": "phy_reg_config",
+    "declarations": 4,
+    "chapters": "48,57,59,60",
+    "distinct_sources": 4,
+    "sources": "raw/ch48/ch48_udp_rgmii/ov5640_udp_rgmii_8_8/ov5640_udp_rgmii_8_8.gprj:src/mdio/phy_reg_config.v;raw/ch57/ch57_phy_config_mdio/phy_config_mdio.gprj:src/phy_reg_config.v;raw/ch59/ch59_ov5640_udp_rgmii/ov5640_udp_rgmii_8_16.gprj:src/mdio/phy_reg_config.v;raw/ch60/ch60_ov5640x2_udp_rgmii/ov5640x2_udp_rgmii.gprj:src/mdio/phy_reg_config.v"
+  },
+  {
+    "module": "pll",
+    "declarations": 9,
+    "chapters": "38,39,40,41,42,43,48,61,67",
+    "distinct_sources": 9,
+    "sources": "raw/ch38/ch38_uart_ddr3_tft_hdmi/uart_ddr3_tft_hdmi.gprj:src/pll/pll.v;raw/ch39/ch39_uart_ddr3_tft_hdmi_rgb2gray/uart_ddr3_tft_hdmi_rgb2gray.gprj:src/pll/pll.v;raw/ch40/ch40_uart_ddr3_tft_hdmi_median_filter/uart_ddr3_tft_hdmi_median_filter.gprj:src/pll/pll.v;raw/ch41/ch41_uart_ddr3_tft_hdmi_mean_filter/uart_ddr3_tft_hdmi_mean_filter.gprj:src/pll/pll.v;raw/ch42/ch42_uart_ddr3_tft_hdmi_gaussian_filter/uart_ddr3_tft_hdmi_gaussian_filter.gprj:src/pll/pll.v;raw/ch43/ch43_uart_ddr3_tft_hdmi_sobel_filter/uart_ddr3_tft_hdmi_sobel_filter.gprj:src/pll/pll.v;raw/ch48/ch48_udp_rgmii/ov5640_udp_rgmii_8_8/ov5640_udp_rgmii_8_8.gprj:src/pll/pll.v;raw/ch61/ch61_eth_udp_rgmii_ddr3_tft800x480/eth_udp_rgmii_ddr3_tft800x480/eth_udp_rgmii_ddr3_tft800x480.gprj:src/pll/pll.v;raw/ch67/ch67_usb_ddr3_tft_hdmi/usb_ddr3_tft_hdmi/uart_ddr3_tft_hdmi.gprj:src/pll/pll.v"
+  },
+  {
+    "module": "PLL_INIT",
+    "declarations": 1,
+    "chapters": "58",
+    "distinct_sources": 1,
+    "sources": "raw/ch58/ch58_eth_udp_lookback_rgmii/eth_udp_lookback_rgmii.gprj:src/pll_init.v"
+  },
+  {
+    "module": "pll_led",
+    "declarations": 1,
+    "chapters": "17",
+    "distinct_sources": 1,
+    "sources": "raw/ch17/ch17_pll_ip/pll_ip.gprj:src/pll_led.v"
+  },
+  {
+    "module": "pll_led_tb",
+    "declarations": 1,
+    "chapters": "17",
+    "distinct_sources": 1,
+    "sources": "raw/ch17/ch17_pll_ip/pll_ip.gprj:src/pll_led_tb.v"
+  },
+  {
+    "module": "pll_tft_4",
+    "declarations": 2,
+    "chapters": "34",
+    "distinct_sources": 2,
+    "sources": "raw/ch34/ch34_uart_rtc8563_tft/uart_rtc8563_tft_disp_driver/uart_rtc8563_tft.gprj:src/gowin_pll/pll_tft_4.v;raw/ch34/ch34_uart_rtc8563_tft/uart_rtc8563_tft/uart_rtc8563_tft/uart_rtc8563_tft.gprj:src/gowin_pll/pll_tft_4.v"
+  },
+  {
+    "module": "pll_tft_5",
+    "declarations": 2,
+    "chapters": "34",
+    "distinct_sources": 2,
+    "sources": "raw/ch34/ch34_uart_rtc8563_tft/uart_rtc8563_tft_disp_driver/uart_rtc8563_tft.gprj:src/gowin_pll/pll_tft_5.v;raw/ch34/ch34_uart_rtc8563_tft/uart_rtc8563_tft/uart_rtc8563_tft/uart_rtc8563_tft.gprj:src/gowin_pll/pll_tft_5.v"
+  },
+  {
+    "module": "pwm_gen",
+    "declarations": 2,
+    "chapters": "19,20",
+    "distinct_sources": 2,
+    "sources": "raw/ch19/ch19_pwm_gen/pwm_gen.gprj:src/pwm_gen.v;raw/ch20/ch20_music_gen/music_gen.gprj:src/pwm_gen.v"
+  },
+  {
+    "module": "pwm_gen_tb",
+    "declarations": 1,
+    "chapters": "19",
+    "distinct_sources": 1,
+    "sources": "raw/ch19/ch19_pwm_gen/pwm_gen.gprj:src/pwm_gen_tb.v"
+  },
+  {
+    "module": "pwm_gen_test",
+    "declarations": 1,
+    "chapters": "19",
+    "distinct_sources": 1,
+    "sources": "raw/ch19/ch19_pwm_gen/pwm_gen.gprj:src/pwm_gen_test.v"
+  },
+  {
+    "module": "ram_tb",
+    "declarations": 1,
+    "chapters": "15",
+    "distinct_sources": 1,
+    "sources": "raw/ch15/ch15_ram_ip/ram_ip.gprj:src/ram_tb.v"
+  },
+  {
+    "module": "rd_data_fifo",
+    "declarations": 14,
+    "chapters": "37,38,39,40,41,42,43,45,46,47,61,62,63,67",
+    "distinct_sources": 14,
+    "sources": "raw/ch37/ch37_ddr3_ctrl_2port/ddr3_ctrl_2port.gprj:src/fifo_top/rd_data_fifo.v;raw/ch38/ch38_uart_ddr3_tft_hdmi/uart_ddr3_tft_hdmi.gprj:src/rd_data_fifo/rd_data_fifo.v;raw/ch39/ch39_uart_ddr3_tft_hdmi_rgb2gray/uart_ddr3_tft_hdmi_rgb2gray.gprj:src/rd_data_fifo/rd_data_fifo.v;raw/ch40/ch40_uart_ddr3_tft_hdmi_median_filter/uart_ddr3_tft_hdmi_median_filter.gprj:src/rd_data_fifo/rd_data_fifo.v;raw/ch41/ch41_uart_ddr3_tft_hdmi_mean_filter/uart_ddr3_tft_hdmi_mean_filter.gprj:src/rd_data_fifo/rd_data_fifo.v;raw/ch42/ch42_uart_ddr3_tft_hdmi_gaussian_filter/uart_ddr3_tft_hdmi_gaussian_filter.gprj:src/rd_data_fifo/rd_data_fifo.v;raw/ch43/ch43_uart_ddr3_tft_hdmi_sobel_filter/uart_ddr3_tft_hdmi_sobel_filter.gprj:src/rd_data_fifo/rd_data_fifo.v;raw/ch45/ch45_ov5640_ddr3_tft/ov5640_ddr3_tft.gprj:src/rd_data_fifo/rd_data_fifo.v;raw/ch46/ch46_ov5640_ddr3_vga/ov5640_ddr3_vga.gprj:src/rd_data_fifo/rd_data_fifo.v;raw/ch47/ch47_ov5640_ddr3_hdmi/ov5640_ddr3_hdmi.gprj:src/rd_data_fifo/rd_data_fifo.v;raw/ch61/ch61_eth_udp_rgmii_ddr3_tft800x480/eth_udp_rgmii_ddr3_tft800x480/eth_udp_rgmii_ddr3_tft800x480.gprj:src/rd_data_fifo/rd_data_fifo.v;raw/ch62/ch62_ad7606_ddr3_rgmii/ad7606_ddr3_rgmii.gprj:src/rd_data_fifo/rd_data_fifo.v;raw/ch63/ch63_acm1030_ddr3_rgmii/acm1030_ddr3_rgmii.gprj:src/rd_data_fifo/rd_data_fifo.v;raw/ch67/ch67_usb_ddr3_tft_hdmi/usb_ddr3_tft_hdmi/uart_ddr3_tft_hdmi.gprj:src/rd_data_fifo/rd_data_fifo.v"
+  },
+  {
+    "module": "rgb2gray",
+    "declarations": 5,
+    "chapters": "39,40,41,42,43",
+    "distinct_sources": 5,
+    "sources": "raw/ch39/ch39_uart_ddr3_tft_hdmi_rgb2gray/uart_ddr3_tft_hdmi_rgb2gray.gprj:src/rgb2gray/rgb2gray.v;raw/ch40/ch40_uart_ddr3_tft_hdmi_median_filter/uart_ddr3_tft_hdmi_median_filter.gprj:src/rgb2gray/rgb2gray.v;raw/ch41/ch41_uart_ddr3_tft_hdmi_mean_filter/uart_ddr3_tft_hdmi_mean_filter.gprj:src/rgb2gray/rgb2gray.v;raw/ch42/ch42_uart_ddr3_tft_hdmi_gaussian_filter/uart_ddr3_tft_hdmi_gaussian_filter.gprj:src/rgb2gray/rgb2gray.v;raw/ch43/ch43_uart_ddr3_tft_hdmi_sobel_filter/uart_ddr3_tft_hdmi_sobel_filter.gprj:src/rgb2gray/rgb2gray.v"
+  },
+  {
+    "module": "rgmii_to_gmii",
+    "declarations": 7,
+    "chapters": "48,51,56,58,61,62,63",
+    "distinct_sources": 7,
+    "sources": "raw/ch48/ch48_udp_rgmii/eth_udp_loopback_rgmii/eth_udp_lookback_rgmii/eth_udp_lookback_rgmii.gprj:src/gmii_rgmii_gmii/rgmii_to_gmii.v;raw/ch51/ch51_gmii_rgmii_gmii/gmii_rgmii_gmii.gprj:src/gmii_rgmii_gmii/rgmii_to_gmii.v;raw/ch56/ch56_eth_udp_rx_rgmii/eth_udp_rx_rgmii.gprj:src/rgmii_to_gmii.v;raw/ch58/ch58_eth_udp_lookback_rgmii/eth_udp_lookback_rgmii.gprj:src/gmii_rgmii_gmii/rgmii_to_gmii.v;raw/ch61/ch61_eth_udp_rgmii_ddr3_tft800x480/eth_udp_rgmii_ddr3_tft800x480/eth_udp_rgmii_ddr3_tft800x480.gprj:src/gmii_rgmii_gmii/rgmii_to_gmii.v;raw/ch62/ch62_ad7606_ddr3_rgmii/ad7606_ddr3_rgmii.gprj:src/gmii_rgmii_gmii/rgmii_to_gmii.v;raw/ch63/ch63_acm1030_ddr3_rgmii/acm1030_ddr3_rgmii.gprj:src/gmii_rgmii_gmii/rgmii_to_gmii.v"
+  },
+  {
+    "module": "rom_blue_x29",
+    "declarations": 5,
+    "chapters": "39,40,41,42,43",
+    "distinct_sources": 5,
+    "sources": "raw/ch39/ch39_uart_ddr3_tft_hdmi_rgb2gray/uart_ddr3_tft_hdmi_rgb2gray.gprj:src/rom_blue_x29/rom_blue_x29.v;raw/ch40/ch40_uart_ddr3_tft_hdmi_median_filter/uart_ddr3_tft_hdmi_median_filter.gprj:src/rom_blue_x29/rom_blue_x29.v;raw/ch41/ch41_uart_ddr3_tft_hdmi_mean_filter/uart_ddr3_tft_hdmi_mean_filter.gprj:src/rom_blue_x29/rom_blue_x29.v;raw/ch42/ch42_uart_ddr3_tft_hdmi_gaussian_filter/uart_ddr3_tft_hdmi_gaussian_filter.gprj:src/rom_blue_x29/rom_blue_x29.v;raw/ch43/ch43_uart_ddr3_tft_hdmi_sobel_filter/uart_ddr3_tft_hdmi_sobel_filter.gprj:src/rom_blue_x29/rom_blue_x29.v"
+  },
+  {
+    "module": "rom_char_tft_hdmi",
+    "declarations": 2,
+    "chapters": "31",
+    "distinct_sources": 2,
+    "sources": "raw/ch31/ch31_rom_char_tft_hdmi/rom_char_tft_hdmi/rom_char_tft_hdmi.gprj:src/rom_char_tft_hdmi.v;raw/ch31/ch31_rom_char_tft_hdmi/rom_char_tft800x480_224x64/rom_char_tft_hdmi/rom_char_tft_hdmi.gprj:src/rom_char_tft_hdmi.v"
+  },
+  {
+    "module": "rom_green_x150",
+    "declarations": 5,
+    "chapters": "39,40,41,42,43",
+    "distinct_sources": 5,
+    "sources": "raw/ch39/ch39_uart_ddr3_tft_hdmi_rgb2gray/uart_ddr3_tft_hdmi_rgb2gray.gprj:src/rom_green_x150/rom_green_x150.v;raw/ch40/ch40_uart_ddr3_tft_hdmi_median_filter/uart_ddr3_tft_hdmi_median_filter.gprj:src/rom_green_x150/rom_green_x150.v;raw/ch41/ch41_uart_ddr3_tft_hdmi_mean_filter/uart_ddr3_tft_hdmi_mean_filter.gprj:src/rom_green_x150/rom_green_x150.v;raw/ch42/ch42_uart_ddr3_tft_hdmi_gaussian_filter/uart_ddr3_tft_hdmi_gaussian_filter.gprj:src/rom_green_x150/rom_green_x150.v;raw/ch43/ch43_uart_ddr3_tft_hdmi_sobel_filter/uart_ddr3_tft_hdmi_sobel_filter.gprj:src/rom_green_x150/rom_green_x150.v"
+  },
+  {
+    "module": "rom_image",
+    "declarations": 7,
+    "chapters": "38,39,40,41,42,43,67",
+    "distinct_sources": 7,
+    "sources": "raw/ch38/ch38_uart_ddr3_tft_hdmi/uart_ddr3_tft_hdmi.gprj:src/test_dat_gen/rom_image.v;raw/ch39/ch39_uart_ddr3_tft_hdmi_rgb2gray/uart_ddr3_tft_hdmi_rgb2gray.gprj:src/test_dat_gen/rom_image.v;raw/ch40/ch40_uart_ddr3_tft_hdmi_median_filter/uart_ddr3_tft_hdmi_median_filter.gprj:src/test_dat_gen/rom_image.v;raw/ch41/ch41_uart_ddr3_tft_hdmi_mean_filter/uart_ddr3_tft_hdmi_mean_filter.gprj:src/test_dat_gen/rom_image.v;raw/ch42/ch42_uart_ddr3_tft_hdmi_gaussian_filter/uart_ddr3_tft_hdmi_gaussian_filter.gprj:src/test_dat_gen/rom_image.v;raw/ch43/ch43_uart_ddr3_tft_hdmi_sobel_filter/uart_ddr3_tft_hdmi_sobel_filter.gprj:src/test_dat_gen/rom_image.v;raw/ch67/ch67_usb_ddr3_tft_hdmi/usb_ddr3_tft_hdmi/uart_ddr3_tft_hdmi.gprj:src/test_dat_gen/rom_image.v"
+  },
+  {
+    "module": "rom_image_extract",
+    "declarations": 7,
+    "chapters": "38,39,40,41,42,43,67",
+    "distinct_sources": 7,
+    "sources": "raw/ch38/ch38_uart_ddr3_tft_hdmi/uart_ddr3_tft_hdmi.gprj:src/test_dat_gen/rom_image_extract.v;raw/ch39/ch39_uart_ddr3_tft_hdmi_rgb2gray/uart_ddr3_tft_hdmi_rgb2gray.gprj:src/test_dat_gen/rom_image_extract.v;raw/ch40/ch40_uart_ddr3_tft_hdmi_median_filter/uart_ddr3_tft_hdmi_median_filter.gprj:src/test_dat_gen/rom_image_extract.v;raw/ch41/ch41_uart_ddr3_tft_hdmi_mean_filter/uart_ddr3_tft_hdmi_mean_filter.gprj:src/test_dat_gen/rom_image_extract.v;raw/ch42/ch42_uart_ddr3_tft_hdmi_gaussian_filter/uart_ddr3_tft_hdmi_gaussian_filter.gprj:src/test_dat_gen/rom_image_extract.v;raw/ch43/ch43_uart_ddr3_tft_hdmi_sobel_filter/uart_ddr3_tft_hdmi_sobel_filter.gprj:src/test_dat_gen/rom_image_extract.v;raw/ch67/ch67_usb_ddr3_tft_hdmi/usb_ddr3_tft_hdmi/uart_ddr3_tft_hdmi.gprj:src/test_dat_gen/rom_image_extract.v"
+  },
+  {
+    "module": "rom_image_tft_hdmi",
+    "declarations": 1,
+    "chapters": "30",
+    "distinct_sources": 1,
+    "sources": "raw/ch30/ch30_rom_image_tft_hdmi/rom_image_tft_hdmi.gprj:src/rom_image_tft_hdmi.v"
+  },
+  {
+    "module": "rom_red_x77",
+    "declarations": 5,
+    "chapters": "39,40,41,42,43",
+    "distinct_sources": 5,
+    "sources": "raw/ch39/ch39_uart_ddr3_tft_hdmi_rgb2gray/uart_ddr3_tft_hdmi_rgb2gray.gprj:src/gowin_prom/rom_red_x77.v;raw/ch40/ch40_uart_ddr3_tft_hdmi_median_filter/uart_ddr3_tft_hdmi_median_filter.gprj:src/gowin_prom/rom_red_x77.v;raw/ch41/ch41_uart_ddr3_tft_hdmi_mean_filter/uart_ddr3_tft_hdmi_mean_filter.gprj:src/gowin_prom/rom_red_x77.v;raw/ch42/ch42_uart_ddr3_tft_hdmi_gaussian_filter/uart_ddr3_tft_hdmi_gaussian_filter.gprj:src/gowin_prom/rom_red_x77.v;raw/ch43/ch43_uart_ddr3_tft_hdmi_sobel_filter/uart_ddr3_tft_hdmi_sobel_filter.gprj:src/rom_red_x77/rom_red_x77.v"
+  },
+  {
+    "module": "rom_sine",
+    "declarations": 2,
+    "chapters": "18",
+    "distinct_sources": 2,
+    "sources": "raw/ch18/ch18_dds_ad9767/A/dds_ad9767.gprj:src/gowin_prom/rom_sine.v;raw/ch18/ch18_dds_ad9767/B/dds_ad9767.gprj:src/gowin_prom/rom_sine.v"
+  },
+  {
+    "module": "rom_square",
+    "declarations": 2,
+    "chapters": "18",
+    "distinct_sources": 2,
+    "sources": "raw/ch18/ch18_dds_ad9767/A/dds_ad9767.gprj:src/gowin_prom/rom_square.v;raw/ch18/ch18_dds_ad9767/B/dds_ad9767.gprj:src/gowin_prom/rom_square.v"
+  },
+  {
+    "module": "rom_top",
+    "declarations": 1,
+    "chapters": "14",
+    "distinct_sources": 1,
+    "sources": "raw/ch14/ch14_rom_ip/rom_ip.gprj:src/rom_top.v"
+  },
+  {
+    "module": "rom_triangular",
+    "declarations": 2,
+    "chapters": "18",
+    "distinct_sources": 2,
+    "sources": "raw/ch18/ch18_dds_ad9767/A/dds_ad9767.gprj:src/gowin_prom/rom_triangular.v;raw/ch18/ch18_dds_ad9767/B/dds_ad9767.gprj:src/gowin_prom/rom_triangular.v"
+  },
+  {
+    "module": "rx_buf_fifo",
+    "declarations": 1,
+    "chapters": "61",
+    "distinct_sources": 1,
+    "sources": "raw/ch61/ch61_eth_udp_rgmii_ddr3_tft800x480/eth_udp_rgmii_ddr3_tft800x480/eth_udp_rgmii_ddr3_tft800x480.gprj:src/rx_buf_fifo/rx_buf_fifo.v"
+  },
+  {
+    "module": "SCLK_DIV",
+    "declarations": 1,
+    "chapters": "35",
+    "distinct_sources": 1,
+    "sources": "raw/ch35/acx720_audio_loopback_slave/audio_loopback.gprj:src/SCLK_DIV/SCLK_DIV.v"
+  },
+  {
+    "module": "serdes_4b_10to1",
+    "declarations": 14,
+    "chapters": "29,30,31,38,39,40,41,42,43,45,46,47,67",
+    "distinct_sources": 14,
+    "sources": "raw/ch29/ch29_hdmi_color/gao_hdmi_color.gprj:src/dvi_encoder.v;raw/ch30/ch30_rom_image_tft_hdmi/rom_image_tft_hdmi.gprj:src/dvi_encoder/dvi_encoder.v;raw/ch31/ch31_rom_char_tft_hdmi/rom_char_tft_hdmi/rom_char_tft_hdmi.gprj:src/dvi_encoder/dvi_encoder.v;raw/ch31/ch31_rom_char_tft_hdmi/rom_char_tft800x480_224x64/rom_char_tft_hdmi/rom_char_tft_hdmi.gprj:src/dvi_encoder/dvi_encoder.v;raw/ch38/ch38_uart_ddr3_tft_hdmi/uart_ddr3_tft_hdmi.gprj:src/dvi_encoder.v;raw/ch39/ch39_uart_ddr3_tft_hdmi_rgb2gray/uart_ddr3_tft_hdmi_rgb2gray.gprj:src/dvi_encoder.v;raw/ch40/ch40_uart_ddr3_tft_hdmi_median_filter/uart_ddr3_tft_hdmi_median_filter.gprj:src/dvi_encoder.v;raw/ch41/ch41_uart_ddr3_tft_hdmi_mean_filter/uart_ddr3_tft_hdmi_mean_filter.gprj:src/dvi_encoder.v;raw/ch42/ch42_uart_ddr3_tft_hdmi_gaussian_filter/uart_ddr3_tft_hdmi_gaussian_filter.gprj:src/dvi_encoder.v;raw/ch43/ch43_uart_ddr3_tft_hdmi_sobel_filter/uart_ddr3_tft_hdmi_sobel_filter.gprj:src/dvi_encoder.v;raw/ch45/ch45_ov5640_ddr3_tft/ov5640_ddr3_tft.gprj:src/vga/dvi_encoder.v;raw/ch46/ch46_ov5640_ddr3_vga/ov5640_ddr3_vga.gprj:src/vga/dvi_encoder.v;raw/ch47/ch47_ov5640_ddr3_hdmi/ov5640_ddr3_hdmi.gprj:src/vga/dvi_encoder.v;raw/ch67/ch67_usb_ddr3_tft_hdmi/usb_ddr3_tft_hdmi/uart_ddr3_tft_hdmi.gprj:src/dvi_encoder.v"
+  },
+  {
+    "module": "shift_reg_ram",
+    "declarations": 4,
+    "chapters": "40,41,42,43",
+    "distinct_sources": 4,
+    "sources": "raw/ch40/ch40_uart_ddr3_tft_hdmi_median_filter/uart_ddr3_tft_hdmi_median_filter.gprj:src/shift_reg_ram/shift_reg_ram.v;raw/ch41/ch41_uart_ddr3_tft_hdmi_mean_filter/uart_ddr3_tft_hdmi_mean_filter.gprj:src/shift_reg_ram/shift_reg_ram.v;raw/ch42/ch42_uart_ddr3_tft_hdmi_gaussian_filter/uart_ddr3_tft_hdmi_gaussian_filter.gprj:src/shift_reg_ram/shift_reg_ram.v;raw/ch43/ch43_uart_ddr3_tft_hdmi_sobel_filter/uart_ddr3_tft_hdmi_sobel_filter.gprj:src/shift_reg_ram/shift_reg_ram.v"
+  },
+  {
+    "module": "shift_register_2taps",
+    "declarations": 4,
+    "chapters": "40,41,42,43",
+    "distinct_sources": 4,
+    "sources": "raw/ch40/ch40_uart_ddr3_tft_hdmi_median_filter/uart_ddr3_tft_hdmi_median_filter.gprj:src/median_filter/shift_register_2taps/shift_register_2taps.v;raw/ch41/ch41_uart_ddr3_tft_hdmi_mean_filter/uart_ddr3_tft_hdmi_mean_filter.gprj:src/mean_filter/shift_register_2taps/shift_register_2taps.v;raw/ch42/ch42_uart_ddr3_tft_hdmi_gaussian_filter/uart_ddr3_tft_hdmi_gaussian_filter.gprj:src/gaussian_filter/shift_register_2taps/shift_register_2taps.v;raw/ch43/ch43_uart_ddr3_tft_hdmi_sobel_filter/uart_ddr3_tft_hdmi_sobel_filter.gprj:src/sobel/shift_register_2taps/shift_register_2taps.v"
+  },
+  {
+    "module": "sobel",
+    "declarations": 1,
+    "chapters": "43",
+    "distinct_sources": 1,
+    "sources": "raw/ch43/ch43_uart_ddr3_tft_hdmi_sobel_filter/uart_ddr3_tft_hdmi_sobel_filter.gprj:src/sobel/sobel.v"
+  },
+  {
+    "module": "sort",
+    "declarations": 1,
+    "chapters": "40",
+    "distinct_sources": 1,
+    "sources": "raw/ch40/ch40_uart_ddr3_tft_hdmi_median_filter/uart_ddr3_tft_hdmi_median_filter.gprj:src/median_filter/sort.v"
+  },
+  {
+    "module": "speed_ctrl",
+    "declarations": 1,
+    "chapters": "63",
+    "distinct_sources": 1,
+    "sources": "raw/ch63/ch63_acm1030_ddr3_rgmii/acm1030_ddr3_rgmii.gprj:src/speed_ctrl.v"
+  },
+  {
+    "module": "state_ctrl",
+    "declarations": 2,
+    "chapters": "62,63",
+    "distinct_sources": 2,
+    "sources": "raw/ch62/ch62_ad7606_ddr3_rgmii/ad7606_ddr3_rgmii.gprj:src/state_ctrl.v;raw/ch63/ch63_acm1030_ddr3_rgmii/acm1030_ddr3_rgmii.gprj:src/state_ctrl.v"
+  },
+  {
+    "module": "test_dat_gen",
+    "declarations": 7,
+    "chapters": "38,39,40,41,42,43,67",
+    "distinct_sources": 7,
+    "sources": "raw/ch38/ch38_uart_ddr3_tft_hdmi/uart_ddr3_tft_hdmi.gprj:src/test_dat_gen/test_dat_gen.v;raw/ch39/ch39_uart_ddr3_tft_hdmi_rgb2gray/uart_ddr3_tft_hdmi_rgb2gray.gprj:src/test_dat_gen/test_dat_gen.v;raw/ch40/ch40_uart_ddr3_tft_hdmi_median_filter/uart_ddr3_tft_hdmi_median_filter.gprj:src/test_dat_gen/test_dat_gen.v;raw/ch41/ch41_uart_ddr3_tft_hdmi_mean_filter/uart_ddr3_tft_hdmi_mean_filter.gprj:src/test_dat_gen/test_dat_gen.v;raw/ch42/ch42_uart_ddr3_tft_hdmi_gaussian_filter/uart_ddr3_tft_hdmi_gaussian_filter.gprj:src/test_dat_gen/test_dat_gen.v;raw/ch43/ch43_uart_ddr3_tft_hdmi_sobel_filter/uart_ddr3_tft_hdmi_sobel_filter.gprj:src/test_dat_gen/test_dat_gen.v;raw/ch67/ch67_usb_ddr3_tft_hdmi/usb_ddr3_tft_hdmi/uart_ddr3_tft_hdmi.gprj:src/test_dat_gen/test_dat_gen.v"
+  },
+  {
+    "module": "tft_ctrl",
+    "declarations": 2,
+    "chapters": "34",
+    "distinct_sources": 2,
+    "sources": "raw/ch34/ch34_uart_rtc8563_tft/uart_rtc8563_tft_disp_driver/uart_rtc8563_tft.gprj:src/tft_ctrl/tft_ctrl.v;raw/ch34/ch34_uart_rtc8563_tft/uart_rtc8563_tft/uart_rtc8563_tft/uart_rtc8563_tft.gprj:src/tft_ctrl/tft_ctrl.v"
+  },
+  {
+    "module": "tft_ctrl_test",
+    "declarations": 1,
+    "chapters": "28",
+    "distinct_sources": 1,
+    "sources": "raw/ch28/ch28_tft_ctrl/tft_ctrl.gprj:src/tft_ctrl_test.v"
+  },
+  {
+    "module": "tft_pll",
+    "declarations": 1,
+    "chapters": "61",
+    "distinct_sources": 1,
+    "sources": "raw/ch61/ch61_eth_udp_rgmii_ddr3_tft800x480/eth_udp_rgmii_ddr3_tft800x480/eth_udp_rgmii_ddr3_tft800x480.gprj:src/tft_pll/tft_pll.v"
+  },
+  {
+    "module": "time_send_uart",
+    "declarations": 3,
+    "chapters": "34",
+    "distinct_sources": 3,
+    "sources": "raw/ch34/ch34_uart_rtc8563_tft/uart_rtc8563_hex8/uart_rtc8563_hex8.gprj:src/time_send_uart/time_send_uart.v;raw/ch34/ch34_uart_rtc8563_tft/uart_rtc8563_tft_disp_driver/uart_rtc8563_tft.gprj:src/time_send_uart/time_send_uart.v;raw/ch34/ch34_uart_rtc8563_tft/uart_rtc8563_tft/uart_rtc8563_tft/uart_rtc8563_tft.gprj:src/time_send_uart/time_send_uart.v"
+  },
+  {
+    "module": "tlv5618",
+    "declarations": 2,
+    "chapters": "23,24",
+    "distinct_sources": 2,
+    "sources": "raw/ch23/ch23_DACtlv5618/DACtlv5618.gprj:src/tlv5618.v;raw/ch24/ch24_ADCadc128S102/ADC_test.gprj:src/tlv5618.v"
+  },
+  {
+    "module": "tlv5618_tb",
+    "declarations": 1,
+    "chapters": "23",
+    "distinct_sources": 1,
+    "sources": "raw/ch23/ch23_DACtlv5618/DACtlv5618.gprj:src/tlv5618_tb.v"
+  },
+  {
+    "module": "top",
+    "declarations": 1,
+    "chapters": "36",
+    "distinct_sources": 1,
+    "sources": "raw/ch36/ch38_DDR3_MC_PHY_1vs4_5a138k/project/ddr3_1v4_hs.gprj:src/top.v"
+  },
+  {
+    "module": "uart_adjust_time",
+    "declarations": 3,
+    "chapters": "34",
+    "distinct_sources": 3,
+    "sources": "raw/ch34/ch34_uart_rtc8563_tft/uart_rtc8563_hex8/uart_rtc8563_hex8.gprj:src/uart_adjust_time/uart_adjust_time.v;raw/ch34/ch34_uart_rtc8563_tft/uart_rtc8563_tft_disp_driver/uart_rtc8563_tft.gprj:src/uart_adjust_time/uart_adjust_time.v;raw/ch34/ch34_uart_rtc8563_tft/uart_rtc8563_tft/uart_rtc8563_tft/uart_rtc8563_tft.gprj:src/uart_adjust_time/uart_adjust_time.v"
+  },
+  {
+    "module": "uart_byte_rx",
+    "declarations": 16,
+    "chapters": "07,08,09,10,33,34,38,39,40,41,42,43,67",
+    "distinct_sources": 16,
+    "sources": "raw/ch07/ch7_uart_rx/uart_rx.gprj:src/uart_byte_rx.v;raw/ch08/ch8_uart_rx_ctrl_led/uart_rx_ctrl_led.gprj:src/uart_byte_rx.v;raw/ch09/ch9_uart_loopback/uart_loopback.gprj:src/uart_byte_rx.v;raw/ch10/ch10_fsm_hello/fsm_hello.gprj:src/uart_byte_rx.v;raw/ch33/ch33_uart_eeprom/nested_A/uart_eeprom.gprj:src/uart_byte_rx.v;raw/ch33/ch33_uart_eeprom/nested_B/uart_eeprom.gprj:src/uart_byte_rx.v;raw/ch34/ch34_uart_rtc8563_tft/uart_rtc8563_hex8/uart_rtc8563_hex8.gprj:src/uart_byte/uart_byte_rx.v;raw/ch34/ch34_uart_rtc8563_tft/uart_rtc8563_tft_disp_driver/uart_rtc8563_tft.gprj:src/uart_byte/uart_byte_rx.v;raw/ch34/ch34_uart_rtc8563_tft/uart_rtc8563_tft/uart_rtc8563_tft/uart_rtc8563_tft.gprj:src/uart_byte/uart_byte_rx.v;raw/ch38/ch38_uart_ddr3_tft_hdmi/uart_ddr3_tft_hdmi.gprj:src/uart_byte_rx/uart_byte_rx.v;raw/ch39/ch39_uart_ddr3_tft_hdmi_rgb2gray/uart_ddr3_tft_hdmi_rgb2gray.gprj:src/uart_byte_rx/uart_byte_rx.v;raw/ch40/ch40_uart_ddr3_tft_hdmi_median_filter/uart_ddr3_tft_hdmi_median_filter.gprj:src/uart_byte_rx/uart_byte_rx.v;raw/ch41/ch41_uart_ddr3_tft_hdmi_mean_filter/uart_ddr3_tft_hdmi_mean_filter.gprj:src/uart_byte_rx/uart_byte_rx.v;raw/ch42/ch42_uart_ddr3_tft_hdmi_gaussian_filter/uart_ddr3_tft_hdmi_gaussian_filter.gprj:src/uart_byte_rx/uart_byte_rx.v;raw/ch43/ch43_uart_ddr3_tft_hdmi_sobel_filter/uart_ddr3_tft_hdmi_sobel_filter.gprj:src/uart_byte_rx/uart_byte_rx.v;raw/ch67/ch67_usb_ddr3_tft_hdmi/usb_ddr3_tft_hdmi/uart_ddr3_tft_hdmi.gprj:src/uart_byte_rx/uart_byte_rx.v"
+  },
+  {
+    "module": "uart_byte_rx_tb",
+    "declarations": 1,
+    "chapters": "07",
+    "distinct_sources": 1,
+    "sources": "raw/ch07/ch7_uart_rx/uart_rx.gprj:src/uart_byte_rx_tb.v"
+  },
+  {
+    "module": "uart_byte_tx",
+    "declarations": 9,
+    "chapters": "06,07,09,33,34,56",
+    "distinct_sources": 9,
+    "sources": "raw/ch06/ch6_uart_tx/uart_tx.gprj:src/uart_byte_tx.v;raw/ch07/ch7_uart_rx/uart_rx.gprj:src/uart_byte_tx.v;raw/ch09/ch9_uart_loopback/uart_loopback.gprj:src/uart_byte_tx.v;raw/ch33/ch33_uart_eeprom/nested_A/uart_eeprom.gprj:src/uart_byte_tx.v;raw/ch33/ch33_uart_eeprom/nested_B/uart_eeprom.gprj:src/uart_byte_tx.v;raw/ch34/ch34_uart_rtc8563_tft/uart_rtc8563_hex8/uart_rtc8563_hex8.gprj:src/uart_byte/uart_byte_tx.v;raw/ch34/ch34_uart_rtc8563_tft/uart_rtc8563_tft_disp_driver/uart_rtc8563_tft.gprj:src/uart_byte/uart_byte_tx.v;raw/ch34/ch34_uart_rtc8563_tft/uart_rtc8563_tft/uart_rtc8563_tft/uart_rtc8563_tft.gprj:src/uart_byte/uart_byte_tx.v;raw/ch56/ch56_eth_udp_rx_rgmii/eth_udp_rx_rgmii.gprj:src/uart_tx/uart_byte_tx.v"
+  },
+  {
+    "module": "uart_cmd",
+    "declarations": 3,
+    "chapters": "08,33",
+    "distinct_sources": 3,
+    "sources": "raw/ch08/ch8_uart_rx_ctrl_led/uart_rx_ctrl_led.gprj:src/uart_cmd.v;raw/ch33/ch33_uart_eeprom/nested_A/uart_eeprom.gprj:src/uart_cmd.v;raw/ch33/ch33_uart_eeprom/nested_B/uart_eeprom.gprj:src/uart_cmd.v"
+  },
+  {
+    "module": "uart_data_rx",
+    "declarations": 1,
+    "chapters": "09",
+    "distinct_sources": 1,
+    "sources": "raw/ch09/ch9_uart_loopback/uart_loopback.gprj:src/uart_data_rx.v"
+  },
+  {
+    "module": "uart_data_tx",
+    "declarations": 3,
+    "chapters": "09,33",
+    "distinct_sources": 3,
+    "sources": "raw/ch09/ch9_uart_loopback/uart_loopback.gprj:src/uart_data_tx.v;raw/ch33/ch33_uart_eeprom/nested_A/uart_eeprom.gprj:src/uart_data_tx.v;raw/ch33/ch33_uart_eeprom/nested_B/uart_eeprom.gprj:src/uart_data_tx.v"
+  },
+  {
+    "module": "uart_ddr3_tft_hdmi",
+    "declarations": 2,
+    "chapters": "38,67",
+    "distinct_sources": 2,
+    "sources": "raw/ch38/ch38_uart_ddr3_tft_hdmi/uart_ddr3_tft_hdmi.gprj:src/uart_ddr3_tft_hdmi.v;raw/ch67/ch67_usb_ddr3_tft_hdmi/usb_ddr3_tft_hdmi/uart_ddr3_tft_hdmi.gprj:src/uart_ddr3_tft_hdmi.v"
+  },
+  {
+    "module": "uart_ddr3_tft_hdmi_gaussian_filter",
+    "declarations": 1,
+    "chapters": "42",
+    "distinct_sources": 1,
+    "sources": "raw/ch42/ch42_uart_ddr3_tft_hdmi_gaussian_filter/uart_ddr3_tft_hdmi_gaussian_filter.gprj:src/uart_ddr3_tft_hdmi_gaussian_filter.v"
+  },
+  {
+    "module": "uart_ddr3_tft_hdmi_mean_filter",
+    "declarations": 1,
+    "chapters": "41",
+    "distinct_sources": 1,
+    "sources": "raw/ch41/ch41_uart_ddr3_tft_hdmi_mean_filter/uart_ddr3_tft_hdmi_mean_filter.gprj:src/uart_ddr3_tft_hdmi_mean_filter.v"
+  },
+  {
+    "module": "uart_ddr3_tft_hdmi_median_filter",
+    "declarations": 1,
+    "chapters": "40",
+    "distinct_sources": 1,
+    "sources": "raw/ch40/ch40_uart_ddr3_tft_hdmi_median_filter/uart_ddr3_tft_hdmi_median_filter.gprj:src/uart_ddr3_tft_hdmi_median_filter.v"
+  },
+  {
+    "module": "uart_ddr3_tft_hdmi_rgb2gray",
+    "declarations": 1,
+    "chapters": "39",
+    "distinct_sources": 1,
+    "sources": "raw/ch39/ch39_uart_ddr3_tft_hdmi_rgb2gray/uart_ddr3_tft_hdmi_rgb2gray.gprj:src/uart_ddr3_tft_hdmi_rgb2gray.v"
+  },
+  {
+    "module": "uart_ddr3_tft_hdmi_sobel_filter",
+    "declarations": 1,
+    "chapters": "43",
+    "distinct_sources": 1,
+    "sources": "raw/ch43/ch43_uart_ddr3_tft_hdmi_sobel_filter/uart_ddr3_tft_hdmi_sobel_filter.gprj:src/uart_ddr3_tft_hdmi_sobel_filter.v"
+  },
+  {
+    "module": "uart_eeprom",
+    "declarations": 2,
+    "chapters": "33",
+    "distinct_sources": 2,
+    "sources": "raw/ch33/ch33_uart_eeprom/nested_A/uart_eeprom.gprj:src/uart_eeprom.v;raw/ch33/ch33_uart_eeprom/nested_B/uart_eeprom.gprj:src/uart_eeprom.v"
+  },
+  {
+    "module": "uart_loopback",
+    "declarations": 1,
+    "chapters": "09",
+    "distinct_sources": 1,
+    "sources": "raw/ch09/ch9_uart_loopback/uart_loopback.gprj:src/uart_loopback.v"
+  },
+  {
+    "module": "uart_rtc8563_hex8",
+    "declarations": 1,
+    "chapters": "34",
+    "distinct_sources": 1,
+    "sources": "raw/ch34/ch34_uart_rtc8563_tft/uart_rtc8563_hex8/uart_rtc8563_hex8.gprj:src/top/uart_rtc8563_hex8.v"
+  },
+  {
+    "module": "uart_rtc8563_tft",
+    "declarations": 2,
+    "chapters": "34",
+    "distinct_sources": 2,
+    "sources": "raw/ch34/ch34_uart_rtc8563_tft/uart_rtc8563_tft_disp_driver/uart_rtc8563_tft.gprj:src/uart_rtc8563_tft.v;raw/ch34/ch34_uart_rtc8563_tft/uart_rtc8563_tft/uart_rtc8563_tft/uart_rtc8563_tft.gprj:src/uart_rtc8563_tft.v"
+  },
+  {
+    "module": "uart_rx_ctrl_led",
+    "declarations": 1,
+    "chapters": "08",
+    "distinct_sources": 1,
+    "sources": "raw/ch08/ch8_uart_rx_ctrl_led/uart_rx_ctrl_led.gprj:src/uart_rx_ctrl_led.v"
+  },
+  {
+    "module": "uart_rx_ctrl_led_tb",
+    "declarations": 1,
+    "chapters": "08",
+    "distinct_sources": 1,
+    "sources": "raw/ch08/ch8_uart_rx_ctrl_led/uart_rx_ctrl_led.gprj:src/uart_rx_ctrl_led_tb.v"
+  },
+  {
+    "module": "uart_rx_test",
+    "declarations": 1,
+    "chapters": "07",
+    "distinct_sources": 1,
+    "sources": "raw/ch07/ch7_uart_rx/uart_rx.gprj:src/uart_rx_test.v"
+  },
+  {
+    "module": "uart_send_ctrl",
+    "declarations": 1,
+    "chapters": "56",
+    "distinct_sources": 1,
+    "sources": "raw/ch56/ch56_eth_udp_rx_rgmii/eth_udp_rx_rgmii.gprj:src/uart_send_ctrl.v"
+  },
+  {
+    "module": "uart_tx_test",
+    "declarations": 1,
+    "chapters": "06",
+    "distinct_sources": 1,
+    "sources": "raw/ch06/ch6_uart_tx/uart_tx.gprj:src/uart_tx_test.v"
+  },
+  {
+    "module": "UDP_Send",
+    "declarations": 3,
+    "chapters": "48,55,60",
+    "distinct_sources": 3,
+    "sources": "raw/ch48/ch48_udp_rgmii/ov5640_udp_rgmii_8_8/ov5640_udp_rgmii_8_8.gprj:src/eth/UDP_Send.v;raw/ch55/ch55_udp_send/udp_send/udp_send.gprj:src/UDP_Send.v;raw/ch60/ch60_ov5640x2_udp_rgmii/ov5640x2_udp_rgmii.gprj:src/eth/UDP_Send.v"
+  },
+  {
+    "module": "usb_cmd",
+    "declarations": 1,
+    "chapters": "70",
+    "distinct_sources": 1,
+    "sources": "raw/ch70/ch70_fx2_stream_in_ov5640_rgb/fx2_stream_in_ov5640_rgb.gprj:src/usb/usb_cmd.v"
+  },
+  {
+    "module": "usb_cmd_rx",
+    "declarations": 1,
+    "chapters": "70",
+    "distinct_sources": 1,
+    "sources": "raw/ch70/ch70_fx2_stream_in_ov5640_rgb/fx2_stream_in_ov5640_rgb.gprj:src/usb/usb_cmd_rx.v"
+  },
+  {
+    "module": "usb_send_ctrl",
+    "declarations": 1,
+    "chapters": "70",
+    "distinct_sources": 1,
+    "sources": "raw/ch70/ch70_fx2_stream_in_ov5640_rgb/fx2_stream_in_ov5640_rgb.gprj:src/usb_send_ctrl/usb_send_ctrl.v"
+  },
+  {
+    "module": "usb_stream_in",
+    "declarations": 2,
+    "chapters": "69,70",
+    "distinct_sources": 2,
+    "sources": "raw/ch69/ch69_FX2_Stream_IN_JPEG/FX2_Stream_IN_JPEG/FX2_Stream_IN_JPEG.gprj:src/usb_stream_in.v;raw/ch70/ch70_fx2_stream_in_ov5640_rgb/fx2_stream_in_ov5640_rgb.gprj:src/usb/usb_stream_in.v"
+  },
+  {
+    "module": "usb_stream_out",
+    "declarations": 3,
+    "chapters": "66,67,70",
+    "distinct_sources": 3,
+    "sources": "raw/ch66/ch66_FX2_Stream_OUT/FX2_Stream_OUT.gprj:src/usb_stream_out.v;raw/ch67/ch67_usb_ddr3_tft_hdmi/usb_ddr3_tft_hdmi/uart_ddr3_tft_hdmi.gprj:src/usb_stream_out.v;raw/ch70/ch70_fx2_stream_in_ov5640_rgb/fx2_stream_in_ov5640_rgb.gprj:src/usb/usb_stream_out.v"
+  },
+  {
+    "module": "usb_stream_out_tb",
+    "declarations": 1,
+    "chapters": "66",
+    "distinct_sources": 1,
+    "sources": "raw/ch66/ch66_FX2_Stream_OUT/FX2_Stream_OUT.gprj:src/usb_stream_out_tb.v"
+  },
+  {
+    "module": "VGA_CTRL",
+    "declarations": 1,
+    "chapters": "26",
+    "distinct_sources": 1,
+    "sources": "raw/ch26/ch26_VGA_CTRL_GM7123/VGA_CTRL_GM7123.gprj:src/VGA_CTRL.v"
+  },
+  {
+    "module": "VGA_CTRL_tb",
+    "declarations": 1,
+    "chapters": "26",
+    "distinct_sources": 1,
+    "sources": "raw/ch26/ch26_VGA_CTRL_GM7123/VGA_CTRL_GM7123.gprj:src/VGA_CTRL_tb.v"
+  },
+  {
+    "module": "VGA_CTRL_test",
+    "declarations": 1,
+    "chapters": "26",
+    "distinct_sources": 1,
+    "sources": "raw/ch26/ch26_VGA_CTRL_GM7123/VGA_CTRL_GM7123.gprj:src/VGA_CTRL_test.v"
+  },
+  {
+    "module": "WM8960_Init",
+    "declarations": 1,
+    "chapters": "35",
+    "distinct_sources": 1,
+    "sources": "raw/ch35/acx720_audio_loopback_master/audio_loopback.gprj:src/WM8960_Init/WM8960_Init.v"
+  },
+  {
+    "module": "wm8960_init_table",
+    "declarations": 1,
+    "chapters": "35",
+    "distinct_sources": 1,
+    "sources": "raw/ch35/acx720_audio_loopback_master/audio_loopback.gprj:src/WM8960_Init/wm8960_init_table.v"
+  },
+  {
+    "module": "wr_data_fifo",
+    "declarations": 14,
+    "chapters": "37,38,39,40,41,42,43,45,46,47,61,62,63,67",
+    "distinct_sources": 14,
+    "sources": "raw/ch37/ch37_ddr3_ctrl_2port/ddr3_ctrl_2port.gprj:src/fifo_top/wr_data_fifo.v;raw/ch38/ch38_uart_ddr3_tft_hdmi/uart_ddr3_tft_hdmi.gprj:src/wr_data_fifo/wr_data_fifo.v;raw/ch39/ch39_uart_ddr3_tft_hdmi_rgb2gray/uart_ddr3_tft_hdmi_rgb2gray.gprj:src/wr_data_fifo/wr_data_fifo.v;raw/ch40/ch40_uart_ddr3_tft_hdmi_median_filter/uart_ddr3_tft_hdmi_median_filter.gprj:src/wr_data_fifo/wr_data_fifo.v;raw/ch41/ch41_uart_ddr3_tft_hdmi_mean_filter/uart_ddr3_tft_hdmi_mean_filter.gprj:src/wr_data_fifo/wr_data_fifo.v;raw/ch42/ch42_uart_ddr3_tft_hdmi_gaussian_filter/uart_ddr3_tft_hdmi_gaussian_filter.gprj:src/wr_data_fifo/wr_data_fifo.v;raw/ch43/ch43_uart_ddr3_tft_hdmi_sobel_filter/uart_ddr3_tft_hdmi_sobel_filter.gprj:src/wr_data_fifo/wr_data_fifo.v;raw/ch45/ch45_ov5640_ddr3_tft/ov5640_ddr3_tft.gprj:src/wr_data_fifo/wr_data_fifo.v;raw/ch46/ch46_ov5640_ddr3_vga/ov5640_ddr3_vga.gprj:src/wr_data_fifo/wr_data_fifo.v;raw/ch47/ch47_ov5640_ddr3_hdmi/ov5640_ddr3_hdmi.gprj:src/wr_data_fifo/wr_data_fifo.v;raw/ch61/ch61_eth_udp_rgmii_ddr3_tft800x480/eth_udp_rgmii_ddr3_tft800x480/eth_udp_rgmii_ddr3_tft800x480.gprj:src/wr_data_fifo/wr_data_fifo.v;raw/ch62/ch62_ad7606_ddr3_rgmii/ad7606_ddr3_rgmii.gprj:src/wr_data_fifo/wr_data_fifo.v;raw/ch63/ch63_acm1030_ddr3_rgmii/acm1030_ddr3_rgmii.gprj:src/wr_data_fifo/wr_data_fifo.v;raw/ch67/ch67_usb_ddr3_tft_hdmi/usb_ddr3_tft_hdmi/uart_ddr3_tft_hdmi.gprj:src/wr_data_fifo/wr_data_fifo.v"
+  }
+]

@@ -1,0 +1,554 @@
+                 小梅哥 FPGA 团队                      武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                   开发板 培训 项目研发三位一体
+
+
+
+                          14 IP 核使用之 ROM
+                      |----02_设计实例
+      工程源码
+                      |----ch14_rom_ip
+      相关视频
+ 课程
+      说明
+
+      章节导读
+
+      本章将实现一组固定的数据（正弦波形表）存储在 FPGA 中使用 IP 核构建
+的 ROM 中，开发板上电后，系统开始从 ROM 中读出数据，并将数据直接通过并
+口输出。通过使用在线调试工具 gao 抓取并口上的数据，显示得到的正弦波形。
+
+
+14.1ROM IP 的创建
+
+      新建 Gowin 工程，单击                     进入 IP Core Generator 界面，在窗口的左上角
+
+“Filter”白色方框内输入“ROM”进行查找。可以看到在 Memory 下有两个和
+ROM 有关的选项 pROM 和 ROM16，如下图 14-1 所示。
+
+
+
+
+                                         图 14-1 ROM IP 显示
+
+
+      下面将对上图所示的 ROM 相关的选项做一下简单介绍。
+
+14.1.1pROM
+      pROM 为 16K 块状只读存储器，双击即可进入 pROM 配置界面，
+店铺：https://xiaomeige.taobao.com                             官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                      技术群组：
+                 小梅哥 FPGA 团队                 武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力              开发板 培训 项目研发三位一体
+
+
+
+
+                                    图 14-2 pROM 配置界面
+
+
+     下面对上图所示的几个部分进行简要介绍：
+
+              1.数据深度和地址位宽配置，数据宽度和地址宽度的配置关系如下
+         表 14-1 所示。
+                           表 14-1 pROM 数据宽度和地址宽度配置关系
+
+                       只读模式      BSRAM 容量   数据宽度       地址宽度
+                       pROM      16 Kbits   1          14
+                                            2          16
+                                            4          12
+                                            8          11
+                                            16         10
+                                            32         9
+
+              2.读模式配置，可支持 2 种读模式：bypass 模式（旁路）和 pipeline
+         模式（寄存器），两种模式下的波形图如下图 14-3 和图 14-4 所示。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                             官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                      技术群组：
+                 小梅哥 FPGA 团队               武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力             开发板 培训 项目研发三位一体
+
+                            图 14-3 ROM 时序波形图（Bypass 模式）
+
+
+
+
+                            图 14-4 ROM 时序波形图（Pipeline 模式）
+
+              3.资源利用情况，当配置完成的时候，可以点击 Calculate 计算 LUT、
+         DFF 等利用情况。
+
+              4.复 位 模 式 配 置 ， 支 持 同 步 复 位 （Synchronous） 和 异 步 复 位
+         （Asynchronous），reset 信号复位锁存器和输出寄存器，因此当设置
+         reset 信号有效时，不管用户使用的是寄存器输出模式还是旁路输出模
+         式，端口都输出 0。同步复位有效时，DO 在 CLK 上升沿复位为 0，异
+         步复位有效时，DO 随之复位为 0，不需要等到 CLK 上升沿。
+
+              5.配置初始值，初始值以二进制、十六进制或带地址十六进制的格
+         式写在初始化文件中。“Memory Initialization File”选取的初始化文件
+         可 通 过 手 动 或 者 在 IDE 菜 单 栏 中 依 次 点 击 “File->New->Memory
+         Initialization File”获取。
+
+14.1.2ROM16
+     ROM16 是数据位宽为 1 的只读存储器，由地址确定输出存储在 ROM 对应
+位置的数据。双击即可进行配置，其配置界面如下图 14-5 所示：
+
+
+
+
+店铺：https://xiaomeige.taobao.com                       官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                技术群组：
+                 小梅哥 FPGA 团队                        武汉芯路恒科技
+            专注于培养您的 FPGA 独立开发能力                    开发板 培训 项目研发三位一体
+
+
+
+
+                                   图 14-5 ROM16 配置界面
+
+
+     上图所示的 1、2、3 和图 14-2 所示的 1、3、5 功能是一样的，这里将不再
+继续进行说明，该 IP 只有两个信号，一个输入，一个输出，其中输入 AD 为地
+址信号，DO 1对应的是其地址对应的数据信号，其时序波形图如下图
+              2    3     4     5
+                                 14-6 所示。
+                                        6                                                    7
+       AD               AD_0             AD_1            AD_2             AD_3
+
+
+
+
+       DO             MEM[AD_0]      MEM[AD_1]          MEM[AD_2]        MEM[AD_3]
+
+
+
+
+                                  图 14-6 ROM16 时序波形图
+
+
+     本章实验将以 pROM 为例进行说明。
+
+14.1.3配置 pROM
+     我们双击 pROM，进入 ROM 配置界面，设置数据位宽为 8，数据深度为
+256 用于存储我们正弦波波形表，读模式设置为 Bypass，复位模式设置为
+Synchronous。最后就需要添加初始化文件了，点击 Memory Initialization File 选
+
+项后面的         进行添加，点击之后，可以看到需要添加的数据文件为 mi 格式的，
+
+其支持的文件格式有二进制格式（Bin File）、十六进制格式（Hex File）和带地
+址的十六进制格式（Address-Hex File）。下面我们将讲解十六进制格式的初始化
+文件配置。
+
+              1.新建一个 mi 格式的文件
+
+
+     首先选择文件类型，依次点击                              -> Memory Initialization File，操作如下所
+
+店铺：https://xiaomeige.taobao.com                                     官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                              技术群组：
+                 小梅哥 FPGA 团队                 武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力              开发板 培训 项目研发三位一体
+
+
+示。
+
+
+
+
+                                     图 14-7 选择文件类型
+
+
+     弹出 New File 对话框，给文件命名为 sine_init，文件默认保存至工程目录的
+src 文件夹下，然后点击 OK，如下所示。
+
+
+
+
+                                    图 14-8 给.mi 文件命名
+
+              2.配置文件格式
+
+     点击 OK 之后，会弹出 sine_init.mi 文件配置界面，将 File Format 选择为
+HEX 格式，点击 Update 进行文件更新，如下图 14-9 所示。
+
+
+
+
+                                     图 14-9 配置文件格式
+
+店铺：https://xiaomeige.taobao.com                        官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                 技术群组：
+                 小梅哥 FPGA 团队                  武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力               开发板 培训 项目研发三位一体
+
+              3.Ctrl+S 保存文件。
+
+     此时我们使用 Notepad++打开 src 文件夹下的 sine_init.mi 文件，可以看到如
+下图 14-10 所示的内容。
+
+
+
+
+                                  图 14-10 sine_init 文件内容
+
+
+     从上图可以看出文件的最开始显示的就是文件格式、地址深度以及数据位
+宽。
+
+              4.Mif 精灵生成数据文件
+
+     首先我们找到我们提供的 Mif 精灵（论坛搜索 mif），点击依次选择为 Altera，
+数据位宽设置为 8，Radix 设置为 hex，Depth 和 Maxi 设置为 256，type 设置为
+sine，如下所示。
+
+
+
+
+                                   图 14-11 Mif 精灵配置界面
+
+
+     点击 OK 之后，将会在软件目录下，生成.coe 文件，右击使用 Notepad++打
+开，将 memory_initialization_vector 后面的数据进行复制替换 sine_init.mi 文件第
+4 行之后的数据，如下所示。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                            官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                     技术群组：
+                 小梅哥 FPGA 团队                 武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力              开发板 培训 项目研发三位一体
+
+
+
+
+                             图 14-12 替换 sine_init.mi 中的数据内容
+
+
+     然后使用列编辑，将数据之后“，”和“；”删除，这样就得到了正弦波
+的.mi 文件。
+
+     然后点击 Memory Initialization File 一栏后面的               ，选择我们刚刚生成的
+
+sine_init.mi 文件，pROM 的最终配置界面如下图 14-13 所示。
+
+
+
+
+                                   图 14-13 pROM 配置界面
+
+
+     此时我们点击 OK 之后，会提示如下所示的界面。
+
+
+
+
+                                   图 14-14 生成 pROM 报错
+
+店铺：https://xiaomeige.taobao.com                          官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                   技术群组：
+                 小梅哥 FPGA 团队                  武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                开发板 培训 项目研发三位一体
+
+
+     上图显示我们的初始化文件的 176 行数据位宽不匹配，打开我们的初始化
+文件 sine_init.mi 查看 176 行，可以看到 176 行显示的 f，是一个 4 位的数据，这
+里我们需要将其修改为一个 8 位的数据，也就是将高位补 0，所有的 4 位数据，
+都需要修改，操作如下所示。
+
+
+
+
+                                 图 14-15 修改 sine_init.m 文件
+
+
+     然后点击 OK，出现如下所示的提示框，表明 IP 生成成功，点击 OK 即可。
+
+
+
+
+                                  图 14-16 IP 生成成功提示框
+
+
+     点击 OK 之后，就会直接打开例化文件 gowin_prom_tmp.v，如下图 14-17 所
+示，这样我们在例化 IP 的时候，直接将其复制即可，如果想要更改 IP 中的配
+
+置，就点击            ，然后点击上方的 Target Device 后面的                     ，选中 IP 对应的.ipc
+文件，操作如下图 14-18 所示。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                              官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                       技术群组：
+                 小梅哥 FPGA 团队                    武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                 开发板 培训 项目研发三位一体
+
+
+
+
+                                         图 14-17 例化文件
+
+
+
+
+                                图 14-18 更改 IP 配置操作示意图
+
+
+14.2激励创建及仿真测试
+     新建一个 rom_tb.v 的文件用于存放测试激励文件，保存至 src 文件的 tb 文
+件夹下。这里除了实现例化需要仿真的文件以及时钟创建，还实现了地址数从 0
+自加到 2559d，但是由于本次实验配置的 pROM 的最大数据个数为 255d，因此
+在 address 第一次加满 255 后会重新从 0 开始自加，这样就有十个地址数循环。
+rom_tb.v 文件代码如下：
+ `timescale 1ns/1ns
+ `define CLK_PERIOD 20
+
+ module rom_tb;
+
+店铺：https://xiaomeige.taobao.com                         官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                  技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+
+
+      reg clk;
+      reg [7:0]addr;
+      reg reset_n;
+
+      integer i = 0;
+
+      initial clk = 1;
+      always #(`CLK_PERIOD/2) clk = ~clk;
+
+
+      wire [7:0]dout;
+
+      GSR GSR(.GSRI(1'b1));
+
+    Gowin_pROM Gowin_pROM(
+         .dout(dout), //output [7:0] dout
+         .clk(clk), //input clk
+         .oce(1'b1), //input oce
+         .ce(1'b1), //input ce
+         .reset(~reset_n), //input reset
+         .ad(addr) //input [7:0] ad
+     );
+
+     initial begin
+         reset_n = 0;
+         #201
+         reset_n = 1;
+         addr = 0;
+         #21;
+         for(i=0;i<2560;i=i+1)begin
+             #`CLK_PERIOD;
+         addr = addr + 1'b1;
+         end
+         #(`CLK_PERIOD * 50);
+         $stop;
+     end
+ endmodule
+     需要注意的是，由于 pROM IP 中用到了全局变量 GSR，由于仿真不具有这
+个变量，所以需要在仿真文件中加上 GSR GSR(.GSRI(1'b1))这样一句话，不然
+仿真会报错。
+     然后打开 Modelsim 新建一个仿真工程，将 rom_tb 文件和 gowin_prom.v 文
+件添加至工程中，可以看到如下所示的数据文件，发现数据发生变化了，但是
+不能直观看到正弦波。
+
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                 小梅哥 FPGA 团队               武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力            开发板 培训 项目研发三位一体
+
+
+
+
+                                   图 14-19 仿真输出波形图
+
+
+     可通过在信号 dout 右键依次选择 Format->Analog（automatic），如下图
+14-20 所示。
+
+
+
+
+                               图 14-20 将波形转换为模拟量形式
+
+
+     然后还需要设置 Radix 为无符号的数据，如下图 14-21 所示。
+
+
+
+
+                                图 14-21 修改输出数据显示格式
+
+
+     设置完成之后，我们就可以看到如下图 14-22 所示的正弦波。说明我们仿真
+正确。
+
+
+
+店铺：https://xiaomeige.taobao.com                      官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/               技术群组：
+                 小梅哥 FPGA 团队               武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力            开发板 培训 项目研发三位一体
+
+
+
+
+                                   图 14-22 正弦波仿真波形
+
+
+14.3板级验证
+
+14.3.1创建顶层测试文件代码
+     添加并创建一个顶层文件并命名为 rom_top，例化 ROM IP，并使地址递增，
+rom_top.v 文件代码如下所示：
+ module rom_top(
+     clk,
+     reset_n,
+     dout
+ );
+     input clk;
+     input reset_n;
+     output wire [7:0]dout;
+
+      reg [9:0]addr;
+      always@(posedge clk or negedge reset_n)
+      if(!reset_n)
+          addr<=0;
+      else
+          addr<=addr+1'b1;
+
+      Gowin_pROM Gowin_pROM(
+          .dout(dout), //output [7:0] dout
+          .clk(clk), //input clk
+          .oce(1'b1), //input oce
+          .ce(1'b1), //input ce
+          .reset(~reset_n), //input reset
+          .ad(addr) //input [7:0] ad
+      );
+
+     endmodule
+     然后进行分析综合直至没有错误。
+
+14.3.2创建 GAO 文件
+     创建 gao 文件用于在线抓取波形，设置触发条件为 dout 不等于 0，如下图
+店铺：https://xiaomeige.taobao.com                      官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/               技术群组：
+                 小梅哥 FPGA 团队                    武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                 开发板 培训 项目研发三位一体
+
+
+14-23 所示。
+
+
+
+
+                                    图 14-23 设置触发条件
+
+
+     采样时钟为 clk，捕获信号为 dout[7:0]，如下所示。
+
+
+
+
+                                         图 14-24 采样配置
+
+
+     其余操作参看高云在线逻辑分析仪一章的内容。
+
+14.3.3I/O 约束
+     进入 FloorPlanner 界面进行 I/O 约束，这里只需要对 clk 与 reset_n 进行约束
+即可，如下图 14-25 所示。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                         官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                  技术群组：
+                 小梅哥 FPGA 团队                     武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                  开发板 培训 项目研发三位一体
+
+
+
+
+                                         图 14-25 I/O 约束
+
+
+14.3.4下载 fs 文件
+     我们首先点击“Place & Route”布局布线没有错误之后，生成 fs 文件，然
+后点击 Program Device 下载 fs 文件，如下图 14-26 所示。
+
+
+
+
+                                     图 14-26 下载 fs 文件
+
+
+14.3.5在线逻辑分析仪抓取波形
+
+     点击       进入在线逻辑分析仪界面，然后点击                            运行，抓取波形如下图
+
+14-27 所示。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                           官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                    技术群组：
+                 小梅哥 FPGA 团队                    武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                 开发板 培训 项目研发三位一体
+
+
+
+
+                              图 14-27 在线逻辑分析仪抓取波形图
+
+
+     从上图可以看出 dout[7:0]数据在发生变化，并且是周期性变化，比如我们
+截取一端从数据 00 变化开始观察，与我们的波形文件里的数据进行对比，如下
+图 14-28 所示，从图中可以看出数据一致，说明实验成功。
+
+
+
+
+                                         图 14-28 对比数据
+
+
+     高云的在线逻辑分析仪也可以将数据转换成模拟量进行分析的功能，如下
+所示，右击需要观察的信号，选中 Format->Unsigned Line Chart，然后点击                             ，
+观察完整波形，如下图 14-29 所示。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                         官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                  技术群组：
+                 小梅哥 FPGA 团队                武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力             开发板 培训 项目研发三位一体
+
+
+
+
+                                    图 14-29 观察模拟波形
+
+
+14.4总结
+     本章实验带领大家学习如何创建 IP、修改 IP 配置，并通过向 ROM IP 中写
+入正弦波配置内容，最终通过仿真以及在线逻辑仪两种方式，最终输出正弦波
+波形数据，读者可以更换用于 ROM 初始化的 mi 文件，更改为其他波形的数据，
+可再次尝试用 mif 精灵生成三角波等其他波形，重新导入 IP 的 mi 文件，即可重
+复上面的操作。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                      官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/               技术群组：
+

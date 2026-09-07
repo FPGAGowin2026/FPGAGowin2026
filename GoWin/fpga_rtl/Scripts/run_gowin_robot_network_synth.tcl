@@ -1,0 +1,5 @@
+open_project acg720_robot_network.gprj
+set_option -top_module acg720_robot_network_rgmii
+set_option -verilog_std v2001
+set_option -print_all_synthesis_warning 1
+run syn

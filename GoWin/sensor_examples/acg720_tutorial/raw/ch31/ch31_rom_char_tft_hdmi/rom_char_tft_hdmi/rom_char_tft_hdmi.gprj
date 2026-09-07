@@ -1,0 +1,18 @@
+<?xml version="1" encoding="UTF-8"?>
+<!DOCTYPE gowin-fpga-project>
+<Project>
+    <Template>FPGA</Template>
+    <Version>5</Version>
+    <Device name="GW5AT-138B" pn="GW5AT-LV138PG484AC1/I0">gw5at138b-012</Device>
+    <FileList>
+        <File path="src/char_extract/char_extract.v" type="file.verilog" enable="1"/>
+        <File path="src/disp_driver/disp_driver.v" type="file.verilog" enable="1"/>
+        <File path="src/disp_driver/disp_parameter_cfg.v" type="file.verilog" enable="1"/>
+        <File path="src/dvi_encoder/dvi_encoder.v" type="file.verilog" enable="1"/>
+        <File path="src/gowin_ddr/gowin_ddr.v" type="file.verilog" enable="1"/>
+        <File path="src/gowin_pll/gowin_pll.v" type="file.verilog" enable="1"/>
+        <File path="src/gowin_prom/gowin_prom.v" type="file.verilog" enable="1"/>
+        <File path="src/rom_char_tft_hdmi.v" type="file.verilog" enable="1"/>
+        <File path="src/rom_char_tft_hdmi.cst" type="file.cst" enable="1"/>
+    </FileList>
+</Project>

@@ -1,0 +1,1562 @@
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+
+
+
+               29 基于 FPGA 的 HDMI/DVI 显示
+                 |----02_设计实例
+ 工程源码
+                 |----ch29_hdmi_color
+ 相关视频课程
+                 如果您手头的硬件不支持本实验，您可以学习本实验的理论内容，也可以跳过本节
+ 说明
+                 内容，继续后续内容的学习。
+
+      章节导读
+
+      随着网络带宽、存储器容量、处理器解码能力的不断发展，与我们日息相关的图像显
+示领域也出现了非常大的进步。以显示器显示原理来说，从最早期的 CRT 阴极射线管扫描
+成像开始，到等离子电视，再到现在随处可见的液晶电视、以及现在高端领域里面使用的
+OLED 显示器，整个显示器领域从最早期的黑白显示效果慢慢进化到现在的 OLED 自发光真彩
+色显示，视觉效果大大提升了。再从显示器的物理分辨率来说，早期的 CRT 显示器，其最
+大分辨率为 800*600 像素，而现在的液晶显示器，分辨率已经一路从 720p 发展到 1080p、
+2K、4K 以及最新的 8K 分辨率，显示效果更加细腻，色彩还原效果也不断提升。
+
+      随着显示技术的发展，与显示技术密切相关的数据传输方式和能力也在不断的提升。
+传输方式从最早期的 VGA 模拟信号传输方式发展到 DVI 接口、HDMI 接口、DisplayPort 接
+口等，传输的数据质量，数据容量也都有了大的提升。传输方式的变化主要与成像原理和
+数据速率相关。
+
+      本节对 DVI 电路接口和 DVI 数据链路原理做简单的介绍，并在 FPGA 上实现基于 DVI 接
+口的显示器彩条显示实验。
+
+
+29.1基于 FPGA 的 DVI 电路设计
+    在 ACX720-GW5A138 开发板上，设计了两路简易的 HDMI 发送接口，使用该接口，
+可以使 FPGA 能够仅使用 8 个 I/O 就完成高达 1280*720@60Hz 的图像输出。
+    在早期基于 FPGA 的开发板上，实现 HDMI 一般使用的是 HDMI 发送芯片，典型的例
+如 ADV7513、sil9022、CH7301，使用这些芯片实现 HDMI 发送，本质上还是将 FPGA 输
+出的 24 位像素数据+3 位的控制信号（HSYNC、VSYNC、DE）接入这些芯片，然后由这些
+芯片完成数据的编码和串行发送。
+    下图为 DE10_NANO_SOC 开发板上使用 ADV7513 实现的 HDMI 发送电路，可以看到，
+除去用于音频传输的 I2S 相关信号，仅与视频数据传输相关的信号就高达 28 个。这在一些
+FPGA IO 相对紧张的应用中，属于较大的浪费了。
+
+
+
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                      小梅哥 FPGA 团队                武汉芯路恒科技
+            专注于培养您的 FPGA 独立开发能力                 开发板 培训 项目研发三位一体
+
+
+
+
+                             图 29-1 ADV7513 实现的 HDMI 发送电路
+
+
+    为了在节约 IO 资源的同时实现 HDMI 发送，就有 FPGA 厂家和开发者采用 FPGA 实现
+HDMI 发送所需的 TMDS 编码和串行发送器。这种设计方案在 FPGA 内部实现了 HDMI 发
+送芯片的核心功能，并最终直接使用 FPGA 管脚输出符合 HDMI 协议规范的 HDMI 链路信
+号。使用这种方案不仅能降低对 FPGA 管脚资源的占用，还能简化电路设计，降低硬件成
+本。事实上，即使使用低端的 FPGA 器件，例如 Cyclone IV E 或者 Spartan-6，也能实现高
+达 720P 的图像传输，而使用更加高性能的 FPGA 芯片，或者带高速收发器的 FPGA 芯片，
+能够传输的图像尺寸将更大。所以，掌握使用 FPGA 编程实现 HDMI 接口的方法，不仅实
+用，而且经济划算。下图为使用 FPGA 直接编程实现 HDMI 接口的示意图：
+
+                                    tmds_data_p[0]
+              HSYNC
+              VSYNC
+                                    tmds_data_n[0]
+  FPGA
+            DATA[23:0]
+                                    tmds_data_p[1]
+               DE
+                                    tmds_data_n[1]
+                         DVI接口逻辑
+                                    tmds_data_p[2]
+                                    tmds_data_n[2]
+         pixelclk
+  PLL    pixelclk5x                      tmds_clk_p
+                                         tmds_clk_n
+
+
+
+
+                               图 29-2 TMDS 编码和串行发送器
+
+
+    ACX720-GW5A138 开发板上板载了两路 HDMI 接口，两路 HDMI 接口电路完全一样，
+下图为 HDMI 接口示意图，其中 AZ1045 芯片为 TVS 器件，保护线路，防止 HDMI 上差分
+线之间的压差过高。整个电路成本低廉，却能达到理想的传输效果。
+店铺：https://xiaomeige.taobao.com                             官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                      技术群组：
+                 小梅哥 FPGA 团队              武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+
+
+
+                            图 29-3 差分线路 HDMI 传输电路设计
+
+
+    下图为 ACX720-GW5A138 开发板上 HDMI 接口的硬件实物图。
+
+
+
+
+                   图 29-4 ACX720-GW54138 开发板 HDMI 接口硬件实物图
+
+
+    既然有了硬件电路，即物理层已经就绪，剩下的就是 FPGA 中的编码了，该部分内容
+涉及的知识点就相对来说复杂很多了，以下将花重点篇幅介绍。
+
+
+29.2HDMI 与 DVI 的区别和联系
+
+29.2.1DVI 接口含义
+     DVI（Digital Visual Interface），即数字视频接口，是一种视频接口标准，设计的目的
+
+店铺：https://xiaomeige.taobao.com                       官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                技术群组：
+                 小梅哥 FPGA 团队                武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力             开发板 培训 项目研发三位一体
+
+
+是用来传输未经压缩的数字化视频。目前广泛应用于 LCD、数字投影机等显示设备上。此
+标 准 由 显 示 业 界 数 家 领 导 厂 商 所 组 成 的 论 坛 ： “数 字 显 示 工 作 小 组 ”（ Digital Display
+Working Group，DDWG）制订。DVI 接口可以发送未压缩的数字视频数据到显示设备。本
+规格部分兼容于 HDMI 标准。
+
+29.2.2HDMI 接口含义
+     高清晰度多媒体接口（High Definition Multimedia Interface）是一种全数位化影像和
+声音传送接口，可以传送无压缩的音频信号及视频信号。HDMI 接口可以提供高达 5Gbps
+的数据传输带宽，可以传送无压缩的音频信号及高分辨率视频信号。同时无需在信号传送
+前进行数/模或者模/数转换，可以保证最高质量的影音信号传送。
+
+29.2.3HDMI 与 DVI 的区别
+     1.   接口外观不同，下图 29-5 中，左侧为 HDMI 接口，右侧为 DVI 接口，可以看出
+          HDMI 接口体积比 DVI 小。
+
+     2.   HDMI 可以同时传输数字视频和音频信号，用一根电缆就可以了，DVI 只能传输
+          数字视频信号，传输音频信号只能用另外的接口和电缆。
+
+     3.   HDMI 最高传输速率比 DVI 高，HDMI 可以传输更高清数字视频信号。
+
+     4.   在保证不失真前提下 HDMI 传输距离比 DVI 远，HDMI 电缆最长可以达 15 米，
+          DVI 只能达到 8 米。
+
+
+
+
+                              图 29-5 DVI 接口和 HDMI 接口
+
+
+29.2.4HDMI 与 DVI 的兼容性
+     HDMI 兼容 DVI，可以通过转换接口将视频信号接到 DVI 接口上。使用 DVI 标准发送
+的视频数据可以直接接入 HDMI 接口的 LCD 显示器正常显示。同样的，使用 HDMI 标准发
+送的视频数据在符合 DVI 规范的范围内，也能直接接到 DVI 接口的 LCD 显示器上正常显示。
+
+店铺：https://xiaomeige.taobao.com                        官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                 技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+
+     在本节中讨论的使用 FPGA 实现 HDMI 发送的功能，实际只能算 DVI，因为我们没有
+加入 HDMI 所拥有的的音频数据传输功能。而且受 FPGA 的 IO 口翻转速度限制，也仅能实
+现 DVI 规范所规定的传输速率，达不到 HDMI 规范的高速传输能力。但是为了接口易用，
+我们在硬件上使用了 HDMI 的连接接口。在下述描述内容中，将不再刻意区分 DVI 和 HDMI，
+介绍协议时多以 DVI 描述，介绍接口时则多以 HDMI 描述。
+
+29.2.5HDMI 与 DVI 接口对比
+     在 DVI 甚至 HDMI 接口出现之前，应用很广泛的一直是 VGA 接口，早期的 CRT 显示
+器多以 VGA 接口与计算机连接，哪怕是到了现在，还有不少的计算机设备将 VGA 接口作
+为标配功能。
+     VGA 接口传输的是模拟信号，通过模拟电压的变化来表示像素颜色。这种传输方式适
+合在早期的 CRT 显示设备中使用，因为 CRT 显示器的成像原理本身就是模拟信号的放大，
+变换等。通过 VGA 传输的模拟信号送入显示器后经过一系列的放大后可以直接驱动 CRT 显
+示器的电子枪扫描荧光屏。
+     而现代 LCD 液晶显示屏则采用液晶材质在会根据加载其两端的电压大小而改变透光性
+的特性实现的被动颜色显示，在液晶显示器中，通过将众多细小的液晶颗粒按照矩阵的形
+式排布在一起，实现显示面板。所以 LCD 液晶显示屏是以像素作为基本的成像单元，通过
+让像素点显示不同的颜色来实现彩色图案的显示。
+     一个 LCD 显示屏的物理像素数量是确定的，每个像素点的颜色都可以对应一个图像数
+据，而这个数据是数字信号，所以 LCD 显示屏从原理上讲可以认为是数字显示屏（虽然最
+终控制单颗液晶的透光程度时也会将这个数字信号转换为模拟电压信号，但是这已经是像
+素点级别的成像原理了，而非液晶显示器显示整幅图案的成像原理）
+                             。显示时，只需要得到
+对应像素点的颜色数据即可，所以这类显示屏接收的是数字信号。
+     下图为 LCD 液晶显示器分别使用 VGA 接口和 HDMI 接口与显卡传输图像数据的数据
+流变换示意图。左图为 VGA 接口，右图为 HDMI 接口。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                    小梅哥 FPGA 团队                   武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                    开发板 培训 项目研发三位一体
+
+                      HSYNC                                   HSYNC
+                                                                                    HDMI
+                                                                                    接口
+                      VSYNC                                   VSYNC
+                                         VGA接口
+                    DATA[23:0]                              DATA[23:0]
+           图形处理器                                  图形处理器                  数据发送器
+                       DE                                       DE
+                                 数模转换器
+                      PCLK                                     PCLK
+
+
+                       显卡                                     显卡
+
+
+                                          VGA电缆                                   HDMI电缆
+
+
+
+
+                    TFT像素点阵面板                               TFT像素点阵面板
+
+
+
+
+                                 LCD液晶                                    LCD液晶
+                                  显示器                                     显示器
+                       HSYNC                                 HSYNC
+                                                                                   HDMI
+                       VSYNC
+                                         VGA接口               VSYNC                 接口
+                    DATA[23:0]                             DATA[23:0]
+           TFT驱动器                                 TFT驱动器                 数据接收器
+                        DE                                    DE
+                                 模数转换器
+                       PCLK                                  PCLK
+
+
+
+
+                         图 29-6 VGA 和 HDMI 接口与显卡传输图像数据流变换图
+
+
+     在使用 VGA 接口的传输方式中，图像数据从图形处理器（也就是常说的显卡芯片）输
+出（此时的信号为数字信号），为了能够变成 VGA 接口传输所需的模拟信号，会使用一片
+数模转换器转换为模拟信号后再输出到 VGA 接口上。然后模拟信号通过 VGA 电缆传输到
+LCD 液晶显示屏的 VGA 接口，由于 TFT 像素面板为数字显示屏，每一个像素的颜色是由一
+个 TFT 驱动器实时的扫描描绘的。TFT 驱动器的输入要求为数字信号，所以 TFT 驱动器和
+VGA 接口之间使用了一片模数转换器将 VGA 接口上的模拟信号转换为数字信号后再送给
+TFT 驱动器使用。整个信号的变换流程为：
+                                 数字信号 -> 模拟信号 -> 模拟信号 -> 数字信号
+     在使用 HDMI 接口的传输方式中，图像数据从图形处理器（也就是常说的显卡芯片）
+输出（此时的信号为数字信号）
+             ，为了能够将数字信号转换为 HDMI 标准的高速差分信号，
+会经过一个数据发送器。该数据发送器仅仅是改变了数据的传输方式，将原本的并行数据
+转换为高速串行数据输出，以符合 HDMI 协议标准，在 HDMI 接口上传输的内容实际还是
+数字信号。数字信号从显卡的 HDMI 接口经由 HDMI 线缆传输到 LCD 显示器的 HDMI 接口，
+再由 LCD 显示器内的数据接收器将 HDMI 接口上的高速串行数字信号转换为并行数据，提
+供给 TFT 驱动器使用。整个信号的变换流程为：
+                                 数字信号 -> 数字信号 -> 数字信号 -> 数字信号
+     使用 HDMI 方式传输的过程中，数据的内容没有发生任何的变化。图形处理器发送的
+是什么数据，最终送到 TFT 驱动器的就是什么数据，不会有哪怕一位数据发生变化。所以
+图像还原度很高，而且由于 HDMI 传输方式为差分传输，其抵抗干扰的能力也比模拟信号
+高很多，一般不会受到干扰。
+店铺：https://xiaomeige.taobao.com                                           官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                                    技术群组：
+                 小梅哥 FPGA 团队                          武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                    开发板 培训 项目研发三位一体
+
+
+     使用 VGA 方式传输数据，由于数据在传输过程中经过了两次数字和模拟信号间的变
+换，所以无法保证图形处理器发送的数据就一定是 TFT 驱动器收到的数据，中间总会有一
+定的差异，虽然这些差异可能不会对最终的显示效果产生明显的影响。但是由于数模转换
+和模数转换的存在，当数据的变化速度过快时，可能造成拖影现象，所谓拖影现象，就是
+指在图像颜色变化较大的边界，后一个像素的图像数据可能无法真正显示其想显示的颜色，
+而是介于需要显示的颜色和前一个像素的颜色之间的一种颜色。而且，模拟信号在传输过
+程中容易受到噪声的干扰。导致显示的图像中会出现很多杂点。
+     综上所述，使用 HDMI 传输图像具有还原度高，抗干扰能力强，数据带宽大的优势，
+目前新出产的计算机和显示器已经都标配 HDMI 接口了。就笔者使用体验来说，使用 VGA
+接口传输图像内容时，受不同显示器和显卡的影响，很容易就会遇到拖影和噪声干扰的问
+题，而 HDMI 接口的则都能保证图像质量。
+
+
+29.3DVI 数据链路介绍
+     无论是 HDMI 还是 DVI 规范，其数据链路层都是使用 TMDS 编码方式。在输出传输过
+程中，还包括了输入接口层、TMDS 发送器、TMDS 接收器和输出接口层。
+                     输入流                 TMDS链路             恢复到的流
+
+                         DE               Channel 0               DE
+
+                                     T                 T
+                  Pixel Data[23：0]        Channel 1        Pixel Data[23：0]
+             输                       M                 M                      输
+             入                       D                 D                      出
+  输入格式       接
+                   CTRL Data[5：0]
+                                     S    Channel 2    S   CTRL Data[5：0]     接   输出格式
+             口                       发                 接                      口
+             层          CLK
+                                     送    Channel C
+                                                       收                      层
+                                                                 CLK
+                                     器                 器
+
+
+
+
+                         单个TMDS数据链路             TMDS参考时钟
+
+                                     图 29-7 DVI 数据链路
+
+
+29.3.1输入接口层
+     输入接口层的信号格式为典型的 RGB 行场同步数字接口，该接口包括数据使能信号
+DE（Data Enable）
+              、24 位像素数据（Pixel Data）
+                                  、6 位的控制数据（包括 HSYNC、VSYNC
+和空信号）和同步时钟信号。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                               官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                        技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+
+29.3.2TMDS 发送器
+     TMDS 发送器完成对输入接口层的数据和控制信号按照 TMDS 编码方式进行编码，再
+将编码的数据通过高速串行接口输出，最终将输入接口层的信号编码进 4 个 TMDS 链路层
+中。关于输入接口层的信号到最终 TMDS 链路层的编码和串行化过程，将在下一节介绍。
+
+29.3.3TMDS 接收器
+     与 TMDS 发送器相反，TMDS 接收器的功能是将 TMDS 链路上的高速串行数据接收，
+解串，TMDS 解码，得到与输入接口层相同的控制信号和数据。
+
+29.3.4输出接口层
+     输出接口层将 TMDS 接收器解码得到的数据流和控制信号传递给最终的数据消费者，
+例如 RGB 接口的液晶显示面板。
+
+
+29.4TMDS 原理与实现
+     在上面介绍 DVI 数据链路层的时候，提到了 TMDS 发送器是将数据和控制信号进行编
+码并串行化后发送，那么什么是 TMDS 编码呢，TMDS 编码又是怎样的一种编码方式呢？
+     首先来说，TMDS 编码包含两个大的内容，传输控制信号的控制段和用来传输图像像
+素数据的数据段。一个完整的图像传输 TMDS 模块包含三个相同的编码和发送模块。每个
+发送模块包含 8 位的像素数据，对应 24 位像素数据中单个颜色的 8 位数据。2 个控制信号，
+这两个控制信号可以分别接行同步（HSYNC）
+                     、场同步（VSYNC）信号，也可以空置接 0。
+另外还有一个数据有效信号 DE，该信号用来区分控制数据和像素数据。当 DE 信号为高电
+平的时候，表明当前数据有效，编码器对 8 位的 Data 数据进行编码。当 DE 信号为低电平
+的时候，则对 2 位的控制信号进行编码。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                 小梅哥 FPGA 团队                   武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                开发板 培训 项目研发三位一体
+
+
+
+                            D[7:0]
+
+                            C0
+                                                         串
+                                  编      q_out[9:0]      行
+                            C1    码                      化     D_P
+                                                                     TMDS_D
+                                  器                      发     D_N
+                                                         送
+                            DE                           器
+
+                            CLK
+                                                      CLKx5
+
+
+                          图 29-8 TMDS 原理与实现输入输出示意图
+
+
+     这里，串行发送器使用的时钟信号频率为编码器的 5 倍。至于为什么是 5 倍，这是因
+为串行发送器在发送数据时候是采用双数据速率的方式传输数据的，一个时钟周期可以传
+输 2 位信号，所以只需要 5 倍的编码器的时钟即可完成 10 位数据的及时传输。关于串行化
+发送器的详细发送原理，在本节内容的后续部分有详细介绍。
+     下图为使用 TMDS 方式传输视频数据的示意图，可以看到，从编码（Encoder）的角
+度，TMDS 发送器将图像数据和控制信号分成了 3 组，每组使用一个编码器加串行发送器。
+每个编码器对 8 位的图像数据和 2 位的控制信号组成。另外还对串行发送时钟进行了输出，
+作为 3 个数据/控制通道的同步时钟。
+
+
+
+
+                           图 29-9 TMDS 传输通道编码解码概况图
+
+
+     第一组中，将像素数据中的蓝色（BLUE）分量和控制信号中的行同步（HSYNC）、场
+
+店铺：https://xiaomeige.taobao.com                               官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                        技术群组：
+                 小梅哥 FPGA 团队               武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力             开发板 培训 项目研发三位一体
+
+
+同步（VSYNC）划分成了一组，经过编码器和串行调制器后输出，名为 Channel 0。
+     第二组中，将像素数据中的绿色（GREEN）分量和两个空的控制信号 CTL0、CTL1 划
+分成了一组，经过编码器和串行调制器后输出，名为 Channel 1。在这一组中，CTL0 和
+CTL1 接入的是空信号。
+     第三组中，将像素数据中的红色（RED）分量和两个空的控制信号 CTL2、CTL3 划分
+成了一组，经过编码器和串行调制器后输出，名为 Channel 2。在这一组中，CTL2 和 CTL3
+接入的是空信号。
+     至此，关于 TMDS 对数据的划分方式就非常的清晰了。设计的重点就是编码器和串行
+化数据发送器的设计。
+
+
+29.5TMDS 最小化传输编码原理
+     什么是最小化传输，为什么要使用最小化传输呢？和各位一样，笔者在第一次听到这
+个概念的时候，首先头脑中冒出的也是这个疑问。
+     所谓最小化传输，其本质就是要通过对输入数据的变换，得到一个跳变次数最少的新
+数据。什么是跳变次数最少呢？举个例子。8 位的数据 0x55，其二进制值为 01010101b，
+这个数据中，相邻的两个数如果个数不一样，则认为是一次跳变。从最低位看起，bit[0] =
+1，bit[1] = 0，0 和 1 的状态不同，则为一次跳变。再接着看，bit[1] = 0，bit[2] = 1，1 和 0
+的状态又不同，所以又是一次跳变。对于 0x55，其 8 位数据中，任意相邻的两个位的值都
+不相同，所以认为 0x55 这个数据的跳变次数为 7。而对于 8 位的 0x80，其二进制值为
+10000000b，其跳变次数为 1。所以不同的数据，其位跳变次数也是不一样的。所以，最小
+化传输，就是要通过一定的手段，将数据进行重新编码，让所有的编码后的数据其跳变次
+数都尽可能的少。
+     为什么要使用最小化传输呢？这个就涉及到信号在具体的线缆中传输的问题了。对于
+TMDS 规范，其最终的数据是通过串行的方式将每个 10 位的数据逐位输出的。那么在传输
+过程中，假设前一个数据是 0，后一个数据是 1，则信号线在传完前一位数据之后，需要马
+上把电平设置为代表 1 的电平，这个过程中就必然会出现信号线高低电平的变化，信号的
+变化就会产生磁场。对信号线产生电磁干扰。所以，越少的信号翻转次数，就会产生越小
+的电磁干扰。
+
+
+
+
+                                  图 29-10 数据流示意图
+
+
+
+
+店铺：https://xiaomeige.taobao.com                    官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/             技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+
+29.6最小化传输实现原理
+     经过最小化传输方式实现的 TMDS，其用来作为像素数据的 TMDS 字符包含 5 个或更
+少的跳变，而用来作为控制数据的 TMDS 字符包含 7 个或更多的跳变。在空期间传送的多
+跳变内容形成解码端的字符边界的基础，这些字符在串行数据流中个体不是独一无二，但
+它们足够相似，使得在发送空间隙期间，解码器它们可以唯一地检测出它们连续的存在。
+     TMDS 数据通道传送的是一个连续的 10bit TMDS 字符流，在空期间，传送 4 个有显著
+特征的字符，它们直接对应编码器的 2 个控制信号的 4 个可能的状态。在数据有效期间，
+10bit 的字符包含 8bit 的像素数据，编码的字符提供近似的 DC 平衡，并最少化数据流的跳
+变次数，对有效像素数据的编码处理可以认为有两个阶段：第一个阶段是依据输入的 8bit
+像素数据产生跳变最少的 9bit 代码字；第二阶段是产生一个 10bit 的代码字，最终的 TMDS
+字符，将维持发送字符总体的 DC 平衡。
+     编码器在第一个阶段产生的 9bit 代码字由“8bit” + “1bit”组成，“8bit”反映输入的 8bit 数
+据位的跳变，“1bit”表示用来描述跳变的两个方法中哪一个被使用，无论哪种方法，输出的
+最低位都会与输入的最低位相匹配。用一个建立的初值，输出字的余下 7bit 的产生是按照
+顺序将输入的每一位与前一导出的位进行 XOR 或 NOR（XNOR）
+                                 。使用 XOR 还是 XNOR 要
+看哪个方法使得编码结果包含最少的跳变，代码字的第 9 位用来表示导出输出代码是使用
+XOR 还是 XNOR，这 9bit 代码字的解码方法很简单，就是相邻位的 XOR 或 XNOR 操作。从
+解码输入到解码器输出最低位不改变。
+     在有效数据期间，编码器执行使传输的数据流维持近似的 DC 平衡处理，这是通过选
+择性地反转第一阶段产生的 9bit 代码中的 8bit 数据位来实现的，第 10bit 被加到代码字上，
+表示是否进行了反转处理，编码器是基于跟踪发送流中 1 和 0 个数的不一致以及当前代码
+字 1 和 0 的数目来确定什么时候反转下一个 TMDS 字符。如果太多的 1 被发送，且输入包
+含的 1 多于 0，则代码字反转，这个发送端的动态编码决定在接收端可以很简单地解码出
+来，方法是以 TMDS 字符的第 10bit 决定是否对输入代码进行反转。
+     关于这个编码的详细方法，结合下述流程图将非常的容易理解。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                 小梅哥 FPGA 团队               武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力            开发板 培训 项目研发三位一体
+
+
+
+
+                                 图 29-11 最小化传输编码
+
+                           表 29-1 最小化传输信号名称含义和功能
+
+ 信号名称         功能描述
+
+
+店铺：https://xiaomeige.taobao.com                    官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/             技术群组：
+                    小梅哥 FPGA 团队          武汉芯路恒科技
+             专注于培养您的 FPGA 独立开发能力         开发板 培训 项目研发三位一体
+
+ D, C0, C1, DE   编码器输入信号，D 是 8 位的像素数据，C0 和 C1 为控制信号，DE 是数据有效信号
+                 （data enable）
+ cnt             这是一个寄存器，用来记录数据流的极性，一个大于 0 的正值表明了数据流中总共多传
+                 了多少个 1，一个小于 0 的负值表明了数据流中总共多传了多少个 0。
+                 cnt{t-1}为上一次传输的中的极性，cnt{t}为当前输入的数据的极性。
+ q_m             最小化传输的编码结果，9 位，由输入的 8 位数据经过最小化传输编码原理编码得到。
+ q_out           对最小化传输编码结果的 9 位数据继续进行直流平衡编码后得到的 10 位输出结果。
+ N1{x}           这可以理解为一个函数，该函数会统计输入的参数 X 中 1 的个数
+ N0{X}           这可以理解为一个函数，该函数会统计输入的参数 X 中 0 的个数
+
+
+29.6.1数据编码算法流程
+       1.   先统计输入的数据中有多少个 1。
+
+       2.   根据输入数据中 1 的个数和输入数据的最低位的值，来确定编码方向。
+
+       3.   根据编码方向，对输入数据进行编码，方向为 1，则采用异或编码方式，方向为
+            0，则采用同或编码方式，并将编码方向值作为编码后数据的第 9 位，也就是
+            q_m[8]。（即：8bit -> 9bit : (q_m[7:0]是被编码后的数据，q_m[8]是表示方向：
+            q_m[8]为 0，采用同或(^~)运算；q_m[8]为 1，采用异或(^)运算，这就是 TMDS
+            编码的第一阶段——最小化传输，也就是将 8 位数据变 9 位。)
+
+
+29.6.2直流平衡编码
+       直流平衡编码中，主要是根据前一个编码过程统计的整个数据流中的 1 和 0 的差值，
+来指导本次编码过程的差值，确保在整个数据流的传输过程中，传输的 1 和 0 的总个数是
+相差不大的。这样能够保证整个传输链路的直流平衡。
+       所谓直流平衡，就是指信号在传输中 0 和 1 的数据个数相同，则发送方和接收方直接
+的就不会有直流电流的传递，在通信系统中，直流平衡可以有效避免由于收发两端电压不
+稳引起的问题。
+
+29.6.3控制数据编码
+       TMDS 编码时将整个的传输内容分为像素数据和控制数据，当 DE 信号为高电平时，编
+码和传输的是像素数据，当 DE 为低电平时，编码和传输的是控制数据。在任何给定的输入
+时钟周期上，是对像素数据还是控制数据进行编码，取决于数据使能信号 DE 的状态。当
+DE 为高位时，8 位像素数据被编码成 10 位转换最小化，直流平衡的 TMDS 序列。在控制
+周期，当 DE 低时，dvi 发送器将 2 位控制数据（C0，C1）编码成 10 位序列。下图显示 DVI
+周期和 DE 信号之间的关系。
+
+
+
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                  小梅哥 FPGA 团队                     武汉芯路恒科技
+              专注于培养您的 FPGA 独立开发能力                开发板 培训 项目研发三位一体
+
+
+
+
+DE
+
+        控制周期                             像素数据周期                         控制周期
+
+                        图 29-12 像素数据周期和控制周期切换控制信号
+
+
+      在上面的过程中，已经讨论了像素数据周期的编码方式，而在控制周期，编码则简单
+的多，只需要针对输入的 CTL0 和 CTL1 的状态输出不同的固定数据即可，查表方式即可实
+现，无需使用编码算法。
+      下表 29-2 为 TMDS 的 3 个通道中每个通道的控制信号对应的信号内容。
+                                  表 29-2 3 个通道控制信号内容
+
+                          TMDS Channel    C0          C1
+                          0               HSYNC       VSYNC
+                          1               CTL0（0）     CTL1（0）
+                          2               CTL2（0）     CTL3（0）
+
+      下表 29-3 为每个通道的 2 位控制信号的不同状态对应的编码输出结果值。
+                                 表 29-3 2 位控制信号对应状态编码值
+
+                             C1     C0   编码值
+                             0      0    10'b1101010100
+                             0      1    10'b0010101011
+                             1      0    10'b0101010100
+                             1      1    10'b1010101011
+
+
+29.7TMDS 编码实现
+      事实上，只要按照上述流程图中的顺序设计相应的逻辑电路，就能实现该编码器，下
+述代码为我们根据该流程图编写设计的编码器，实测能够正常的用于图像数据发送中。
+ module encode(
+      clk,
+      rst_n,
+      din,
+      c0,
+      c1,
+      de,
+      dout
+ );
+      input            clk;        // 像素时钟输入
+      input            rst_n;       // 异步复位高电平有效
+      input       [7:0] din;        // 数据输入，需要寄存
+      input            c0;          // c0 输入
+      input            c1;          // c1 输入
+
+店铺：https://xiaomeige.taobao.com                               官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                        技术群组：
+                  小梅哥 FPGA 团队                  武汉芯路恒科技
+             专注于培养您的 FPGA 独立开发能力              开发板 培训 项目研发三位一体
+
+
+     input               de;        // 数据使能，输入
+     output reg [9:0] dout;         // 数据输出
+
+
+     parameter CTL0 = 10'b1101010100;
+     parameter CTL1 = 10'b0010101011;
+     parameter CTL2 = 10'b0101010100;
+     parameter CTL3 = 10'b1010101011;
+
+
+     reg [3:0] n1d;            //统计输入的 8bit 数据中 1 的个数
+     reg [7:0] din_q;          //同步寄存输入的 8bit 数据（统计需要一拍时间）
+
+
+     // 统计每次输入的 8bit 数据中 1 和 0 的个数。流水线输出.同步寄存输入的 8bit 数据
+     always @ (posedge clk) begin
+           din_q <=   din;
+           n1d<=din[0]+din[1] + din[2] + din[3] + din[4] + din[5] + din[6] + din[7];
+     end
+
+
+     // 第一步：8 bit -> 9 bit
+     // 参考 DVI 规范 1.0，第 29 页，图 3-5
+     wire decision1; //0
+     assign decision1 = (n1d > 4'h4) | ((n1d == 4'h4) & (din_q[0] == 1'b0));
+
+
+     // 最低位不变，剩下的等于前一位跟对应的 din_q 相异或运算，或者是同或运算
+     // q_m[0] = din_q[0];
+     // q_m[i+1] = q_m[i] ^ din_q[i+1]; q_m[8] = 1;
+     // q_m[i+1] = q_m[i] ^~ din_q[i+1]; q_m[8] = 0;
+     wire [8:0] q_m;
+     assign q_m[0] = din_q[0];
+     assign q_m[1] = (decision1) ? ~(q_m[0] ^ din_q[1]) : (q_m[0] ^ din_q[1]);
+     assign q_m[2] = (decision1) ? ~(q_m[1] ^ din_q[2]) : (q_m[1] ^ din_q[2]);
+     assign q_m[3] = (decision1) ? ~(q_m[2] ^ din_q[3]) : (q_m[2] ^ din_q[3]);
+     assign q_m[4] = (decision1) ? ~(q_m[3] ^ din_q[4]) : (q_m[3] ^ din_q[4]);
+     assign q_m[5] = (decision1) ? ~(q_m[4] ^ din_q[5]) : (q_m[4] ^ din_q[5]);
+     assign q_m[6] = (decision1) ? ~(q_m[5] ^ din_q[6]) : (q_m[5] ^ din_q[6]);
+     assign q_m[7] = (decision1) ? ~(q_m[6] ^ din_q[7]) : (q_m[6] ^ din_q[7]);
+     assign q_m[8] = (decision1) ? 1'b0 : 1'b1;
+
+
+     // 第二步：9 bit -> 10 bit
+     // 参考 DVI 规范 1.0，第 29 页，图 3-5
+     reg [3:0] n1q_m, n0q_m; // 统计 q_m 中 1 和 0 的个数
+     always @ (posedge clk) begin
+           n1q_m <= q_m[0]+ q_m[1]+ q_m[2]+ q_m[3]+ q_m[4]+ q_m[5]+ q_m[6]+ q_m[7];
+           n0q_m<=4'h8-(q_m[0]+q_m[1]+q_m[2]+q_m[3]+ q_m[4]+ q_m[5]+q_m[6]+ q_m[7]);
+     end
+
+
+     reg [4:0] cnt; // 计数器差距统计：统计 1 和 0 是否过量发送，最高位(cnt[4])是符号位
+   wire decision2, decision3;
+店铺：https://xiaomeige.taobao.com                             官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                      技术群组：
+                    小梅哥 FPGA 团队                            武汉芯路恒科技
+            专注于培养您的 FPGA 独立开发能力                            开发板 培训 项目研发三位一体
+
+
+     assign decision2 = (cnt == 5'h0) | (n1q_m == n0q_m);
+
+
+     // [(cnt > 0) and (N1q_m > N0q_m)] or [(cnt < 0) and (N0q_m > N1q_m)]
+     assign decision3 = (~cnt[4] & (n1q_m > n0q_m)) | (cnt[4] & (n0q_m > n1q_m));
+
+
+     // 流水线对齐(同步寄存器 2 拍)
+     reg [1:0] de_reg;
+     reg [1:0] c0_reg;
+     reg [1:0] c1_reg;
+     reg [8:0] q_m_reg;
+     always @ (posedge clk) begin
+           de_reg   <=   {de_reg[0], de};
+           c0_reg   <=   {c0_reg[0], c0};
+           c1_reg   <=   {c1_reg[0], c1};
+           q_m_reg <=    q_m;
+     end
+
+
+     // 10-bit      数据输出
+     always @ (posedge clk or negedge rst_n) begin
+           if (!rst_n) begin
+               dout <= 10'h0;
+               cnt <= 5'd0;
+           end else begin
+               if (de_reg[1]) begin// 数据周期：发送对应编码的数据
+                    if (decision2) begin
+                         dout[9]         <=   ~q_m_reg[8];
+                         dout[8]         <=   q_m_reg[8];
+                         dout[7:0] <=         (q_m_reg[8]) ? q_m_reg[7:0] : ~q_m_reg[7:0];
+                         cnt<=(~q_m_reg[8])?(cnt+n0q_m - n1q_m):(cnt + n1q_m - n0q_m);
+                    end else begin if (decision3) begin
+                                dout[9]       <=   1'b1;
+                                dout[8]       <=   q_m_reg[8];
+                                dout[7:0] <=       ~q_m_reg;
+                                cnt <=    cnt + {q_m_reg[8], 1'b0} + (n0q_m - n1q_m);
+                         end else begin
+                                dout[9]       <=   1'b0;
+                                dout[8]       <=   q_m_reg[8];
+                                dout[7:0] <=       q_m_reg[7:0];
+                                cnt <=    cnt - {~q_m_reg[8], 1'b0} + (n1q_m - n0q_m);
+                         end
+                   end
+               end else begin      // 控制周期:发送控制信号
+                    cnt <=      5'd0;
+                    case ({c1_reg[1], c0_reg[1]})
+                         2'b00:     dout <=        CTL0;
+                         2'b01:     dout <=        CTL1;
+                        2'b10:  dout <=            CTL2;
+店铺：https://xiaomeige.taobao.com                                      官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                               技术群组：
+                       小梅哥 FPGA 团队                    武汉芯路恒科技
+             专注于培养您的 FPGA 独立开发能力                      开发板 培训 项目研发三位一体
+
+
+                           default: dout <=   CTL3;
+                       endcase
+                 end
+           end
+     end
+
+
+ endmodule
+
+
+29.8串行发送模块
+
+29.8.1串行发送原理
+     在完成了最小化传输编码之后，剩下的就是要将编码好的内容按照串行方式发送出去
+了。
+     对于发送器来说，使用 5 倍的编码器工作时钟速率，将编码的 10 位数据采用双数据
+速率（DDR）形式一位一位的输出。所以整个 TMDS 编码发送模块共需要 2 路时钟，一路
+供给编码器使用，其时钟速率等于输入接口层的时钟速率，另一路供串行发送器使用，其
+时钟速率等于输入接口层时钟速率的 5 倍。
+     至于经常有人疑问的，为啥串行发送时钟的频率是编码器的 5 倍而不是 10 倍，因为
+做过 UART 串口通信的人都知道，一个 10 位的数据（8 位数据位+1 位起始位+1 位停止位）
+要通过串口发出去，需要分 10 次发送，每次发送 1 位。而这里为啥只要 5 次呢？这是因为
+在这里，发送是在时钟的上升沿和下降沿各发送一位。也就是一个时钟周期可以发送 2 位
+数据，所以 10 位数据只需要 5 个时钟周期即可发完。这样每个 10 位的数据都可以在编码
+器的一个时钟周期内由串行发送器发送完毕，发送示意图如下图 29-13 所示。
+
+        CLK
+       DATA                        Dm[9:0]                      Dm+1[9:0]
+      CLKx5
+       S_data               D0 D1 D2 D3 D4 D5 D6 D7 D8 D9 D0 D1 D2 D3 D4 D5 D6 D7 D8 D9
+
+
+                                      图 29-13 串行发送时序图
+
+
+     在时钟的上升沿和下降沿都发送数据，这就是 DDR（Double Data Rate 双数据速率）
+接口，DDR 接口能够在不改变传输时钟频率的情况下将单根信号线上传输的数据数量扩大
+一倍。就大家所感兴趣的 DDR SDRAM 与 SDRAM 来说，两者在结构上的最大区别就是 DDR
+SDRAM 使用了 DDR 接口来传输数据，使得相同的时钟频率下，DDR SDRAM 的数据传输带
+宽为 SDRAM 的 2 倍。
+店铺：https://xiaomeige.taobao.com                                     官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                              技术群组：
+                  小梅哥 FPGA 团队                                                           武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                                                          开发板 培训 项目研发三位一体
+
+
+29.8.2FPGA 实现 DDR 接口
+     几乎所有现在流行的 FPGA 都支持双数据速率接口，Gowin 的 FPGA 也不例外，在使
+用的时候我们可以在 Gowin 软件中通过调用原语来使用双数据速率 IO。双数据速率 IO 包
+括 IDDR（输入型双速率 IO）、ODDR（输出型双速率 IO）。通过调用双速率数据 IO 原语，
+就能够实现双数据速率传输了。
+     本次实验需要使用到 ODDR（Dual Data Rate Output），实现双倍数据速率输出。
+ODDR 模式，用于从 FPGA 器件传输双倍数据速率信号。Q0 为双倍速率数据输出，Q1 用
+于 Q0 所连的 IOBUF/TBUF 的 OEN 信号，ODDR 的逻辑框图如图 29-14 所示，时序图如下
+图 29-15 所示。
+
+                CLK                                                             CLK
+                                             CLK
+                 D                      Q     D                           Q         D                           Q
+      D1                   DFF                            DFF                                  DFF
+                                                                                                                    I0
+                                                                                                                    I1                Q
+                                                                                                                           MUX2                 Q0
+                                                                                CLK                                 SEL
+                CLK                          CLK
+                 D                      Q     D                           Q      D                          Q
+      D0                   DFF                            DFF                                  DFF
+
+
+     CLK
+                                                                          TRI-DDRX1
+               CLK                          CLK                               CLK                               CLK                       I1
+                D                       Q    D                        Q        D                       Q         D                Q        I0                 Q
+     TX                    DFF                           DFF                                 DFF                           DFF                  MUX2                Q1
+                                                                                                                                      SEL
+
+               TXCLK_POL
+
+
+                                                   图 29-14 ODDR 逻辑框图
+
+           1          2           3                4                  5                  6                  7              8              9          10
+     CLK
+
+
+     D0          D0_A            D0_B             D0_C            D0_D
+
+
+
+     D1           D1_A           D1_B             D1_C            D1_D
+
+
+
+     Q                                            D0_A   D1_A     D0_B D1_B             D0_C D1_C      D0_D D1_D
+
+
+
+     TX          TX_A            TX_B             TX_C            TX_D
+
+
+
+     Q1                                             TX_A              TX_B               TX_C               TX_D
+                TXCLK_POL = 1'b0
+
+
+     Q1*                                    TX_A               TX_B             TX_C                 TX_D
+                TXCLK_POL = 1'b1
+
+                                                                                                                                                          TimeGen
+                                                    图 29-15 ODDR 时序图
+
+
+     ODDR 端口示意图如下图 29-16 所示，端口信号说明如下表 29-4 所示。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                                                                                          官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                                                                                   技术群组：
+                 小梅哥 FPGA 团队                    武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                开发板 培训 项目研发三位一体
+
+
+                         CLK
+                         D1                              Q0
+                         D0              ODDR            Q1
+                         TX
+
+
+                                  图 29-16 ODDR 端口示意图
+
+                                  表 29-4 ODDR 端口说明表
+
+                端口名     I/O       描述
+                D0,D1   Input     ODDR 数据输入信号
+                TX      Input     通过 TRI-DDRX1 产生 Q1
+                CLK     Input     时钟输入信号
+                Q0      Output    ODDR 数据输出信号
+                Q1      Output    ODDR 三态使能控制输出信号，可连接 Q0 所连
+                                  的 IOBUF/TBUF 的 OEN 信号，或悬空。
+
+     ODDR 使用的时候可以直接实例化原语，例化代码如下所示：
+ ODDR uut(
+     .Q0(Q0),
+     .Q1(Q1),
+     .D0(D0),
+     .D1(D1),
+     .TX(TX),
+     .CLK(CLK)
+ );
+ defparam uut.TXCLK_POL=1'b0;
+     上述代码中的 TXCLK_POL 是用来控制 Q1 输出极性的，1’b0 代表 Q1 上升沿输出，
+1’b1 代表 Q1 下降沿输出。
+     当然我们可以通过调用 IP 的方式使用 ODDR，在 IP Core Generator 界面搜索 DDR，
+选择 IO 下面的 DDR，进入 IP 配置界面，如下图 29-17 所示：
+
+
+
+
+                                 图 29-17 进入 IP 配置界面示意图
+
+
+     IP 配置界面如下图 29-18 所示。
+
+店铺：https://xiaomeige.taobao.com                               官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                        技术群组：
+                 小梅哥 FPGA 团队                武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力              开发板 培训 项目研发三位一体
+
+
+
+
+                                图 29-18 IO_DDR 配置界面
+
+
+     下面对上述图中的各项配置进行简要说明。
+
+     1.   DDR Mode：配置 DDR 模式，包括输入“Input”、输出“Output”、三态“Tristate”和
+          双向“Bidirectional”。
+
+     2.   Data Width：配置 DDR 的数据宽度，支持 1~64。
+
+     3.   Ratio：配置 DDR 数据转换的比值，包括 2，4，7，8，10，14，16，32。
+
+     4.   Reset：Radio 选择 2 时，可选择使能或不使能此选项，使能时将实例化 IDDRC 或
+          ODDRC。
+
+     5.   Input IODELAY：
+
+         Enable Input IODELAY：配置 DDR 是否使用输入延时模块。
+
+         Delay Mode：配置 Delay 模式，“Dynamic”表示使用 IODELAY 并动态调整延时步
+          数 ， “ Static ” 表 示 使 用 IODELAY 并 静 态 调 整 延 时 步 数 ， “ Adaptive ”表 示 使 用
+          IODELAY 并自适应调整延时步数。
+
+         Delay Step：选择静态调整延时步数，范围 0~255。
+
+     6.   Output IODELAY：
+
+         Enable Output IODELAY：配置 DDR 是否使用输出延时模块。
+
+         Delay Mode：配置 Delay 模式，“Dynamic”表示使用 IODELAY 并静态调整延时步
+          数，“Static”表示使用 IODELAY 并静态调整步数，“Adaptive”表示使用 IODELAY 并
+
+店铺：https://xiaomeige.taobao.com                         官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                  技术群组：
+                 小梅哥 FPGA 团队                          武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                       开发板 培训 项目研发三位一体
+
+
+          自适应调整延时步数。
+
+         Delay Step：选择静态调整延时步数，范围 0~255。
+
+     7.   Use CLKDIV：使能时将实例化 CLKDIV，对时钟信号 fclk 进行分配，Ratio 为 2 时
+          不勾选。
+
+29.8.3TMDS 数据位与 DDR 接口对应关系
+     在 TMDS 发送中，数据从 FPGA 发出，所以只需要 ODDR 即可人，下图 29-19 为 1 位
+ODDR 示意图。
+
+                        datain_h
+                                        D0
+                         datain_l                               dataout
+                                        D1 ODDR Q0
+                        outclock
+                                        CLK
+
+
+                                图 29-19 1 位的 ODDR 使用方式
+
+
+     DVI 总共有 4 个通道，其中三个通道为数据通道。由于每个通道需要在 5 个时钟周期
+内完成 10 位数据的输出，且输出时，从低位开始顺序输出，所以需要每个时钟周期切换一
+次送给 datain_h 和 data_l 端口的数据，具体每个时钟周期对应的 datain_h 和 datain_l 上连
+接的数据如下表所示：
+                   表 29-5 每个时钟周期对应的 datain_h 和 datain_l 连接关系
+
+                             CLK0       CLK1       CLK2       CLK3        CLK4
+                  datain_h   q_out[0]   q_out[2]   q_out[4]   q_out[6]    q_out[8]
+                  datain_l   q_out[1]   q_out[3]   q_out[5]   q_out[7]    q_out[9]
+
+     所以实现时，只需要使用一个计数器，循环的对 5 个时钟周期计数（计数器计数满 4
+之后下一个时钟周期既清零，或称为模 5 计数器）
+                       ，并使用计数器的输出值作为多路选择器
+的选择端，选择当前将 q_out 中的哪两位数据接到 datain_h 和 datain_l 上。据此可以绘制
+出如下图 29-20 所示的逻辑电路图：
+
+
+
+
+店铺：https://xiaomeige.taobao.com                                          官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                                   技术群组：
+                        小梅哥 FPGA 团队                             武汉芯路恒科技
+              专注于培养您的 FPGA 独立开发能力                           开发板 培训 项目研发三位一体
+
+
+                                                 q_out[0]
+                                                            0
+                                                 q_out[2]
+                                                            1
+                                                 q_out[4]
+
+
+
+
+                                                            MUX
+                                                            2
+                                                 q_out[6]
+                                                            3
+                                                 q_out[8]
+                                                            4
+
+          1   add       0
+                        MUX                      cnt
+                    0
+                        1
+                                                 q_out[1]
+                               Cnt                          0
+
+          4   ==              [2:0]              q_out[3]
+                                                            1
+                                                 q_out[5]
+
+
+
+
+                                                            MUX
+                                                            2      datain_h
+                                                 q_out[7]
+                                                            3
+                                                 q_out[9]         datain_l
+                                                                                       dataout
+                                                            4
+                                                                               ODDR
+                                      outclock
+
+
+
+                                  图 29-20 多路器思路切换输入的位
+
+
+     上述图中，使用的是多路器的思路来选择切换 q_out 中的每一位，事实上，也可以使
+用移位寄存器的方式来实现移位。
+
+29.8.4串行发送模块编码实现
+     通过上述分析可以知道，送给 DDR 的 datain_l 端口的数据为 q_out 的 1、3、5、7、9
+位，送给 DDR 的 datain_h 端口的数据为 q_out 的 0、2、4、6、8 位。如果使用移位寄存器
+的方式，则需要先将每个通道的需要发送的高位和低位提取出来组成新的 2 个 5 位的数据，
+然后再分别移位。我们提供的参考设计中，使用的就是这种移位寄存器的思路。
+
+     1.   首先将刚开始进来的三个通道的 10bit 数据都拆分成奇偶两路分别放到 TMDS_x_I
+          和 TMDS_x_h 中：
+
+ wire [4:0]TMDS_0_l={datain_0[9],datain_0[7],datain_0[5],datain_0[3],datain_0[1]};
+ wire [4:0]TMDS_0_h={datain_0[8],datain_0[6],datain_0[4],datain_0[2],datain_0[0]};
+
+
+ wire [4:0]TMDS_1_l={datain_1[9],datain_1[7],datain_1[5],datain_1[3],datain_1[1]};
+ wire [4:0]TMDS_1_h={datain_1[8],datain_1[6],datain_1[4],datain_1[2],datain_1[0]};
+
+
+ wire [4:0]TMDS_2_l={datain_2[9],datain_2[7],datain_2[5],datain_2[3],datain_3[1]};
+ wire [4:0]TMDS_2_h={datain_2[8],datain_2[6],datain_2[4],datain_2[2],datain_3[0]};
+
+
+ wire [4:0]TMDS_3_l={datain_3[9],datain_3[7],datain_3[5],datain_3[3],datain_3[1]};
+ wire [4:0]TMDS_3_h={datain_3[8],datain_3[6],datain_3[4],datain_3[2],datain_3[0]};
+
+     2.   用 5 倍的速率时钟将数据输入移位寄存器，同时用了一个模 5 计数器 TMDS_mod5，
+          计数到了 5 个后就更新一次数据。
+
+ // 模 5 计数器
+店铺：https://xiaomeige.taobao.com                                         官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                                  技术群组：
+                 小梅哥 FPGA 团队              武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+
+ always @(posedge clkx5)
+ begin
+     if(TMDS_mod5 >= 3'd4)
+         TMDS_mod5 <= 3'd0;
+     else
+         TMDS_mod5 <= TMDS_mod5 + 3'd1;
+ end
+
+ // 5 倍速度移位发送数据
+ always @(posedge clkx5)
+ begin
+     if(TMDS_mod5 == 3'd4)begin
+         TMDS_shift_0h <= TMDS_0_h;
+         TMDS_shift_0l <= TMDS_0_l;
+         TMDS_shift_1h <= TMDS_1_h;
+         TMDS_shift_1l <= TMDS_1_l;
+         TMDS_shift_2h <= TMDS_2_h;
+         TMDS_shift_2l <= TMDS_2_l;
+         TMDS_shift_3h <= TMDS_3_h;
+         TMDS_shift_3l <= TMDS_3_l;
+     end
+     else begin
+         TMDS_shift_0h <= TMDS_shift_0h[4:1];
+         TMDS_shift_0l <= TMDS_shift_0l[4:1];
+         TMDS_shift_1h <= TMDS_shift_1h[4:1];
+         TMDS_shift_1l <= TMDS_shift_1l[4:1];
+         TMDS_shift_2h <= TMDS_shift_2h[4:1];
+         TMDS_shift_2l <= TMDS_shift_2l[4:1];
+         TMDS_shift_3h <= TMDS_shift_3h[4:1];
+         TMDS_shift_3l <= TMDS_shift_3l[4:1];
+     end
+ end
+     3.   移位完成后，只需要将每个通道的高低位移位寄存器的值分辨送往 ODDR 的
+          datain_h 和 datain_l 端口即可，这里通过调用一个 IO_DDR IP 实现，IO_DDR IP 配
+          置如下图 29-21 所示。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                 小梅哥 FPGA 团队                  武汉芯路恒科技
+              专注于培养您的 FPGA 独立开发能力            开发板 培训 项目研发三位一体
+
+
+
+
+                              图 29-21 IO_DDR 配置界面示意图
+
+
+      上图所示的配置中，调用了 4 个输出的 ODDR，完成所有通道数据的输出，调用代码
+如下所示：
+ Gowin_DDR Gowin_DDR_1(
+      .din({TMDS_shift_3l[0],TMDS_shift_2l[0],TMDS_shift_1l[0],TMDS_shift_0l[0],
+      TMDS_shift_3h[0],TMDS_shift_2h[0],TMDS_shift_1h[0],TMDS_shift_0h[0]}),
+      .clk(clkx5), //input clk
+      .q({dataout_3_p,dataout_2_p,dataout_1_p,dataout_0_p}) //output [3:0] q
+ );
+
+
+
+ Gowin_DDR Gowin_DDR_2(
+      .din(~{TMDS_shift_3l[0],TMDS_shift_2l[0],TMDS_shift_1l[0],TMDS_shift_0l[0],
+      TMDS_shift_3h[0],TMDS_shift_2h[0],TMDS_shift_1h[0],TMDS_shift_0h[0]}),
+      .clk(clkx5), //input clk
+      .q({dataout_3_n,dataout_2_n,dataout_1_n,dataout_0_n}) //output [4:0] q
+      );
+      至此，整个串行发送模块的设计思路就完全介绍清楚了。相信稍有 Verilog 编程基础
+的读者都能根据此介绍完成相关代码的编写，以下为笔者提供的参考设计代码。
+      发送模块 serdes_4b_10to1 代码如下所示：
+ module serdes_4b_10to1(
+      input          clkx5,         // 5x clock input
+
+店铺：https://xiaomeige.taobao.com                            官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                     技术群组：
+                    小梅哥 FPGA 团队                 武汉芯路恒科技
+              专注于培养您的 FPGA 独立开发能力               开发板 培训 项目研发三位一体
+
+
+      input [9:0]    datain_0,        // input data for serialisation
+      input [9:0]    datain_1,        // input data for serialisation
+      input [9:0]    datain_2,        // input data for serialisation
+      input [9:0]    datain_3,        // input data for serialisation
+      output         dataout_0_p,     // out DDR data
+      output         dataout_0_n,     // out DDR data
+      output         dataout_1_p,     // out DDR data
+      output         dataout_1_n,     // out DDR data
+      output         dataout_2_p,     // out DDR data
+      output         dataout_2_n,     // out DDR data
+      output         dataout_3_p,     // out DDR data
+      output         dataout_3_n      // out DDR data
+ );
+
+
+      reg [2:0] TMDS_mod5 = 0;     // 模 5 计数器
+
+
+      reg [4:0] TMDS_shift_0h = 0, TMDS_shift_0l = 0;
+      reg [4:0] TMDS_shift_1h = 0, TMDS_shift_1l = 0;
+      reg [4:0] TMDS_shift_2h = 0, TMDS_shift_2l = 0;
+      reg [4:0] TMDS_shift_3h = 0, TMDS_shift_3l = 0;
+
+
+      wire [4:0] TMDS_0_l=
+ {datain_0[9],datain_0[7],datain_0[5],datain_0[3],datain_0[1]};
+      wire [4:0] TMDS_0_h =
+ {datain_0[8],datain_0[6],datain_0[4],datain_0[2],datain_0[0]};
+
+
+      wire [4:0] TMDS_1_l =
+ {datain_1[9],datain_1[7],datain_1[5],datain_1[3],datain_1[1]};
+      wire [4:0] TMDS_1_h =
+ {datain_1[8],datain_1[6],datain_1[4],datain_1[2],datain_1[0]};
+
+
+      wire [4:0] TMDS_2_l =
+ {datain_2[9],datain_2[7],datain_2[5],datain_2[3],datain_3[1]};
+      wire [4:0] TMDS_2_h =
+ {datain_2[8],datain_2[6],datain_2[4],datain_2[2],datain_3[0]};
+
+
+      wire [4:0] TMDS_3_l =
+ {datain_3[9],datain_3[7],datain_3[5],datain_3[3],datain_3[1]};
+      wire [4:0] TMDS_3_h =
+ {datain_3[8],datain_3[6],datain_3[4],datain_3[2],datain_3[0]};
+
+
+
+      // 模 5 计数器
+      always @(posedge clkx5)
+      begin
+          if(TMDS_mod5 >= 3'd4)
+              TMDS_mod5 <= 3'd0;
+店铺：https://xiaomeige.taobao.com                              官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                       技术群组：
+                    小梅哥 FPGA 团队                   武汉芯路恒科技
+             专注于培养您的 FPGA 独立开发能力                  开发板 培训 项目研发三位一体
+
+
+           else
+                 TMDS_mod5 <= TMDS_mod5 + 3'd1;
+     end
+
+
+     // 5 倍速度移位发送数据
+     always @(posedge clkx5)
+     begin
+           if(TMDS_mod5 == 3'd4)begin
+                 TMDS_shift_0h <= TMDS_0_h;
+                 TMDS_shift_0l <= TMDS_0_l;
+                 TMDS_shift_1h <= TMDS_1_h;
+                 TMDS_shift_1l <= TMDS_1_l;
+                 TMDS_shift_2h <= TMDS_2_h;
+                 TMDS_shift_2l <= TMDS_2_l;
+                 TMDS_shift_3h <= TMDS_3_h;
+                 TMDS_shift_3l <= TMDS_3_l;
+           end
+           else begin
+                 TMDS_shift_0h <= TMDS_shift_0h[4:1];
+                 TMDS_shift_0l <= TMDS_shift_0l[4:1];
+                 TMDS_shift_1h <= TMDS_shift_1h[4:1];
+                 TMDS_shift_1l <= TMDS_shift_1l[4:1];
+                 TMDS_shift_2h <= TMDS_shift_2h[4:1];
+                 TMDS_shift_2l <= TMDS_shift_2l[4:1];
+                 TMDS_shift_3h <= TMDS_shift_3h[4:1];
+                 TMDS_shift_3l <= TMDS_shift_3l[4:1];
+           end
+     end
+
+
+     Gowin_DDR Gowin_DDR_1(
+           .din({TMDS_shift_3l[0],TMDS_shift_2l[0],TMDS_shift_1l[0],TMDS_shift_0l[0]
+ ,TMDS_shift_3h[0],TMDS_shift_2h[0],TMDS_shift_1h[0],TMDS_shift_0h[0]}),
+           .clk(clkx5), //input clk
+           .q({dataout_3_p,dataout_2_p,dataout_1_p,dataout_0_p}) //output [3:0] q
+     );
+
+
+     Gowin_DDR Gowin_DDR_2(
+           .din(~{TMDS_shift_3l[0],TMDS_shift_2l[0],TMDS_shift_1l[0],TMDS_shift_0l[0
+ ],TMDS_shift_3h[0],TMDS_shift_2h[0],TMDS_shift_1h[0],TMDS_shift_0h[0]}),
+           .clk(clkx5), //input clk
+           .q({dataout_3_n,dataout_2_n,dataout_1_n,dataout_0_n}) //output [4:0] q
+     );
+
+
+ endmodule
+
+
+
+
+店铺：https://xiaomeige.taobao.com                             官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                      技术群组：
+                       小梅哥 FPGA 团队                         武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                            开发板 培训 项目研发三位一体
+
+
+29.9DVI 发送器实现
+     完成了底层编码和串行发送器的设计之后，对于 DVI 接口，只需要将编码器和发送器
+例化并与图像数据流的数据和控制信号按照 DVI 规范链接到一起即可。如下图所示：
+
+         blue_din[7:0]
+                                Din[7:0]
+          hsync
+                                C0
+          vsync                       编
+                                C1 码
+                                      器
+                    de
+                                DE
+         pixelclk
+                                CLK
+
+          green_din[7:0]
+                                Din[7:0]                                  datain_1[9:0]   tmds_data_p[0]
+
+                         1'b0                                                             tmds_data_n[0]
+                                C0
+                         1'b0         编                                   datain_2[9:0]   tmds_data_p[1]
+                                C1 码                                                      tmds_data_n[1]
+                                      器
+                  de                                                      datain_3[9:0]
+                                DE                                                        tmds_data_p[2]
+
+             pixelclk                                                                     tmds_data_n[2]
+                                CLK                      10'b1111100000
+                                                                          datain_4[9:0]    tmds_clk_p
+                                                                                           tmds_clk_n
+           red_din[7:0]
+                                Din[7:0]
+                         1'b0
+                                C0
+                         1'b0         编
+                                C1 码
+                                      器
+                  de
+                                DE
+             pixelclk
+                                CLK
+
+             pixelclk5x
+
+                                              图 29-22 DVI 发送原理图
+
+
+     TMDS 要求在发送时将像素时钟随数据一起发送，注意，这里的时钟频率应该是和
+pixelclk 的频率一致，而不是和 pixelclk5x 一致，也就是说，tmds_clk 并不是数据的位同步
+时钟而是一个完整编码数据的同步时钟，每次 tmds_clk 的下降沿标志着新的 10 位数据的开
+始发送。tmds_clk 和 data 的关系如下图 29-23 所示。
+
+
+
+
+                                          图 29-23 tmds_clk 和 data 的关系图
+
+
+     为了产生 tmds_clk，有两种方式，一种方式是直接将 pixelclk 及其取反信号输出作为
+tmds_clk，另一种方式是使用 ODDR 以数据的形式产生。使用 ODDR 以数据的形式产生，
+
+店铺：https://xiaomeige.taobao.com                                              官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                                       技术群组：
+                 小梅哥 FPGA 团队                     武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                   开发板 培训 项目研发三位一体
+
+
+能够一定程度上保证输出的 tmds_clk 和 tmds_data 之间拥有相同的相位关系，便于数据在
+接收端进行同步，所以这里使用 ODDR 以数据的形式产生。产生这种波形的方式很简单，
+就是让 ODDR 引脚的前 2.5 个时钟周期输出低电平，后 2.5 个时钟周期输出高电平即可。此
+时，只需要对串行发送器的 datain_3 端口赋值一个常量 10’b1111100000 即可。完整的 DVI
+编码发送器顶层如下所示。
+ module dvi_encoder(
+     input       pixelclk,               // system clock
+     input       pixelclk5x,             // system clock x5
+     input       rst_n,                  // reset
+     input[7:0] blue_din,                // Blue data in
+     input[7:0] green_din,               // Green data in
+     input[7:0] red_din,                 // Red data in
+     input       hsync,                  // hsync data
+     input       vsync,                  // vsync data
+     input       de,                     // data enable
+     output      tmds_clk_p,
+     output      tmds_clk_n,
+     output[2:0] tmds_data_p,            //rgb
+     output[2:0] tmds_data_n             //rgb
+ );
+
+      wire [9:0] red;
+      wire [9:0] green;
+      wire [9:0] blue;
+
+      encode encb(
+          .clk(pixelclk),
+          .rst_n(rst_n),
+          .din(blue_din),
+          .c0(hsync),
+          .c1(vsync),
+          .de(de),
+          .dout(blue)
+      );
+
+      encode encg(
+          .clk(pixelclk),
+          .rst_n(rst_n),
+          .din(green_din),
+          .c0(1'b0),
+          .c1(1'b0),
+          .de(de),
+          .dout(green)
+      );
+
+店铺：https://xiaomeige.taobao.com                           官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                    技术群组：
+                       小梅哥 FPGA 团队                             武汉芯路恒科技
+               专注于培养您的 FPGA 独立开发能力                             开发板 培训 项目研发三位一体
+
+
+
+       encode encr(
+           .clk(pixelclk),
+           .rst_n(rst_n),
+           .din(red_din),
+           .c0(1'b0),
+           .c1(1'b0),
+           .de(de),
+           .dout(red)
+       );
+
+       serdes_4b_10to1 serdes_4b_10to1_inst(
+           .clkx5(pixelclk5x),// 5x clock input
+           .datain_0(blue),// input data for serialisation
+           .datain_1(green),// input data for serialisation
+           .datain_2(red),// input data for serialisation
+           .datain_3(10'b1111100000),// input data for serialisation
+           .dataout_0_p(tmds_data_p[0]),// out DDR data
+           .dataout_0_n(tmds_data_n[0]),// out DDR data
+           .dataout_1_p(tmds_data_p[1]),// out DDR data
+           .dataout_1_n(tmds_data_n[1]),// out DDR data
+           .dataout_2_p(tmds_data_p[2]),// out DDR data
+           .dataout_2_n(tmds_data_n[2]),// out DDR data
+           .dataout_3_p(tmds_clk_p),// out DDR data
+           .dataout_3_n(tmds_clk_n) // out DDR data
+       );
+
+      endmodule
+
+29.10基于 DVI 接口的显示器彩条显示实验
+     设计完成该控制器之后，在使用时，只需要基于基本的 VGA 或者 TFT 显示系统，将
+VGA 或 TFT 控制器逻辑的相关信号接到 dvi_encoder 的对应端口上即可。如下图 29-24 所
+示：
+                                                                    tmds_data_p[0]
+      FPGA                                    HSYNC
+                                                                    tmds_data_n[0]
+                                              VSYNC
+               disp_data[23:0]     disp_     DATA[23:0]
+   color_bar
+                                   driver
+                                                                    tmds_data_p[1]
+                     disp_clk                   DE
+                                                                    tmds_data_n[1]
+                                                          DVI接口逻辑
+                                                                    tmds_data_p[2]
+                                                                    tmds_data_n[2]
+                                 pixelclk
+           Gowin                                                     tmds_clk_p
+                                pixelclk5x
+           _PLL
+                                                                     tmds_clk_n
+
+
+
+                                             图 29-24 DVI 输出逻辑接口图
+
+店铺：https://xiaomeige.taobao.com                                            官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                                     技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+
+     可以看到，在上述框图中，只是将传统的直接输出到 FPGA 管脚的 VGA/TFT 控制器的
+输出信号接到了 DVI 接口逻辑的对应输入接口，即可实现 HDMI 接口的图像发送。所以，
+使用该 DVI 接口逻辑不会改变原有图像显示系统的框架结构，只是对最终输出的信号多加
+入了一级变换处理而已。由于在 VGA 控制器设计与验证章节，我们已经完成了 VGA 控制
+器的设计，因此我们就可以将本节所设计的 DVI 发送器连接到 VGA 控制器上，实现 VGA 控
+制器设计章节里在显示屏上显示彩条的功能。
+     本 节 实 验 ， 配 置 VGA 控 制 器 输 出 800*480 分 辨 率 的 时 序 信 号 ， 在
+“disp_parameter_cfg.v”文件中设置使能“Resolution_800x480”选项即可。另外，由于 TMDS
+编码需要 2 路时钟，一路与 VGA 控制器同频，作为基本的逻辑工作时钟，另一路为 5 倍的
+VGA 控制器时钟频率，用作 TMDS 串行编码的发送时钟。所以，相较于直接驱动 VGA 显示
+器需要使用 PLL 产生相应频率的时钟信号（480p 为 33MHz）
+                                  ，使用 DVI 接口输出，还需要
+使用 PLL 再产生一路 5 倍的时钟信号，对于 480p 分辨率，也就是 165MHz。
+     其中 colour_bar 为彩条数据产生模块，这里是为了让代码结构更加的清晰，将其独立
+出来作为了一个单独的模块。当然，由于分辨率变了，所以彩条发生器中对应的在什么位
+置显示什么颜色的坐标值也相应需要修改。
+     disp_driver 为 VGA 实验中设计的多分辨率适配的 VGA/TFT 控制器，负责产生相应分
+辨率的 VGA 驱动时序信号。dvi_encoder 则为本节内容介绍的 DVI 发送器，实现将
+disp_driver 产生的 VGA 时序编码为 DVI 标准时序发送出去。
+     pll 产生 VGA 控制器输出 800*480 分辨率所需的 375MHz 时钟和 DVI 编码器进行串行
+编码时所需的 165MHz 时钟。至此，整个验证工程就设计完成了。
+     至此，整个验证工程就设计完成了，接下来开始硬件连接。
+
+29.10.1系统所需硬件
+     1.   ACX720-GW5A138 开发板
+
+     2.   电源线一根（可选）
+
+     3.   下载器一个
+
+     4.   HDMI 电缆一根
+
+     5.   支持 HDMI 接口的液晶显示器一台
+
+29.10.2硬件连接
+     本次实验的硬件连接如下图 29-25 所示。
+
+
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                 小梅哥 FPGA 团队                        武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                     开发板 培训 项目研发三位一体
+
+
+
+
+                                     图 29-25 硬件连接图
+
+
+     图像数据通过开发板上的 HDMI 接口输出，在连接 HDMI 线缆时请确保线缆一端连接
+在开发板的 HDMI 接口，一端连接在显示器的 HDMI 接口上。
+
+29.10.3下载与验证
+     连接完硬件后，我们需要为设计分配引脚。除了时钟和复位引脚外，还需要分配
+HDMI 引脚信号。本次设计的引脚分配如下表 29-6 所示。
+                                     表 29-6 管脚分配表
+
+                    Port             Location.   Port             Location..
+                    clk              Y18         rst_n            F15
+                    led              M22
+                    tmds_data_p[2]   M3          tmds_data_n[2]   M2
+                    tmds_data_p[1]   L5          tmds_data_n[1]   L4
+                    tmds_data_p[0]   L3          tmds_data_n[0]   K3
+                    tmds_clk_p       K4          tmds_clk_n       J4
+
+     打开 FloorPlanner 对引脚进行分配，如下图 29-26 所示。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                                     官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                              技术群组：
+                 小梅哥 FPGA 团队                 武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力              开发板 培训 项目研发三位一体
+
+
+
+
+                                    图 29-26 管脚约束
+
+
+     设置完成之后，开始布局布线，然后如下所示，成功生成了 fs 文件，将 fs 文件下载至
+开发板中。
+
+
+
+
+                                 图 29-27 成功生成 fs 文件
+
+
+     可以看到。该工程几乎就是在原本的 VGA/TFT 控制器工程基础上，把 VGA/TFT 控制
+器控制器原本的输出信号再经过了一级 DVI 编码后通过差分形式输出，所以使用起来非常
+的方便。下图 29-28 为该工程运行时在 HDMI 显示器上的实际显示效果。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                       官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+
+
+
+                      图 29-28ACX720-GW5A138 开发板彩条实验效果图
+
+
+     可以看到，彩条图像成功在 HDMI 显示器上显示，图像比例正常，各颜色区域层次清
+晰，显示分辨率为正确的 800*480，说明本次设计的 DVI 发送模块功能正常，本次设计成
+功。
+
+
+29.11总结
+     本章，我们带大家学习 DVI/HDMI 接口原理以及实现方法，完成了 DVI 发送模块的设
+计，并通过具体的实验，验证了设计模块功能的正确性。在后续的各种图像相关的应用中，
+只需要按照本节内容最后采取的方法，将 VGA 控制信号送入 dvi_encoder 编码器，就能实
+现 HDMI/DVI 接口显示器的驱动了。
+     本方案不仅结构简单，占用 FPGA 逻辑资源少，而且经济实惠，不需要使用专用的
+RGB 转 HDMI 芯片，也大大缩减了对 FPGA 管脚占用的数量，适合在众多成本敏感的场合
+应用。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                   官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/            技术群组：
+

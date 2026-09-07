@@ -1,0 +1,22 @@
+D:/work/waresoft/Gowin2/workspace/720138K/ch41_uart_ddr3_tft_hdmi_rgb2gray/src/image_stitche/image_stitche_x_tb.v {1 {vlog -work work -vopt -stats=none D:/work/waresoft/Gowin2/workspace/720138K/ch41_uart_ddr3_tft_hdmi_rgb2gray/src/image_stitche/image_stitche_x_tb.v
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module image_stitche_x_tb
+
+Top level modules:
+	image_stitche_x_tb
+
+} {} {}} D:/work/waresoft/Gowin2/workspace/720138K/ch41_uart_ddr3_tft_hdmi_rgb2gray/src/image_buffer/image_buffer.vo {1 {vlog -work work -vopt -stats=none D:/work/waresoft/Gowin2/workspace/720138K/ch41_uart_ddr3_tft_hdmi_rgb2gray/src/image_buffer/image_buffer.vo
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module image_buffer
+
+Top level modules:
+	image_buffer
+
+} {} {}} D:/work/waresoft/Gowin2/workspace/720138K/ch41_uart_ddr3_tft_hdmi_rgb2gray/src/image_stitche/image_stitche_x.v {1 {vlog -work work -vopt -stats=none D:/work/waresoft/Gowin2/workspace/720138K/ch41_uart_ddr3_tft_hdmi_rgb2gray/src/image_stitche/image_stitche_x.v
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module image_stitche_x
+
+Top level modules:
+	image_stitche_x
+
+} {} {}}

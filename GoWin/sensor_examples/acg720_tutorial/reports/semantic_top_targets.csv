@@ -1,0 +1,6 @@
+chapter,project_file,top_module,reason
+15,raw/ch15/ch15_ram_ip/ram_ip.gprj,Gowin_SP,"原工程自动选择 ram_tb；核心 IP 顶层应单独验证"
+16,raw/ch16/ch16_fifo_ip/fifo_ip.gprj,fifo_top,"原工程自动选择 fifo_ip_tb；核心 FIFO 顶层应单独验证"
+51,raw/ch51/ch51_gmii_rgmii_gmii/gmii_rgmii_gmii.gprj,gmii_to_rgmii,"本章包含两个独立转换方向，不能让工具自动选择 Gowin_PLL"
+51,raw/ch51/ch51_gmii_rgmii_gmii/gmii_rgmii_gmii.gprj,rgmii_to_gmii,"本章包含两个独立转换方向，不能让工具自动选择 Gowin_PLL"
+66,raw/ch66/ch66_FX2_Stream_OUT/FX2_Stream_OUT.gprj,usb_stream_out,"原工程启用 testbench 导致综合错误；硬件设计顶层是 usb_stream_out"

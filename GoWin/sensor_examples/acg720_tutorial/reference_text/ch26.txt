@@ -1,0 +1,1288 @@
+                 小梅哥 FPGA 团队                  武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                开发板 培训 项目研发三位一体
+
+
+
+                   26 VGA 显示驱动设计与验证
+                 |----02_设计实例
+ 工程源码
+                 |---- ch26_VGA_CTRL_GM7123
+ 相关视频课程
+                 如果您手头的硬件不支持本实验，您可以学习本实验的理论内容，也可以跳过本节
+ 说明
+                 内容，继续后续内容的学习。
+
+      章节导读
+
+      在本章节，我们将重点介绍基于 FPGA 的 VGA 信号输出驱动开发。关于本章
+节内容，我们将依次进行如下内容学习：
+
+      （1）以 VGA 为切入点，着重讲解 VGA 的成像原理。
+
+      （2）对 VGA 核心模块进行仿真验证。
+
+      （3）以 VGA 彩条实验为目标进行板级验证。
+
+
+26.1VGA 开发概述
+      在基于 FPGA 的数字系统设计中，VGA 显示实验是一个大家绕不开的话题，
+毕竟使用 FPGA 就能驱动平常只有电脑才能驱动得了的大型显示器，相较于普
+通的 MCU 一般只能点亮普通的低分辨率小尺寸 LCD 液晶屏，驱动 VGA 显示器
+显得更加的令人感兴趣。
+      然而事实上，使用 FPGA 驱动 VGA 显示器，从底层和应用两个方向来说，
+都与普通的 MCU 驱动小尺寸 LCD 液晶屏有着较大的差异。
+      首先从底层驱动来说，使用 FPGA 驱动 VGA 显示器在指定位置显示某一指
+定颜色并不难，一个具有基本的 FPGA 逻辑设计能力的人在了解了 VGA 的驱动
+时序之后，大概半小时就能写出一个易用的 VGA 控制器，相较于使用小尺寸
+MCU 接口的 LCD 液晶屏需要查阅一大堆的寄存器来配置其工作模式，显然
+VGA 控制器的开发难度要小很多。
+      其次从功能应用来说，使用 FPGA 驱动 VGA 显示器显示复杂多变的图案就
+显得异常的麻烦了。不仅开发周期长，而且灵活性很低。不适合用来显示人机
+交互类的图案（所谓人机交互类图案就是指各种多变的文字信息，以及按钮信
+息等）。
+
+店铺：https://xiaomeige.taobao.com                      官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/               技术群组：
+                 小梅哥 FPGA 团队                武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力             开发板 培训 项目研发三位一体
+
+
+     使用 FPGA 驱动 VGA 虽然不适合用来显示复杂多变的图像内容，但是却常
+用于显示实时图像内容，例如显示图像传感器实时采集到的图像。此种方式数
+据流由图像传感器实时提供，FPGA 只需要控制好图像数据流的存储和传输即
+可，无需主动生成需要绘制的图像数据，所以实现相对简单。
+     鉴于当前基于 FPGA 的图像处理是一个非常热门的应用方向，而在图像处
+理中，通过显示器实时查看显示内容属于必备功能，因此本节将详细介绍 VGA
+时序及在 FPGA 中实现 VGA 控制器的方法。
+
+26.2VGA 显示器成像原理
+     在 VGA 标准刚兴起的时候，常见的 VGA 接口彩色显示器一般基于 CRT
+（阴极射线管）实现，色彩由 RGB 三基色组成，显示是用逐行扫描的方式。下
+图 26-1 为基于 CRT 的显示器实物图，相信现在很多人已经没有见过这种显示器
+了。
+
+
+
+
+                                   图 26-1 CRT 显示器样式图
+
+
+     阴极射线枪发出的电子束打在涂有荧光粉的荧光屏上，产生 RGB 三基色，
+合成一个彩色像素，扫描从屏幕的左上方开始，从左到右，从上到下进行扫描，
+每扫完一行，电子束都回到屏幕的下一行左边的起始位置。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                        官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                 技术群组：
+                 小梅哥 FPGA 团队                   武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                 开发板 培训 项目研发三位一体
+
+
+
+
+                                         ...
+                                     图 26-2 屏幕扫描形式
+
+
+     在回扫的过程中，电子枪不能发射电子，否则会影响荧光屏上既有图像的
+颜色，所以回扫期间，需要进行行消隐，简单来说就是关闭电子枪。每行结束
+时，用行同步信号进行行同步，图中从右上方向左下方的斜向虚线就是其回行
+扫示意图。
+     当整个屏幕的所有行都扫描完后，使用场同步信号进行场同步，并使扫描
+回到屏幕的左上方。同样的，为了避免电子枪在回到左上方的过程中发出的电
+子破坏荧光屏上既有的图像内容，这个回扫的过程也需要关闭电子枪，即场消
+隐。
+     随着显示技术的发展，出现了液晶显示器，液晶显示器让显示设备彻底摆
+脱了厚重的机身，也为便携式计算机的出现创造了可能。
+     液晶显示器的成像原理与 CRT 不同。液晶显示器是通过改变对液晶像素点
+单元施加电压的电压大小，来改变液晶单元的透光性。在液晶单元背后发射白
+光，并添加三色滤光片，分别使 R、G、B 这 3 种光线透过滤光片，最后通过 3
+个像素点合成一个彩色像素点，从而实现彩色显示。
+     由于液晶技术晚于 CRT 显示技术诞生，在液晶显示器出现的时候，计算机
+显示接口已经确定，很难再突然改变。所以为了能够兼容传统的显示接口，液
+晶显示器通过内部电路实现了对 VGA 接口的完全兼容。因此，在使用显示器时，
+只要该显示器带有标准的 VGA 接口，就不用去关注其成像原理，直接使用标准
+的 VGA 时序即可驱动。
+     当使用 VGA 接口传输图像时，显示驱动芯片（如显卡）输出的 RGB 数据
+先要经过 DAC 转换为 3 路分别代表 R、G、B 颜色分量的模拟信号，送到 VGA
+店铺：https://xiaomeige.taobao.com                       官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+
+接口，这些模拟信号经由 VGA 线缆到达显示器的 VGA 接口，对于模拟的 CRT
+显示器，这些信号会直接被放大后用于驱动电子枪发射电子，而对于液晶显示
+器，则需要显示器使用专门的模拟数字转换芯片将模拟信号再转换为数字信号
+后，去驱动 RGB 接口的液晶显示屏显示图像。
+
+26.3VGA 时序详解
+     上一小节的内容中，我们介绍了基于阴极射线管（CRT）的 VGA 显示器的
+显示原理，那么具体到每一个像素的图像，相关信号的时序究竟是怎样的呢？
+本节内容就针对该时序进行详细介绍。
+     由于 VGA 时序的诞生，最早就是为了驱动阴极射线管（CRT）。也因为
+CRT 的物理特性，才有了多个与之相关的物理时间参数，所以为了让大家彻底
+理解 VGA 时序中各个参数的物理意义，这里以一张图像在基于 CRT 结构的显
+示器上显示为例，介绍显示器完整展现这幅图的各个阶段和每个阶段的物理意
+义。
+     下图 26-3 中，白底的卡通人物图像就是我们希望显示的图像内容。我们的
+目的就是要让该图像恰好完全显示在显示器上。而 CRT 显示器是基于电子枪的，
+通过电子轰击荧光粉来产生明暗不同的亮度，从而实现图像线索。所以这一幅
+图像，可以理解为横向的很多行图像向下依次平铺构成的，而每一行图像，又
+可以理解为由多个像素点从左向右依次平铺构成的。电子枪每次只能点亮一个
+点上的荧光粉，所以需要像我们人眼看文章一样，从左向右一个字一个字的看，
+看完一行内容后，再把视线回到左侧，另起一行开始看，这也就是 CRT 的成像
+方式。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                                                  小梅哥 FPGA 团队                                           武汉芯路恒科技
+                           专注于培养您的 FPGA 独立开发能力                                                          开发板 培训 项目研发三位一体
+
+
+
+                                                                                      Back Porch        Left Border            Right Border   Front Porch
+
+                                                                      DATA
+                                                                      HSYC
+                                                                                                                      Visible area
+
+                                                               DATA
+                                                        VSYC                               Sync Pulse         Whole Line
+
+
+
+                                                                      Back Porch
+                            Sync Pulse
+
+
+
+
+                                                                                                                Blanking
+
+
+                                                                                                                      Border
+                                                                      Top Border
+              Whole Frame
+
+
+                                         Visible area
+
+
+
+
+                                                                      Bottom Border
+         V_Whole_Frame-1
+
+
+
+
+                                                                      Front Porch
+
+
+
+
+                                                                                             图 26-3 CRT 成像方式
+
+
+26.3.1CRT 行扫描过程
+     对于 CRT 显示器，虽然扫描的时候是按照一行一行的方式进行的，但不是
+扫描完一行有效数据段之后就立马返回，而是会继续向右扫描一段区域，这个
+区域称为右边界区域（horizontal right border），该区域已经不在有效的显示范围
+内，如果从物理结构的角度来说，这一段对应的荧光屏玻璃上就不再有荧光粉
+了，但是电子枪还在继续向右走，大家可以形象理解为显示器右边的黑边。同
+样的，显示器左边也有这样一段黑边，在开始显示有效数据之前，电子枪扫描
+到的这段区域同样也是没有荧光粉的，不会显示图像, 这个区域称为左边界区域
+（horizontal left border）。
+     那么，电子枪什么时候会到最左侧准备开始新一行图像的扫描呢？当电子
+枪扫描一行图像到达荧光屏的最右端后，其并不会自动回到最左边准备下一行，
+
+店铺：https://xiaomeige.taobao.com                                                                                            官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                                                                                     技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+
+而是需要有一个通知信号，通知其回去，这个通知信号就是行同步信号脉冲
+（horizontal sync pulse）。行同步信号是一个脉冲，当该脉冲出现后，电子枪的
+指向会在一定时间内从最右侧回到显示屏的最左侧。而这个回去的过程需要耗
+费一定的时间，这个时间就称为 horizontal back porch。这也是这个名词中 back
+的意义所在，即出现行同步信号后，电子枪从显示屏最右侧回到最左侧的时间。
+     当电子枪扫描过了右侧没有荧光粉的区域后，还没有收到回到最左侧的命
+令（行同步信号脉冲）之前，电子枪需要关闭以实现消隐，这个消隐的时间段
+就称为 horizontal front porch，直观一点理解就是完成了一行图像的扫描，但还
+没收到回到最左侧命令之前的一段时间。这也是这个名词中 front 的意义所在。
+
+26.3.2CRT 场扫描过程
+     一幅完整的图像可以看作是多行图像平铺构成的，所以理解了行扫描的过
+程中每个时间段对应的时间参数名称之后，再来理解场扫描中的名词就非常简
+单了。
+     首先来讲，CRT 在扫描一行图像的时候，电子枪的水平位置是保持稳定不
+变的，而当一行图像扫描完成，开始扫描下一行图像的时候，电子枪的水平位
+置会向下调整一定的值。因此，我们可以认为，场时序就是在垂直方向上从上
+往下依次扫描。
+     其次来说，对于 CRT 显示器来说，其不是扫描完所有行的图像后就立马返
+回最上方，而是会继续向下扫描一段区域，这个区域称为下边界区域（vertical
+bottom border），该区域已经不在有效的显示范围内，如果从物理结构的角度来
+说，这一段对应的荧光屏玻璃上就不再有荧光粉了，但是电子枪还在继续向下
+走，大家可以形象理解为显示器下边的黑边。同样的，显示器上边也有这样一
+段黑边，在开始显示有效数据之前，电子枪扫描到的这段区域同样也是没有荧
+光粉的，不会显示图像，这个区域称为上边界区域（vertical top border）。
+     再来说说，电子枪什么时候会到最上方准备开始新一场图像的扫描。当电
+子枪扫描一场图像到达荧光屏的最下方后，其并不会自动回到最上边准备下一
+场，而是需要有一个通知信号，通知其回去，这个通知信号就是场同步信号脉
+冲（vertical sync pulse）。场同步信号是一个脉冲，当该脉冲出现后，电子枪的
+指向会在一定时间内从最下方回到显示屏的最上方。而这个回去的过程需要耗
+费一定的时间，这个时间就称为 vertical back porch。这也是这个名词中 back 的
+意义所在，即出现场同步信号后，电子枪从显示屏最下方回到最上方的时间。
+
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                 小梅哥 FPGA 团队                    武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                 开发板 培训 项目研发三位一体
+
+
+     当电子枪扫描过了下方没有荧光粉的区域后，还没有收到回到最上方的命
+令（场同步信号脉冲）之前，电子枪需要关闭以实现消隐，这个消隐的时间段
+就称为 vertical front porch，直观一点理解就是完成了一场图像的扫描，但还没
+收到回到最上方命令之前的一段时间。这也是这个名词中 front 的意义所在。
+
+26.3.3VGA 时序标准
+     了解了扫描一场完整的图像的过程和其中各个阶段的物理意义之后，再看
+上面图中的各个参数和所处的位置，以及其作用，就非常的直观了。
+     在上面介绍行、场同步脉冲信号的时候，我们只说了是脉冲信号，但是并
+未定义脉冲信号的极性，VGA 时序标准支持四种极性，但是并不是所有的显示
+设备都支持这四种极性，本文默认以应用最为广泛的行、场同步信号都为低脉
+冲进行介绍。所谓行、场同步信号都是低电平，就是说在产生同步脉冲信号的
+时候，行、场同步信号变为低电平，其他时刻为高电平。下图 26-4、图 26-5 分
+别为行扫描时序和场扫描时序的示意图。
+            Back Porch         Left Border       Right Border        Front Porch
+
+       DATA
+       HSYC
+                                           Visible area
+                 Sync Pulse
+                                     Whole Line
+                                     图 26-4 行扫描时序图
+
+
+           Back Porch           Top Border       Bottom Border          Front Porch
+
+      DATA
+      VSYC
+                                            Visible area
+                 Sync Pulse
+                                         Whole Frame
+
+                                     图 26-5 场扫描时序图
+
+
+     上述两幅图中，都只给出了时序参数的名称，并没有给出每个参数具体的
+
+店铺：https://xiaomeige.taobao.com                            官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                     技术群组：
+                  小梅哥 FPGA 团队                      武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                     开发板 培训 项目研发三位一体
+
+
+值是多少。而每个参数具体的值是多少，并不是固定的，而是根据需要扫描的
+有效图像区域的大小确定的。需要扫描的有效图像区域的大小，一般用分辨率
+来表示。例如标准 VGA 时序的分辨率就是 640*480 个像素点。很显然，这个分
+辨率放在 2K、4K 大行其道的今天，已经是非常非常低的了，所以除了 VGA 标
+准，还有很多表示更大或更小分辨率的标准，如 QVGA、SVGA、XVGA 等等，
+下表 26-1 为几个常见的分辨率名词和与之对应的像素矩阵大小。
+                              表 26-1 各分辨率标准对应像素矩阵表
+
+                                分辨率标准           像素矩阵大小
+                                SQCIF           12*96
+                                QCIF            176*144
+                                CIF             352*288
+                                QVGA            320*240
+                                VGA             640*480
+                                SVGA            800*600
+                                WSVGA           1024*600
+                                XGA             1024*768
+                                XVGA            1280*960
+                                UXGA            1600*1200
+
+     虽然上表列出了众多的分辨率标准的名词，但是记这些名词貌似在大多数
+场合下并没有太大的意义，反不如直接使用像素矩阵大小的数据来的直观。
+
+26.4各常见分辨率时序参数
+     下表 26-2 给出了若干个常见分辨率对应的行场时序中各个参数的具体数值，
+注意，这些参数值中，行相关的参数都是以像素的更新频率，也就是像素时钟
+作为单位，而场相关的参数，则是以行作为单位。
+                                     表 26-2 行场时序参数表
+
+                       480     640       800      800       1024   1024   1280   1920
+                       272     480       480      600       600    768    720    1080
+      H Right Borde    0       8         0        0         0      0      0      0
+      H Front Porch    2       8         40       40        24     24     110    88
+      H Sync Time      41      96        128      128       136    136    40     44
+      H Back Porch     2       40        88       88        160    160    220    148
+      H Left Border    0       8         0        0         0      0      0      0
+      H Data Time      480     640       800      800       1024   1024   1280   1920
+      H Total Time     525     800       1056     1056      1344   1344   1650   2200
+      V Bottom Borde   0       8         8        0         0      0      0      0
+      V Front Porch    2       2         2        1         1      3      5      4
+      V Sync Time      10      2         2        4         4      6      5      5
+      V Back Porch     2       25        25       23        23     29     20     36
+      V Top Border     0       8         8        0         0      0      0      0
+      V Data Time      272     480       480      600       600    768    720    1080
+店铺：https://xiaomeige.taobao.com                                    官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                             技术群组：
+                     小梅哥 FPGA 团队                武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                 开发板 培训 项目研发三位一体
+
+      V Total Time     286     525       525   628   628   806    750   1125
+
+     上 表 中 ， 大 部 分 参 数 都 来 源 于 视 频 电 子 标 准 协 会 （Video Electronics
+Standards Association）制定的显示器时序标准（Monitor Timing Standard）。当然，
+也有部分分辨率是该协会没有制定，由显示设备厂家自己定义并世界范围内流
+通的标准，例如 480*272 分辨率就没有在这个标准里面，但是 sony 的 psp 设备
+使用了该分辨率的显示屏，后续引发其他厂家也生产相同规格的显示屏并最终
+大量应用到各种多媒体终端设备，如当年风靡一时的 MP4 播放器、车载导航设
+备等。在我们前期提供的 4.3 寸显示屏中，就使用了该分辨率。
+     这里再补充介绍下上表列出的各分辨率的常见显示屏设备。
+
+               480*272：这个刚刚已经说过了，最早用于 sony 的 psp 设备中，
+         后来被大量应用到各种 MP4 播放器和车载导航设备中。我们前期也提
+         供了一款该分辨率，尺寸为 4.3 寸，支持电阻触摸功能的显示屏模组。
+
+               640*480：标准的 VGA 分辨率，是所有显示器都必须支持的标准，
+         所有的计算机设备都要求支持该分辨率图像的输出，计算机设备在刚
+         开机的时候，BISO 阶段，显卡设备没有开始工作，由 CPU 直接驱动显
+         示器，使用的就是这个分辨率。另外，该分辨率在 FPGA 相关的应用中
+         还有一个更为大家熟知的存在——OV7670、OV7725 等众多 30W 像素
+         的图像传感器输出的图像大小就是这个分辨率，所以为了显示 30W 像
+         素的摄像头图像，也会按照此分辨率驱动 VGA 显示器。
+
+               800*480：该分辨率的显示屏在 2010 年~2013 年的智能手机中经
+         常用到。如当年的中兴 V880、华为 U8800、酷派 8017、联想乐 phone
+         （对，上述列举的就是当年名噪一时的中华酷联，由于笔者当时从事
+         相关工作，所以对这些型号比较熟悉）。针对 FPGA 开发板，我们也提
+         供了一款该分辨率，尺寸为 5 寸，支持电容触摸功能的显示屏模组。
+
+               800*600：很多老式的 CRT 显示器最高就是支持这个分辨率。
+
+               1024*600：这个分辨率大概是并行 RGB 接口中分辨率最高的一
+         款了吧，目前网络上销售的非常多的 7 寸触摸屏模组，使用的就是这个
+         分辨率的显示屏。
+
+               1024*768：很经典的一个型号，早期（2000 年~2005 年）的方屏
+         笔记本电脑，使用的就是这个分辨率，笔者的第一台笔记本（高三时
+         候在网上买的二手洋垃圾）就是这个分辨率的。
+
+               1280*720：也就是我们常说的 720P 视频的分辨率。但是这个分
+
+店铺：https://xiaomeige.taobao.com                            官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                     技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+         辨率的屏幕其实并不太常用，用的是 1280*800 的分辨率。1280*800 分
+         辨率的屏幕广泛应用于各种 7 寸的安卓或 win8 平板电脑中。但是
+         1280*720 这个分辨率，在 FPGA 系统中实现 720p 的实时图像显示时候
+         有用到，所以这里也列出了其时序参数。
+
+              1920*1080：这个分辨率，就不用多说了，1080p 标准，相信大家
+         都熟悉。现在的笔记本电脑，显示屏的分辨率最低标准貌似就是这个
+         分辨率了，而经典的如 iphone plus 系列手机，使用的也都是这个分辨率
+         的显示屏。
+
+26.5VGA 控制器设计思路
+     了解了整个 VGA 扫描时序的详细参数之后，设计一个能够驱动 VGA 显示
+器显示正常图像内容的控制器就非常的简单了。
+     首先确定，我们的设计目的是设计一个能够产生符合 VGA 显示时序的逻辑
+控制器，为了实现这个目的，我们需要产生用于行同步的行同步信号脉冲
+（horizontal sync pulse）、用于场同步的场同步信号脉冲（vertical sync pulse）、
+并在一行图像的显示有效区间内将需要显示的图像内容的对应像素点的颜色数
+据输出，在一场图像的显示有效区间内使能将需要显示的图像内容输出。据此，
+整个设计就变得非常简单了。如果以场同步脉冲的下降沿作为一场图像的起始
+时刻，以行同步信号的同步脉冲的下降沿作为一行图像的起始时刻，那么每行
+图像的扫描时序都可以看成是一个依线性序列的操作，设计时只需要在序列的
+指定时刻产生制定的操作即可。例如对于 640*480 分辨率的时序，其完整的一
+行包括 800 个像素时钟周期，因此我们设计时，只需要使用一个计数器循环计
+数 800 个时钟周期，并在对应的计数值时候产生相应的动作，例如：
+     在计数值为 0 时刻，拉低行同步信号（HSYNC），以示产生行同步低脉冲，
+然后让行同步信号（HSYNC）保持 H Sync Time 个时钟周期低电平，此阶段就
+是 H Sync Time 时序。此阶段处于消隐阶段，消隐信号保持为有效电平。
+     拉高行同步信号（HSYNC）并保持 H Bach Porch 个时钟周期的高电平，此
+阶段就是回扫阶段。此时数据总线应该保持全 0 状态。且消隐信号也保持为有
+效电平。
+     让行同步信号（HSYNC）继续保持 H Left Border 个时钟周期的高电平，该
+阶段就是左廊阶段。此时数据总线应该保持全 0 状态。消隐信号被关闭。
+     正式进入输出图像数据的阶段后，在 H Data Time 阶段，行同步信号
+
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                   小梅哥 FPGA 团队                      武汉芯路恒科技
+              专注于培养您的 FPGA 独立开发能力                  开发板 培训 项目研发三位一体
+
+
+（HSYNC）继续保持高电平，并在 RGB 数据总线上每个时钟周期输出一个颜
+色数据。
+     当 H Data Time 个数据输出完成后，进入 H Right Border 阶段，此时，继续
+保持行同步信号（HSYNC）为高电平。但是数据总线不再输出颜色数据。
+     H Right Border 阶段过后，进入 H Front Porch 阶段，此阶段继续保持行同步
+信号（HSYNC）为高电平，数据线不再输出颜色数据，且将消隐信号开启。至
+此，一行图像的扫描过程结束。
+                                 表 26-3 行扫描的一行数据区间构成
+
+ H Sync Time    H Bach Porch   H Left Border    H Data Time     H Right Border   H Front Porch
+ 96 vclk        40 vclk        8 vclk           640 vclk        8 vclk           8 vclk
+
+     分析完了行扫描时序的实现方案，再来设计场扫描时序的实现方案就非常
+简单了，思路和行扫描时序的实现方案完全一致，区别仅在于，场扫描时序中
+的时序参数都是以完成一行扫描所耗费的时间为基本时间单位的。
+                                 表 26-4 场扫描的一行数据区间构成
+
+V Sync Time    V Bach Porch    V Top Border    V Data Time    V Bottom Border    V Front Porch
+2 lines        25 lines        8 lines         480 lines      8 lines            2 lines
+
+     了解了整体的设计思路后，设计该控制器时需要编写的逻辑内容就非常的
+清晰。设计时，可用两个计数器进行计数（行、场扫描计数器），行扫描计数器
+的驱动时钟就是基本的像素时钟信号，场计数器的驱动自加使能使用行计数器
+的溢出信号。根据计数器的实时计数值控制行、场同步信号输出，并在适当的
+时候送出数据，就能让图像在 VGA 显示器上正确的显示。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                                    官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                             技术群组：
+                                       小梅哥 FPGA 团队                                                                     武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                                                                                         开发板 培训 项目研发三位一体
+
+                                                                                H_Whole_Line-1                                                                     H_Whole_Line-1
+
+                                                         行中像素点计数器                                     0      1   2     ...                           ...                             0   1
+                                                            hcount
+                                                                                                 Back Porch                  Left Border            Right Border                    Front Porch
+
+                                                                                 DATA
+       行计数器vcount
+                                                                                 HSYC
+                    V_Whole_Frame-1
+
+
+                                                                                                                                           Visible area
+
+
+
+
+                                                                         DATA
+                                                                  VSYC
+                                                                                                          Sync Pulse               Whole Line
+
+
+
+
+                                                                                 Back Porch
+           0
+
+
+
+
+                                      Sync Pulse
+
+
+
+
+                                                                                                                                     Blanking
+           1
+           2
+
+
+
+
+                                                                                                                                           Border
+            ...
+
+
+
+
+                                                                                 Top Border
+                       Whole Frame
+
+
+                                                   Visible area
+
+
+
+
+                                                                                 Bottom Border
+            ...
+
+                  V_Whole_Frame-1
+
+
+
+
+                                                                                 Front Porch
+           0
+           1
+
+
+
+
+                                                                                                   图 26-6 VGA 成像示意图
+
+
+     这样，VGA 成像的基本时序，就介绍完成了，接下来即开始着手设计
+640*480 分辨率 VGA 控制器。
+
+26.6640*480 分辨率 VGA 控制器设计
+     基于上述对 VGA 时序的详细分析，设计一个 VGA 控制器主要也就包括行
+计数器、场计数器，以及行、场同步信号在合适的时刻产生低电平脉冲，以及
+在显示有效区域将图像数据输出。本节内容将以 640*480 这个标准的 VGA 分辨
+率为例，介绍 VGA 控制器的设计方法。
+
+26.6.1640*480 分辨率 VGA 控制器时序分析
+     通过上述对于 VGA 时序的分析，我们已经了解了 VGA 时序的基本特征，
+而对于一个特定分辨率的时序标准来说，在什么时候产生 HS、VS 的脉冲信号，
+
+店铺：https://xiaomeige.taobao.com                                                                                                              官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                                                                                                       技术群组：
+                 小梅哥 FPGA 团队                          武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                        开发板 培训 项目研发三位一体
+
+
+在什么时候输出有效图像数据都是确定的，所以，我们可以根据该分辨率的时
+序特征，使用 2 个计数器分别来标记行和场整个周期中的每一个时间点，然后
+在相应的时间点拉高或拉低 HS、VS 信号，输出 RGB 数据，即可实现 VGA 时
+序的生成。
+     对于行扫描来说，主要关心的就是在什么时刻产生 HS 脉冲信号，以及在一
+行中的什么位置输出图像内容。如果以 HS 信号的下降沿作为一行扫描的起点时
+刻（此时刻为 0 时刻），那么我们只需要知道在第几个时刻 HS 脉冲信号结束
+（VGA_HS_end），并知道图像数据在一行中什么时候开始输出（hdat_begin）、
+什 么 时 刻 结 束 输 出 （hdat_end）， 还 需 要 知 道 一 行 扫 描 到 什 么 时 刻 停 止
+（hpixel_end）。所以，对于 640*480 分辨率的时序，据此可以归纳得到如下 4 个
+与行图像扫描相关的参数：
+                         表 26-5 图像行扫描以每行最左侧为同一原点的绝对参数
+
+ 时间节点参数              VGA_HS_end          hdat_begin       hdat_end       hpixel_end
+ 时间节点值（clk）          95                  143              783            799
+ 时间节点参数构成            H Sync Time - 1     VGA_HS_end +     hdat_begin +   hdat_end +
+                                         H Bach Porch +   H Data Time    H Right Border +
+                                         H Left Border                   H Front Porch
+
+     同样的，对于场扫描来说，主要关心的是在什么时刻产生 VS 脉冲信号，以
+及在一场中的什么位置输出图像内容。如果以 VS 信号的下降沿作为一行扫描的
+起点时刻（此时对应 0 行），那么我们只需要知道在第几个行时 VS 脉冲信号结
+束（VGA_VS_end），并知道图像数据在一行中什么时刻开始输出（vdat_begin）、
+什 么 时 刻 结 束 输 出 （vdat_end）， 还 需 要 知 道 一 行 扫 描 到 什 么 时 刻 停 止
+（vline_end）。所以，对于 640*480 分辨率的时序，据此可以归纳得到如下 4 个
+与场图像扫描相关的参数：
+                                   表 26-6 图像场扫描的绝对参数
+
+ 时间节点参数              VGA_VS_end          vdat_begin       vdat_end       vline_end
+ 时间节点值（clk）          1                   34               514            524
+ 时间节点参数构成            V Sync Time - 1     VGA_VS_end +     vdat_begin +   vdat_end +
+                                         V Bach Porch +   V Data Time    V Bottom Border +
+                                         V Top Border                    V Front Porch
+
+     有了以上参数之后，编写逻辑就变得非常简单了，以下分别实现。
+
+26.6.2行扫描计数器设计
+     行扫描计数器即每个像素时钟自加 1，一旦加满到 799（刚好 800 个时钟周
+期），也就是 H Total Time 个时钟周期后，计数器清零并重新计数，该部分代码
+
+店铺：https://xiaomeige.taobao.com                                  官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                           技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+
+可如下设计：
+ reg [9:0] hcount_r;          //VGA 行扫描计数器
+
+ //**********************VGA 驱动部分**********************
+ //行扫描计数器
+ always@(posedge Clk25M or negedge Rst_n)
+ if(!Rst_n) //复位时，让行扫描计数器清零
+     hcount_r<=10'd0;
+ else if(hcount_r==10'd799) //当一行数据扫完后，再次清零行扫描计数器
+     hcount_r<=10'd0;
+ else    //0~799 之间，每个像素时钟时行扫描计数器自加 1
+     hcount_r<=hcount_r+10'd1;
+
+26.6.3场扫描计数器设计
+     由于场扫描计数器是在每次一行扫描完成后加 1 的，即场扫描计数器的自
+加条件是行扫描计数器溢出。所以，场扫描计数器的自加条件为行扫描完成，
+即“hcount_r == 10'd799”，场扫描计数器代码如下所示：
+ reg [9:0] vcount_r;          //VGA 场扫描计数器
+
+ //场扫描
+ always@(posedge Clk25M or negedge Rst_n)
+ if(!Rst_n) //复位时让场计数器清零
+     vcount_r<=10'd0;
+ else if(hcount_r==10'd799) begin    //每次一行扫描完成
+     if(vcount_r==10'd524)   //每次一场扫描结束，清零计数器
+         vcount_r<=10'd0;
+     else
+         vcount_r<=vcount_r+10'd1;//场计数器在 0~524，满足条件自加 1
+ end
+ else //不满足行扫描结束条件器件，让场扫描计数器保持不变
+     vcount_r<=vcount_r;
+
+26.6.4行场同步信号设计
+     根据 VGA 工业标准时序，我们知道每一个完整的 VGA 帧都包含了数据段
+和消隐段，在消隐段期间，行同步信号和场同步信号分别有一段行同步头和场
+同步头。在同步期间，对应行同步信号或者场同步信号为低电平。因此我们可
+以根据行、场计数器的值来确定行、场同步信号的电平状态。对于行同步信号，
+其行同步头为一行扫描的前 96 个像素时钟周期，因此行同步信号可用如下的简
+单方式控制：
+ assign VGA_HS=(hcount_r>10’d95);
+
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+
+     对于场同步信号，其场同步头为一行扫描的前 2 个像素时钟周期，因此行
+同步信号可用如下的简单方式控制：
+ assign VGA_VS=(vcount_r>10’d1);
+
+26.6.5输出数据
+     VGA 控制器的设计目的是为了驱动 VGA 显示器显示需求的图像内容，因
+此需要设计数据输出部分，这里，数据来源可以为其它部分产生的图像信号，
+如摄像头数据、BMP 图片数据。我们在驱动 VGA 时，只需要保证在扫描正确
+的像素点时，其它部分产生的图像信号能够与该像素点位置对应上，则不需要
+对图像数据再进行二次处理，但是，在行、场消隐期间，需要保证输出到 VGA
+的 RGB 数据线上的数据全部为 0，因此可以设置一个二选一多路器，只有在非
+消隐期间，VGA 控制器才直接输出其他部分输入的图像数据，而消隐期间则强
+制输出全 0。
+     我们可以首先产生一个图像数据有效标志信号，然后使用该标志信号控制
+VGA 输出数据的内容，即切换二选一多路器的通道，从而实现消隐期间数据全
+0 的功能。
+     图像数据有效标志信号产生代码如下所示：
+ //数据、同步信号输出
+ assign dat_act=((hcount_r>=10'd143)&&(hcount_r<10'd783))
+             &&((vcount_r>=10'd34)&&(vcount_r<10'd514));
+     dat_act 即为图像数据有效标志信号。
+     VGA_BLANK 信号和 dat_act 信号功能一致，因此直接将 dat_act 信号赋值
+给 VGA_BLANK 即可。
+ assign VGA_BLK = dat_act;
+     另外，也可以在消隐期间，设置 RGB 输出端口上数据为 0 来强制产生消隐
+效果。
+     消隐强制输出 0 二选一多路器代码如下所示：
+ assign VGA_RGB=(dat_act)?data_in:24'h000000;
+     其中，VGA_RGB 是输出到 VGA 接口上的数据，而 data_in 则是其他模块
+传递过来的正确的图像数据。
+
+26.6.6输出行列扫描位置
+     为了使其他模块能够根据当前扫描位置正确的输出图像数据，因此需要将
+VGA 控制器的实时扫描位置输出，以供其他模块使用。
+店铺：https://xiaomeige.taobao.com                   官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/            技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+ assign hcount=dat_act?(hcount_r- 10'd143):10'd0;
+ assign vcount=dat_act?(vcount_r- 10'd34):10'd0;
+
+26.6.7输出数据锁存时钟信号
+     对于 FPGA 上实现的 VGA 控制器，在时钟信号的上升沿输出数据，而对于
+DAC 芯片来说，需要在数据的中点采集数据，根据实际板级调试效果，将 VGA
+控制器的时钟取反后输出作为 DAC 的数据锁存时钟信号，能够确保 DAC 芯片
+在锁存数据时数据刚好是稳定的，如下所示：
+ //将 VGA 控制器时钟信号取反输出，作为 DAC 数据锁存信号
+ assign VGA_CLK = ~Clk25M;
+
+26.6.8VGA 控制器设计实例
+     以上为我们根据直观思维设计的驱动电路，在代码中，直接使用了数字作
+为运算和比较的内容，这样的编写方式，虽然很直观，但是并不十分利于修改。
+因此，为了实现易于修改的控制器设计，方便后期简单修改后兼容其他分辨率，
+对代码进行优化，使用参数化设计。将代码中使用到的一些与时序相关的数字
+直接使用 parameter 这样的参数进行定义，这样在以后需要修改时间参数时，只
+需要修改 parameter 定义的内容即可，不需要再深入到代码中一个一个修改。这
+里不再一一介绍如何修改，只贴出最终设计修改完成的代码，请用户自行比对
+领悟。
+ module VGA_CTRL(
+     Clk25M, //系统输入时钟 25MHZ
+     Rst_n, //复位输入，低电平复位
+     data_in,    //待显示数据
+     hcount,     //VGA 行扫描计数器
+     vcount,     //VGA 场扫描计数器
+     VGA_RGB,    //VGA 数据输出
+     VGA_HS,     //VGA 行同步信号
+     VGA_VS,     //VGA 场同步信号
+     VGA_BLK,        //VGA 场消隐信号
+     VGA_CLK     //VGA DAC 输出时钟
+ );
+
+      //----------------模块输入端口----------------
+      input Clk25M;        //系统输入时钟 25MHZ
+      input Rst_n;
+      input [23:0]data_in;   //待显示数据
+
+      //----------------模块输出端口----------------
+      output [9:0]hcount;
+店铺：https://xiaomeige.taobao.com                     官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/              技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+      output [9:0]vcount;
+      output [23:0]VGA_RGB; //VGA 数据输出
+      output VGA_HS;           //VGA 行同步信号
+      output VGA_VS;           //VGA 场同步信号
+      output VGA_BLK;     //VGA 场消隐信号
+      output VGA_CLK;     //VGA DAC 输出时钟
+
+      //将 VGA 控制器时钟信号取反输出，作为 DAC 数据锁存信号
+      assign VGA_CLK = ~Clk25M;
+
+      //----------------内部寄存器定义----------------
+      reg [9:0] hcount_r;  //VGA 行扫描计数器
+      reg [9:0] vcount_r;  //VGA 场扫描计数器
+      //----------------内部连线定义----------------
+      wire hcount_ov;
+      wire vcount_ov;
+      wire dat_act;//有效显示区标定
+
+      //VGA 行、场扫描时序参数表
+      parameter VGA_HS_end=10'd95,
+                   hdat_begin=10'd143,
+                   hdat_end=10'd783,
+                   hpixel_end=10'd799,
+                   VGA_VS_end=10'd1,
+                   vdat_begin=10'd34,
+                   vdat_end=10'd514,
+                   vline_end=10'd524;
+
+      assign hcount=dat_act?(hcount_r-hdat_begin):10'd0;
+      assign vcount=dat_act?(vcount_r-vdat_begin):10'd0;
+
+      //**********************VGA 驱动部分**********************
+      //行扫描
+      always@(posedge Clk25M or negedge Rst_n)
+      if(!Rst_n)
+          hcount_r<=10'd0;
+      else if(hcount_ov)
+          hcount_r<=10'd0;
+      else
+          hcount_r<=hcount_r+10'd1;
+
+      assign hcount_ov=(hcount_r==hpixel_end);
+
+      //场扫描
+      always@(posedge Clk25M or negedge Rst_n)
+      if(!Rst_n)
+          vcount_r<=10'd0;
+店铺：https://xiaomeige.taobao.com                    官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/             技术群组：
+                 小梅哥 FPGA 团队                    武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                 开发板 培训 项目研发三位一体
+
+      else if(hcount_ov) begin
+          if(vcount_ov)
+              vcount_r<=10'd0;
+          else
+              vcount_r<=vcount_r+10'd1;
+      end
+      else
+          vcount_r<=vcount_r;
+
+      assign   vcount_ov=(vcount_r==vline_end);
+
+      //数据、同步信号输出
+      assign dat_act=((hcount_r>=hdat_begin)&&(hcount_r<hdat_end))
+                      &&((vcount_r>=vdat_begin)&&(vcount_r<vdat_end));
+
+      assign VGA_BLK = dat_act;
+
+      assign VGA_HS=(hcount_r>VGA_HS_end);
+      assign VGA_VS=(vcount_r>VGA_VS_end);
+      assign VGA_RGB=(dat_act)?data_in:24'h000000;
+
+ endmodule
+     综上所述，得到该模块的接口图如下图 26-7 所示。
+                                                        VGA_BLK
+                                                        VGA_CLK
+                         Clk25M
+                                                        VGA_HS
+                          Rst_n                         data_in[23:0]
+                        data_in[23:0]     VGA_CTRL
+                                                        VGA_VS
+                                                        hcount[23:0]
+                                                        vcount[23:0]
+
+
+
+                                  图 26-7 VGA 控制模块接口框图
+
+                                         表 26-7 端口功能表
+
+                         端口名               端口功能
+                         Clk25M            VGA 像素时钟，25MHz
+                         Rst_n             系统复位，低电平复位
+                         data_in[23:0]     待显示数据输入端口
+                         VGA_HS            VGA 接口行同步信号
+                         VGA_VS            VGA 接口场同步信号
+                         VGA_RGB[23:0]     VGA 三元色数据输出
+                         hcount[9:0]       图像区行扫描地址
+                         vcount[9:0]       图像区场扫描地址
+
+店铺：https://xiaomeige.taobao.com                             官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                      技术群组：
+                 小梅哥 FPGA 团队                 武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力               开发板 培训 项目研发三位一体
+
+
+     完成了 640*480 分辨率控制器模块设计后，接下来即可进行该模块控制器
+的仿真验证。
+
+26.7640*480 分辨率 VGA 控制器仿真验证
+     本小节对设计的 VGA 控制器进行仿真验证，通过仿真查看行场同步信号是
+否满足设计需求。
+
+26.7.1Testbench 设计
+     Testbench 的设计思路非常简单，只需要产生一个 25MHz 的时钟信号，然后
+在 data_in 端口上给一个固定的数据编码，为了与消隐时候的强制输出全 0 相区
+分，因此只需要是 data_in 上的数据不为 0 即可。testbench 内容如下所示：
+ `timescale 1ns/1ns
+
+ `define clk_period 40
+
+ module VGA_CTRL_tb;
+     //----------------模块输入端口----------------
+     reg Clk25M;         //系统输入时钟 25MHZ
+     reg Rst_n;
+     reg [23:0]data_in;    //待显示数据
+
+      //----------------模块输出端口----------------
+      wire [9:0]hcount;
+      wire [9:0]vcount;
+      wire [23:0]VGA_RGB; //VGA 数据输出
+      wire VGA_HS;          //VGA 行同步信号
+      wire VGA_VS;          //VGA 场同步信号
+
+      reg [11:0]V_cnt = 0;//扫描行数统计计数器
+
+      VGA_CTRL VGA_CTRL(
+              .Clk25M(Clk25M),           //系统输入时钟 25MHZ
+              .Rst_n(Rst_n),
+              .data_in(data_in),         //待显示数据
+              .hcount(hcount),               //VGA 行扫描计数器
+              .vcount(vcount),               //VGA 场扫描计数器
+              .VGA_RGB(VGA_RGB),         //VGA 数据输出
+              .VGA_HS(VGA_HS),               //VGA 行同步信号
+              .VGA_VS(VGA_VS),               //VGA 场同步信号
+              .VGA_BLK(VGA_BLK),             //VGA 场消隐信号
+              .VGA_CLK(VGA_CLK)          //VGA DAC 输出时钟
+
+店铺：https://xiaomeige.taobao.com                       官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                技术群组：
+                 小梅哥 FPGA 团队               武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力            开发板 培训 项目研发三位一体
+
+          );
+
+      initial Clk25M = 0;
+      always #(`clk_period/2) Clk25M = ~Clk25M;
+
+      initial begin
+          Rst_n = 0;
+          data_in = 8'd0;
+          #(`clk_period *20 +1);
+          Rst_n = 1;
+          data_in = 24'hffffff;
+      end
+
+      initial begin
+          wait(V_cnt == 3);//等待扫描 2 帧后结束仿真
+          $stop;
+      end
+
+      always @(posedge VGA_VS)//统计总扫描帧数
+          V_cnt <= V_cnt + 1'b1;
+
+ endmodule
+
+26.7.2仿真结果分析
+
+ 26.7.2.1VGA_HS 信号
+
+     以下为 VGA_HS 信号的仿真波形。
+
+
+
+
+                               图 26-8 VGA_HS 信号电平转换图 1
+
+
+
+
+店铺：https://xiaomeige.taobao.com                      官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/               技术群组：
+                 小梅哥 FPGA 团队               武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力            开发板 培训 项目研发三位一体
+
+
+
+
+                               图 26-9 VGA_HS 信号电平转换图 2
+
+
+     由图可见，VGA_HS 在 0~95 这一行扫描段内为低电平，即行同步头，其他
+时间为高电平，行扫描依次，行扫描计数器计数最大值为 799，即刚好 800 个像
+素时钟周期，与设计一致，因此可知行扫描信号满足时序设计要求。
+
+ 26.7.2.2VGA_VS 信号
+
+     以下为 VGA_VS 仿真波形图。
+
+
+
+
+                               图 26-10 VGA_VS 信号电平转换图
+
+
+     由图可见，VGA_VS 信号在 0~1 这一段场扫描时间内为低电平，即场同步
+头，其他时间为高电平。场扫描一次，场扫描计数器计数最大值为 524，即刚好
+525 个行扫描周期，与设计一致，满足 VGA 工业标准，因此可知场扫描信号满
+足时序设计要求。
+     其他信号本文不再进行详细分析比对，在进行板级调试中，如果发现显示
+效果不对，则可根据实际显示效果，判断错误位置，如行同步信号错误、场同
+步信号错误等。
+
+
+店铺：https://xiaomeige.taobao.com                         官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                  技术群组：
+                 小梅哥 FPGA 团队               武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力            开发板 培训 项目研发三位一体
+
+
+26.8640*480 分辨率 VGA 控制器板级验证
+     前面章节，我们简述了 VGA 控制器的设计思路并给出了具体的 VGA 控制
+器设计过程，同时通过仿真验证了设计的合理性。本节，我们将对该 VGA 控制
+器使用彩条实验来进行板级验证，通过板级验证来进一步确定我们设计的正确
+性。
+
+26.8.1板级验证功能设计
+     我们设计一个测试工程，该工程中我们测试上述提到的 8 种颜色，通过颜
+色的位置，不但能确定是否能够正确输出指定颜色的图像，还能间接确定是否
+能够精确指定像素位置。
+     因此，我们对屏幕进行划分，将屏幕划分成 4 行 2 列总共八个像素阵列，
+每个阵列分别显示一种颜色。据此，我们可以首先定义每种颜色的具体数据编
+码，然后再定义每个像素阵列的基本显示颜色，这里首先使用 localparam 定义
+每种颜色的具体数据编码：
+ //定义颜色编码                                //定义每个像素块的默认显示颜色值
+ localparam                              localparam
+   BLACK = 24'h000000,//黑色               R0_C0 = BLACK, //第 0 行 0 列像素块
+   BLUE = 24'h0000FF,//蓝色                R0_C1 = BLUE,   //第 0 行 1 列像素块
+   RED   = 24'hFF0000,//红色               R1_C0 = RED,    //第 1 行 0 列像素块
+   PURPPLE =24'hFF00FF,//紫色              R1_C1 = PURPPLE,//第 1 行 1 列像素块
+   GREEN = 24'h00FF00, //绿色              R2_C0 = GREEN, //第 2 行 0 列像素块
+   CYAN = 24'h00FFFF, //青色               R2_C1 = CYAN,   //第 2 行 1 列像素块
+   YELLOW = 24'hFFFF00,//黄色              R3_C0 = YELLOW, //第 3 行 0 列像素块
+   WHITE   = 24'hFFFFFF;//白色             R3_C1 = WHITE; //第 3 行 1 列像素块
+     紧接着，我们需要知道 VGA 当前扫描的位置是在哪一个位置区间，换一种
+说法，我们需要通过 VGA 当前的扫描位置得到当前扫描的是哪一个像素阵列，
+然后给待显示数据赋予对应的颜色值即可。这里我们先定义每个像素块处于扫
+描中的条件。
+
+              1.产生每一列的处于扫描状态标志信号，屏幕每行总共 640 个像素
+         点，我们将屏幕划分成了 2 列，因此，当行扫描范围在 0~319 这一段像
+         素内时，第 0 列处于活跃阶段；当行扫描范围在 320~639 这一段像素内，
+         第 1 列处于活跃阶段，因此可得：
+
+ wire C0_act = hcount >= 0 && hcount < 320; //正在扫描第 0 列
+ wire C1_act = hcount >= 320 && hcount < 640;//正在扫描第 1 列
+
+              2.产生每一行的处于扫描状态标志信号，屏幕每列总共 480 个像素
+店铺：https://xiaomeige.taobao.com                      官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/               技术群组：
+                 小梅哥 FPGA 团队              武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力            开发板 培训 项目研发三位一体
+
+         点，我们将屏幕划分成了 4 列，因此，当行扫描范围在 0~119 这一段像
+         素内时，第 0 行处于活跃阶段；当行扫描范围在 120~239 这一段像素内
+         时，第 1 行处于活跃阶段；当行扫描范围在 240~359 这一段像素内时，
+         第 2 行处于活跃阶段；当行扫描范围在 360~479 这一段像素内时，第 3
+         行处于活跃阶段。因此可得：
+
+ wire R0_act = vcount >= 0 && vcount < 120; //正在扫描第 0 行
+ wire R1_act = vcount >= 120 && vcount < 240;//正在扫描第 1 行
+ wire R2_act = vcount >= 240 && vcount < 360;//正在扫描第 2 行
+ wire R3_act = vcount >= 360 && vcount < 480;//正在扫描第 3 行
+
+              3.产生扫描每一个像素块的标志信号：
+
+ wire R0_C0_act = R0_act & C0_act;       //第 0 行 0 列像素块被扫描中
+ wire R0_C1_act = R0_act & C1_act;       //第 0 行 1 列像素块被扫描中
+ wire R1_C0_act = R1_act & C0_act;       //第 1 行 0 列像素块被扫描中
+ wire R1_C1_act = R1_act & C1_act;       //第 1 行 1 列像素块被扫描中
+ wire R2_C0_act = R2_act & C0_act;       //第 2 行 0 列像素块被扫描中
+ wire R2_C1_act = R2_act & C1_act;       //第 2 行 1 列像素块被扫描中
+ wire R3_C0_act = R3_act & C0_act;       //第 3 行 0 列像素块被扫描中
+ wire R3_C1_act = R3_act & C1_act;       //第 3 行 1 列像素块被扫描中
+     然后，我们就可以根据当前被扫描的像素块范围来确定需要给 VGA 输出什
+么颜色，这里采用一个多路器即可实现：
+ always@(*)
+     case({R3_C1_act,R3_C0_act,R2_C1_act,R2_C0_act,
+             R1_C1_act,R1_C0_act,R0_C1_act,R0_C0_act})
+         8'b0000_0001:disp_data = R0_C0;
+         8'b0000_0010:disp_data = R0_C1;
+         8'b0000_0100:disp_data = R1_C0;
+         8'b0000_1000:disp_data = R1_C1;
+         8'b0001_0000:disp_data = R2_C0;
+         8'b0010_0000:disp_data = R2_C1;
+         8'b0100_0000:disp_data = R3_C0;
+         8'b1000_0000:disp_data = R3_C1;
+         default:disp_data = R0_C0;
+ endcase
+
+26.8.2添加 PLL 时钟分频单元
+     通过以上步骤，我们就完成了简易 VGA 控制器测试电路的主要电路设计。
+在前面我们曾经提到，VGA 控制器的像素时钟为 25Mhz，而我们芯路恒 FPGA
+开发板设计的是 50Mhz 的晶振，因此需要使用锁相环对时钟进行分频得到 25M
+的时钟，以供 VGA 控制器使用。注意，虽然我们直接使用寄存器二分频也能从
+50M 直接分频得到 25M 时钟，但是这样分频出来的时钟驱动能力是非常差的，
+店铺：https://xiaomeige.taobao.com                   官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/            技术群组：
+                 小梅哥 FPGA 团队              武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+
+抖动也非常大，不能再作为时序电路的时钟使用，因此这里必须使用 pll 来得到
+25MHz 时钟。
+
+
+
+
+                              图 26-11 VGA 驱动频率锁相环配置图
+
+
+26.8.3完整的彩条实验测试电路源码
+     实现完整的彩条实验测试电路源码如下所示：
+ module VGA_CTRL_test(
+     Clk,    //50MHZ 时钟
+     Rst_n,
+     VGA_RGB,//TFT 数据输出
+     VGA_HS, //TFT 行同步信号
+     VGA_VS, //TFT 场同步信号
+     VGA_BLK,        //VGA 场消隐信号
+     VGA_CLK     //VGA DAC 输出时钟
+ );
+
+
+店铺：https://xiaomeige.taobao.com                    官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/             技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+      input Clk;
+      input Rst_n;
+      output [23:0]VGA_RGB;
+      output VGA_HS;
+      output VGA_VS;
+      output VGA_BLK;     //VGA 场消隐信号
+      output VGA_CLK;     //VGA DAC 输出时钟
+
+      reg [23:0]disp_data;
+      wire [9:0]hcount;
+      wire [9:0]vcount;
+      wire Clk25M;
+
+      Gowin_PLL Gowin_PLL(
+          .clkout0(Clk25M), //output clkout0
+          .clkin(Clk) //input clkin
+      );
+
+      VGA_CTRL VGA_CTRL(
+          .Clk25M(Clk25M),     //系统输入时钟 25MHZ
+          .Rst_n(Rst_n),
+          .data_in(disp_data),     //待显示数据
+          .hcount(hcount),         //VGA 行扫描计数器
+          .vcount(vcount),         //VGA 场扫描计数器
+          .VGA_RGB(VGA_RGB), //VGA 数据输出
+          .VGA_HS(VGA_HS),         //VGA 行同步信号
+          .VGA_VS(VGA_VS),         //VGA 场同步信号
+          .VGA_BLK(VGA_BLK),       //VGA 场消隐信号
+          .VGA_CLK(VGA_CLK)    //VGA DAC 输出时钟
+      );
+
+
+
+ //定义颜色编码
+ localparam
+     BLACK          = 24'h000000, //黑色
+     BLUE           = 24'h0000FF, //蓝色
+     RED            = 24'hFF0000, //红色
+     PURPPLE        = 24'hFF00FF, //紫色
+     GREEN          = 24'h00FF00, //绿色
+     CYAN           = 24'h00FFFF, //青色
+     YELLOW         = 24'hFFFF00, //黄色
+     WHITE          = 24'hFFFFFF; //白色
+
+ //定义每个像素块的默认显示颜色值
+ localparam
+     R0_C0 = BLACK, //第 0 行 0 列像素块
+     R0_C1 = BLUE,  //第 0 行 1 列像素块
+店铺：https://xiaomeige.taobao.com                   官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/            技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+      R1_C0 = RED,    //第 1 行 0 列像素块
+      R1_C1 = PURPPLE,//第 1 行 1 列像素块
+      R2_C0 = GREEN, //第 2 行 0 列像素块
+      R2_C1 = CYAN,   //第 2 行 1 列像素块
+      R3_C0 = YELLOW, //第 3 行 0 列像素块
+      R3_C1 = WHITE; //第 3 行 1 列像素块
+
+      wire R0_act = vcount >= 0 && vcount < 120; //正在扫描第 0 行
+      wire R1_act = vcount >= 120 && vcount < 240;//正在扫描第 1 行
+      wire R2_act = vcount >= 240 && vcount < 360;//正在扫描第 2 行
+      wire R3_act = vcount >= 360 && vcount < 480;//正在扫描第 3 行
+
+      wire C0_act = hcount >= 0 && hcount < 320; //正在扫描第 0 列
+      wire C1_act = hcount >= 320 && hcount < 640;//正在扫描第 1 列
+
+      wire R0_C0_act=R0_act & C0_act;//第 0 行 0 列像素块处于被扫描中标志信号
+      wire R0_C1_act=R0_act & C1_act;//第 0 行 1 列像素块处于被扫描中标志信号
+      wire R1_C0_act=R1_act&C0_act; //第 1 行 0 列像素块处于被扫描中标志信号
+      wire R1_C1_act=R1_act & C1_act;//第 1 行 1 列像素块处于被扫描中标志信号
+      wire R2_C0_act=R2_act & C0_act;//第 2 行 0 列像素块处于被扫描中标志信号
+      wire R2_C1_act=R2_act & C1_act;//第 2 行 1 列像素块处于被扫描中标志信号
+      wire R3_C0_act=R3_act & C0_act;//第 3 行 0 列像素块处于被扫描中标志信号
+      wire R3_C1_act=R3_act & C1_act;//第 3 行 1 列像素块处于被扫描中标志信号
+
+      always@(*)
+          case({R3_C1_act,R3_C0_act,R2_C1_act,R2_C0_act,
+                  R1_C1_act,R1_C0_act,R0_C1_act,R0_C0_act})
+              8'b0000_0001:disp_data = R0_C0;
+              8'b0000_0010:disp_data = R0_C1;
+              8'b0000_0100:disp_data = R1_C0;
+              8'b0000_1000:disp_data = R1_C1;
+              8'b0001_0000:disp_data = R2_C0;
+              8'b0010_0000:disp_data = R2_C1;
+              8'b0100_0000:disp_data = R3_C0;
+              8'b1000_0000:disp_data = R3_C1;
+              default:disp_data = R0_C0;
+          endcase
+
+ endmodule
+
+
+     基于以上测试源码，即可完成对 VGA 彩条实验的功能测试任务。接下来，
+我们继续完成板级验证的其他条件准备。
+
+26.8.4系统所需硬件
+              1.ACX720-GW5A138 开发板
+店铺：https://xiaomeige.taobao.com                    官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/             技术群组：
+                 小梅哥 FPGA 团队                武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力             开发板 培训 项目研发三位一体
+
+              2.电源线一根
+
+              3.高云下载器一套
+
+              4.VGA 模块一个
+
+              5.VGA 电缆一根
+
+              6.支持 VGA 接口的液晶显示器一台(可以和编程 PC 选用同一个液
+         晶显示器，但观察实验现象时需能进行模式切换和分辨率设置)
+
+26.8.5板级验证需求
+     VGA 的板级验证，主要验证以下三个方面：
+
+              1.能够正确的全屏点亮屏幕，显示稳定。
+
+              2.能否正确的显示颜色，即按照需求定时需要显示的颜色。
+
+              3.能否正确的定位坐标，即实现在指定的位置显示对应的数据。
+
+26.8.6GM7123 模块硬件连接
+     由于一个 24 位色的 VGA 电路至少需要占用 28 个 I/O，直接集成在开发板
+上会浪费较多 I/O，所以对于小梅哥 FPGA 的各个 FPGA 开发板，都统一使用一
+个 36Pin 的通用显示扩展接口，再加上扩展的 VGA 输出模块来实现相应的功能。
+下图 26-12 所示为提供的 VGA 输出模块。
+
+
+
+
+                                图 26-12 24 位色 VGA 输出模块
+
+
+
+
+店铺：https://xiaomeige.taobao.com                          官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                   技术群组：
+                 小梅哥 FPGA 团队              武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力            开发板 培训 项目研发三位一体
+
+
+
+
+                     图 26-13ACX720-GW5A138 开发板连接 VGA 接口的效果图
+
+
+     图中的 VGA 模块使用兼容 ADI 公司 ADV7123 芯片的国产 GM7123 芯片设
+计，能够实现 24 位色，分辨率高达 1920*1080 的 VGA 图像输出，关于该模块
+的进一步介绍，可查看对应的“GM7123 模块使用说明.pdf”文档。
+     连接好 VGA 模块后，使用 VGA 通信电缆将模块输出端与 VGA 显示器的对
+应接口连接，并将显示器设定为 VGA（640*480）模式，再按开发板的正常供
+电电缆和下载电缆连接方式连接好开发板和 PC 机。
+
+26.8.7下载与验证
+     经过上述工作，所有代码都已经设计完毕，硬件环境也已搭建完成。接下
+来介绍板级测试和验证方法：
+
+              1.按照开发板的引脚分配表分配正确的引脚，本设计实例针对各开
+         发板的管脚分配如下表 26-8 所示。
+                                表 26-8 VGA 驱动模块管脚绑定表
+店铺：https://xiaomeige.taobao.com                        官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                 技术群组：
+                 小梅哥 FPGA 团队                    武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                 开发板 培训 项目研发三位一体
+
+                     Pin Name       Pin NO.   Pin Name      Pin NO.
+                     Clk            Y18       VGA_RGB[13]   C15
+                     Rst_n          F15       VGA_RGB[14]   B15
+                     VGA_RGB[0]     A16       VGA_RGB[15]   B16
+                     VGA_RGB[1]     A15       VGA_RGB[16]   C17
+                     VGA_RGB[2]     A19       VGA_RGB[17]   E16
+                     VGA_RGB[3]     A18       VGA_RGB[18]   D16
+                     VGA_RGB[4]     F14       VGA_RGB[19]   B17
+                     VGA_RGB[5]     F13       VGA_RGB[20]   B18
+                     VGA_RGB[6]     E14       VGA_RGB[21]   C18
+                     VGA_RGB[7]     E13       VGA_RGB[22]   F18
+                     VGA_RGB[8]     C13       VGA_RGB[23]   F20
+                     VGA_RGB[9]     B13       VGA_HS        A13
+                     VGA_RGB[10]    D14       VGA_VS        A14
+                     VGA_RGB[11]    D15       VGA_BLK       D17
+                     VGA_RGB[12]    C14       VGA_CLK       C19
+
+              2.连接好开发板的硬件电路，并全编译工程直至没有错误后下载 fs
+         文件，最终测试效果如下图 26-14 所示。
+
+
+
+
+                                   图 26-14 VGA 显示效果图
+
+
+     通过图片可知，VGA 控制器设计能够稳定正确的刷新 VGA 显示器并控制
+正确的显示位置，因此设计无误。
+     后续，我们就可以使用该控制器再结合一定的图像信号产生电路实现更多
+更复杂的显示系统设计。当然，也可能根据具体的使用环境，再对本控制器进
+行设计微调。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                              官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                       技术群组：
+

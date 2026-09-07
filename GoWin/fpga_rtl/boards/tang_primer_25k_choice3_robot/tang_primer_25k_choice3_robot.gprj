@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE gowin-fpga-project>
+<Project>
+  <Template>FPGA</Template>
+  <Version>5</Version>
+  <Device name="GW5A-25B" pn="GW5A-LV25MG121NC1/I0">gw5a25b-003</Device>
+  <FileList>
+    <File path="../../src/motor/encoder_velocity_estimator.v" type="file.verilog" enable="1"/>
+    <File path="../../src/motor/wheel_speed_controller.v" type="file.verilog" enable="1"/>
+    <File path="../../../sensor_examples/common/i2c_register8_master.v" type="file.verilog" enable="1"/>
+    <File path="../../../sensor_examples/common/i2c_register16_master.v" type="file.verilog" enable="1"/>
+    <File path="../../../sensor_examples/ov5640_dvp/src/ov5640_sccb_init.v" type="file.verilog" enable="1"/>
+    <File path="../../../sensor_examples/ov5640_dvp/src/ov5640_dvp_capture.v" type="file.verilog" enable="1"/>
+    <File path="../../../sensor_examples/icm42688p_spi/src/icm42688p_spi.v" type="file.verilog" enable="1"/>
+    <File path="../../../sensor_examples/vl53l0x_i2c/src/vl53l0x_i2c.v" type="file.verilog" enable="1"/>
+    <File path="../../../sensor_examples/hc_sr04/src/hc_sr04_controller.v" type="file.verilog" enable="1"/>
+    <File path="../../../sensor_examples/multi_ir_array/src/multi_ir_array.v" type="file.verilog" enable="1"/>
+    <File path="../tang_primer_25k_bringup/src/bringup_uart_rx.v" type="file.verilog" enable="1"/>
+    <File path="../tang_primer_25k_bringup/src/bringup_uart_tx.v" type="file.verilog" enable="1"/>
+    <File path="src/choice3_reset_sync.v" type="file.verilog" enable="1"/>
+    <File path="src/choice3_video_clocks.v" type="file.verilog" enable="1"/>
+    <File path="src/choice3_tmds_encoder.v" type="file.verilog" enable="1"/>
+    <File path="src/choice3_hdmi_phy.v" type="file.verilog" enable="1"/>
+    <File path="src/choice3_camera_double_buffer.v" type="file.verilog" enable="1"/>
+    <File path="src/choice3_vga_640x480.v" type="file.verilog" enable="1"/>
+    <File path="src/choice3_event_freshness.v" type="file.verilog" enable="1"/>
+    <File path="src/choice3_imu_sample_guard.v" type="file.verilog" enable="1"/>
+    <File path="src/choice3_attitude_tilt_proxy.v" type="file.verilog" enable="1"/>
+    <File path="src/choice3_attitude_cdc.v" type="file.verilog" enable="1"/>
+    <File path="src/choice3_safety_supervisor.v" type="file.verilog" enable="1"/>
+    <File path="src/choice3_range_fusion.v" type="file.verilog" enable="1"/>
+    <File path="src/choice3_navigation_fsm.v" type="file.verilog" enable="1"/>
+    <File path="src/choice3_quadrature_decoder.v" type="file.verilog" enable="1"/>
+    <File path="src/choice3_encoder_health.v" type="file.verilog" enable="1"/>
+    <File path="src/choice3_tb6612_quad_bridge.v" type="file.verilog" enable="1"/>
+    <File path="src/choice3_control_core.v" type="file.verilog" enable="1"/>
+    <File path="src/choice3_uart_console.v" type="file.verilog" enable="1"/>
+    <File path="src/tang_primer_25k_choice3_robot_top.v" type="file.verilog" enable="1"/>
+    <File path="constraints/tang_primer_25k_choice3_robot.cst" type="file.cst" enable="1"/>
+    <File path="constraints/tang_primer_25k_choice3_robot.sdc" type="file.sdc" enable="1"/>
+  </FileList>
+</Project>

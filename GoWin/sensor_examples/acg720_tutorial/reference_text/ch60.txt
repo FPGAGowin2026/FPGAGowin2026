@@ -1,0 +1,949 @@
+                 小梅哥 FPGA 团队                    武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                  开发板 培训 项目研发三位一体
+
+
+
+60 基于双目 OV5640 的以太网 RGMII 图像传输设计
+                 |----02_设计实例
+ 工程源码
+                 |----ch60_ov5640x2_udp_rgmii
+ 相关视频课程
+ 说明
+
+      章节导读
+
+      双目摄像头常常被用作暗光增强、3D 建模以及测距上，相较于单目摄像头
+仅仅只能用于图像采集，双目摄像头的应用场景更加广泛，所能实现的功能更
+为全面。本节将以双目摄像头为实验对象，实现对数据的采集显示。
+
+      本节主要实现了一种对双目摄像头采集数据的图像拼接设计，并结合了具
+体的工程，完成了双目摄像头图像采集的以太网传输显示。本节设计基于上节
+内容为基础，在对不同源数据进行相应处理后，将相同行的数据组合成新的一
+行图像数据。组合后的图像数据通过以太网传输到 PC 机上。PC 机通过我们开发
+的软件，将数据解析还原后实现对图像的拼接显示。
+
+
+60.1双目摄像头与图像数据
+      在前面我们曾做过有关单目摄像头以太网传图显示系统的介绍。双目摄像
+头相对于单目而言虽然多了一个传感器输入，但是其原理与单目以太网传图显
+示系统基本一致。系统工作时首先对摄像头初始化，随后对数据进行行编号后
+存入 FIFO 中，通过 UDP 发送模块发送给 PC 端显示。不同的是，双目摄像头的
+图像输入源有两个，为了让最终能将图像同时显示在 PC 的显示设备上，我们在
+发送到 PC 端前先要对其进行数据拼接操作，随后将数据存储进 FIFO 中等待数
+据足够后再进行发送。因为双目摄像头的以太网发送部分原理与单目摄像头一
+致，所以本节仅对数据处理部分进行讲解。
+
+60.2系统整体设计
+      本次工程设计，大部分结构和单目摄像头以太网图像传输的总体结构图相
+似，不同的是，在设计中，新增了一个对双目摄像头采集数据图像合并的模块
+controller，同时在模块中，例化了两个 FIFO 作为两个半行图像数据的缓存。缓
+存的数据经过图像合并模块的处理后输出一行图像数据，交付给 UDP_Send 模
+
+店铺：https://xiaomeige.taobao.com                        官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                 技术群组：
+                     小梅哥 FPGA 团队                             武汉芯路恒科技
+              专注于培养您的 FPGA 独立开发能力                           开发板 培训 项目研发三位一体
+
+
+块。这样，在 UDP_Send 模块看来，接收的数据和单目摄像头工程一样，也是
+一整行带行号的数据。
+     本次板级验证的工程名为 ov5640x2_udp_rgmii，整个工程的系统框图如下
+所示。
+
+              D
+       OV5640     Camera_ETH_             PLL
+              V
+       摄像头          Formator
+              P
+       SCCB
+
+                  Camera
+                                                      UDP_Send            crc
+                   Init         cache1
+
+                                                                                gmii_to_
+              D                          Controller
+       OV5640     Camera_ETH_                                                     rgmii    ETH
+              V                                                                                  RJ45   计算机   显示器
+       摄像头
+              P
+                    Formator    cache2                            eth_
+                                                                 dcfifo                    PHY
+       SCCB
+                                                                                                 网口
+
+                  Camera
+                   Init
+
+
+
+
+                                                图 60-1 系统框图
+
+
+     结合板级验证的硬件搭建环境，本次板级验证的原理可以以硬件环境为背
+景作如下对应的深化讲解：
+
+                  1.整个系统在开始工作前，首先按照 camera_init 模块的设计对摄像
+           头进行初始化。
+
+                  2.随 后 摄 像 头 将 采 集 到 的 数 据 经 由 DVP 接 口 输 送 给
+           Camera_ETH_Formator 模块，该模块会根据输入数据行场同步信号的高
+           低电平，以行为单位，对其进行编码。
+
+                  3.数据进入一个双口 FIFO 中，当 FIFO 中的值足够进行一次以太网
+           数据传输时，数据就会被 controller 模块读出。
+
+                  4.controller 模块会先对 cache1 中的数据读取，在读取了一行包含有
+           行号的图像数据后，再对 cache2 中的数据读取。最终输出给以太网发
+           送模块的 fifo。
+
+                  5.使用 UDP 协议将以太网发送模块 async_dcfifo 中的数据经过 crc
+           校验后，经由以太网发送到 PC 机。
+
+                  6.PC 端使用我们专门开发的显示软件（小梅哥 UDP 摄像头.exe）
+           接收 FPGA 发送的包含行编号的图像数据，解析后还原为图像内容绘制
+           在 PC 机显示屏上。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                                                    官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                                             技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+
+60.3各子模块设计
+
+60.3.1摄像头初始化模块组（camera_init）
+     和单目摄像头工程一致，要想让摄像头按照设计需求工作，我们首先需要
+对摄像头进行初始化配置。为了方便用户操作，我们提供了一份 initial_table 文
+件，摄像头在初始化时会根据该文件对相关寄存器进行配置。用户若想修改摄
+像头的工作模式和输出格式，只需根据摄像头数据手册上的指示，对
+initial_table 文件中相关寄存器的值进行修改即可。
+
+60.3.2行号插入模块（Camera_ETH_Formator）
+     本次设计使用双目摄像头，通过双目转接板，将两个摄像头采集到的数据
+通过拓展接口输送给开发板。开发板接收到数据后根据输送过来的行场同步信
+号判断当前行数据在整幅图像中的位置。根据行信号判断是否为一行数据的开
+始，每当一行数据开始发送时，便会将行号计数器的值插入其中。当一行数据
+发送完毕后其内部的行号计数器便会加一，等到下一行数据到来，再将加一后
+的行号计数器的值插入该行图像数据中。根据场信号判断一帧图像是否结束，
+一帧图像发送完毕后便会对行号清零，并重新开始计数。
+     图像数据经过了行号插入后，接下来便是对图像数据进行数据拼接。
+
+60.3.3数据拼接模块（controller）
+     因为本次设计使用的双目摄像头，所以对应的图像数据源有两个。要想将
+两个图像源的图像数据显示在一个显示屏上，我们便需要对其进行拼接处理。
+经过了行号的插入，我们已经实现了对每行图像数据在对应整幅图像中的定位，
+而想对数据拼接处理只需要根据行号将相同行号的数据排列在同一行即可。对
+此我们可以设计一个数据拼接模块，该模块工作时会轮流读取两个信号源行号
+插入后的数据，每当读取完其中一个信号源一行带行号数据后便跳转到另一个
+数据源读取一行不带行号的数据。这样既实现了对图像数据的拼接，又不会因
+为行号对拼接后的图像产生影响。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                 小梅哥 FPGA 团队                      武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                    开发板 培训 项目研发三位一体
+
+
+                          clk                                    rdclk
+                         rst_n                                   rdreq1
+                                                                 rdreq2
+                        rdusedw1           controller
+                                                                 wrclk
+                        rddatal
+                                                                fifo_aclr
+                        rddata2
+                                                               fifo_wrreq
+                        rdusedw2
+                                                               fifo_wrdata
+
+
+
+                                     图 60-2 controller 模块端口图
+
+
+     模块各个信号所代表的含义如表 60-1 所示。
+                                          表 60-1 信号功能表
+
+                       信号名称          位宽    I/O   信号功能
+                       clk           1     I     模块时钟
+                       rst_n         1     I     复位信号
+                       rddata1       8     I     左侧读数据
+                       rdusedw1      14    I     左侧图像读数据量
+                       rddata2       8     I     右侧图像数据
+                       rdusedw2      14    I     右侧图像读数据量
+                       rdclk         1     o     读出图像时钟
+                       rdreql        1     o     左侧图像读使能信号 1
+                       rdreq2        1     o     右侧图像读使能信号 2
+                       wrclk         1     o     写合并后 fifo 使能信号
+                       fifo_aclr     1     o     清合并后 fifo 信号
+                       fifo_wrreq    8     o     合并后的 fifo 输出使能
+                       fifo_wrdata   1     o     合并后的 fifo 输出数据
+
+     cache1 和 cache2 是两个配置相同，功能也一致的 dcfifo。通道 1 和通道 2 的
+图像数据经过行号处理后会分别存储进 cache1 和 cache2 中，等待 controller 模块
+进行读取。这里以 cache1 的图像数据比 cache2 先显示为例，对整个 controller 模
+块的工作流程进行说明：
+
+              每当 wrreq1 信号高电平有效时，8 位的图像数据 wrdata1 便会写
+         入 cache1 中。
+
+              cache1 根据输入的数据量产生 14 位的 rdusedw1 信号，用来表示
+         当 前 dcfifo 中 所 能对数 据 进行 读取 的次 数。 同 时将 该信 号传 递给
+         controller 模块
+
+              controller 模块对 rdusedw1 信号进行判断，当其大于摄像头输出
+         图像的一行长度与行号长度的和。这里以摄像头输出的图像分辨率为
+         640*720 为例，即大于 640*2+2=1282 时，controller 模块便会使 rdreq1
+         信号为高电平，读取 cache1 中的图像数据，即 rddata1。每次都会从中
+店铺：https://xiaomeige.taobao.com                                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                          技术群组：
+                 小梅哥 FPGA 团队                      武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                   开发板 培训 项目研发三位一体
+
+         读取 1282 个字节的数据。
+
+              由于 cache1 的图像数据先显示，所以不需要进行处理，controller
+         会发出写请求信号给以太网的 dcfifo，即 fifo_wrreq。同时，将读取进
+         controller 的数据按照每次 8 位的数据量进行输出。
+
+              controller 模块采集完便会采集 cache2 中的数据。cache2 的工作流
+         程同理，但不同的是 controller 模块会将 cache2 中的行号剔除，将当行
+         的图像数据紧随 cache1 中当前行的数据输出。最终图像数据在显示设
+         备上显示时便会达到拼接的效果，两个摄像头采集到的数据同时显示
+         在显示屏中。
+
+     本次 cache1 和 cache2 中 dcfifo 的配置除了深度不同其余部分配置一致。考
+虑到 controller 模块在读取其中一个 cache 中的数据时，另一个 cache 中仍可能在
+存储数据，所以 dcfifo 的深度应该大于两行摄像头采集的数据量加上两个行号。
+因此 dcfifo 的深度应该大于(1080*2+2)*2=4324。因此该项我们将其设置为 8192。
+其相关配置如下图 60-3 所示，其余部分保持默认。
+
+
+
+
+                                         图 60-3 dcfifo 配置
+
+店铺：https://xiaomeige.taobao.com                             官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                      技术群组：
+                 小梅哥 FPGA 团队                                    武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                                 开发板 培训 项目研发三位一体
+
+
+     在清楚了 controller 模块的工作原理并配置完了 dcfifo 之后接下来即可开始
+本次模块的功能设计。
+
+60.4功能设计
+     本次模块设计主要实现的是对两个摄像头通道输入的图像数据分别处理，
+而该模块对数据的处理又可以分为三个状态。根据这三个状态，我们可以设计
+一个状态机，通过控制其状态的跳转，来达到分别处理的目的。本次设计的状
+态机为二段式状态机，其状态转移图如所示。
+
+                 rdusedw1 < IMG_WIDTH * 2 + 2
+                                                                                 cnt < IMG_WIDTH * 2 + 2 - 1
+
+
+
+
+                                                cnt >= IMG_WIDTH * 2 + 2 – &&
+                                                  rdusedw2 < IMG_WIDTH * 2 + 2
+                            IDLE                                                          SIDEA
+                                                rdusedw1 >= IMG_WIDTH * 2 + 2
+
+
+
+
+                                                            SIDEB
+
+
+
+
+                                                  cnt < IMG_WIDTH * 2 + 2 - 1
+
+
+                                        图 60-4 二段状态机状态转移图
+
+
+     IMG_WIDTH 为摄像头输出的图像像素宽度，本次设计我们以该值为 640 为
+例进行设计。IDLE，SIDEA，SIDEB 为三个不同的状态，在各个状态下实现的
+功能如下：
+
+              IDLE：空闲状态。状态机处于该状态时，会对 cache1 中可读数
+         据的数据量进行判断。当满足摄像头输出的图像数据和行号之和，即
+         640*2+2=1282 时，让状态跳转到 SIDEA，否则将一直处于该状态。
+
+              SIDEA：通道 1 读取状态。状态机处于该状态时，会读取 cache1
+         中的数据，并对数据进行计数。当计数值小于 1281 时，会一直在该状
+         态循环读取，并将读取的数据存储进以太网的发送 FIFO 中。当计数值
+         大于 1281 时，判断此时 cache2 中可读取的数据量是否满足 1282.如果
+店铺：https://xiaomeige.taobao.com                                                       官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                                                技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+         满足便跳转到 SIDEB，否则跳转到 IDLE。
+
+              SIDEB：通道 B 读取状态。状态机处于该状态时，会读取 cache2
+         中的数据，并对数据进行计数。当计数值小于 1281 时，会一直在该状
+         态循环读取，并舍弃最开始输入的行号数据后存储进以太网的发送
+         FIFO 中。当计数值大于设定好的图像数据量时，判断此时 cache1 中可
+         读取的数据量是否满足 1282，如果满足便跳转到 SIDEA 状态，否则跳
+         转到 IDLE 状态。
+
+     这里可能有读者会问，为什么在 IDLE 状态时要先判断 cache1 中的数据量
+而不是 cache2 中的数据量。这就涉及到了二者的优先级问题。本次涉及我们以
+cache1 的数据作为最终显示图像的起始数据，则 cache1 数据相较于 cache2 数据
+为高优先级。只有先对 cache1 的行数据处理输出后再对 cache2 的行数据处理输
+出，不断地循环处理才能使最终的显示图像达到预期的效果。
+     该部分相应的代码如下：
+ case (state)
+     IDLE:
+         begin
+             if (rdusedw1 >= IMG_WIDTH * 2 + 2) begin
+                 cnt <= 'd0;
+                 state <= SIDEA;
+             end else
+                 state <= IDLE;
+         end
+     SIDEA:
+         begin
+             if (cnt < IMG_WIDTH * 2 + 2 - 1) begin
+                 cnt <= cnt + 1'b1;
+                 state <= SIDEA;
+             end else if (rdusedw2 >= IMG_WIDTH * 2 + 2) begin
+                 cnt <= 'd0;
+                 state <= SIDEB;
+             end else begin
+                 cnt <= 'd0;
+                 state <= IDLE;
+             end
+         end
+     SIDEB:
+         begin
+             if (cnt < IMG_WIDTH * 2 + 2 - 1) begin
+                 cnt <= cnt + 1'b1;
+店铺：https://xiaomeige.taobao.com                   官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/            技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+                   state <= SIDEB;
+               end else if (rdusedw1 >= IMG_WIDTH * 2 + 2) begin
+                   cnt <= 'd0;
+                   state <= SIDEA;
+               end else begin
+                   cnt <= 'd0;
+                   state <= IDLE;
+               end
+         end
+     default :      state <= IDLE;
+ endcase
+     当然，这里我们只实现了状态的跳转，使能信号的转变以及数据的数据还
+未实现，对应代码如下：
+ always @ (*) begin
+ case (state)
+     IDLE:
+         begin
+             rdreq1 = 1'b0;
+             rdreq2 = 1'b0;
+             fifo_wrreq = 1'b0;
+             fifo_wrdata = 'd0;
+         end
+     SIDEA:
+         begin
+             rdreq1 = 1'b1;
+             rdreq2 = 1'b0;
+             fifo_wrreq = 1'b1;
+             fifo_wrdata = rddata1;
+         end
+     SIDEB:
+         begin
+             rdreq1 = 1'b0;
+             rdreq2 = 1'b1;
+             fifo_wrreq = 1'b1;
+             fifo_wrdata = rddata2;
+         end
+     default:
+         begin
+             rdreq1 = 1'b0;
+             rdreq2 = 1'b0;
+             fifo_wrreq = 1'b0;
+             fifo_wrdata = 'd0;
+         end
+店铺：https://xiaomeige.taobao.com                     官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/              技术群组：
+                  小梅哥 FPGA 团队            武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+ endcase
+     在空闲态 IDLE 时，不进行任何数据处理工作，所以该部分相应信号全部为
+高电平，输出数据为 0。
+     在 SIDEA 状态时，系统需要读取 cache1 中的数据并输出，所以相应 cache1
+的读请求信号变为高电平，controller 模块的输出请求信号为高电平，输出数据
+为 cache1 中的数据。
+     在 SIDEB 状态时，系统读取 cache2 中的数据将行号去除掉后输出，所以相
+应 cache2 的读请求信号变为高电平，controller 模块的输出请求信号为高电平，
+输出数据为 cache2 中的数据。
+     至此，该模块的设计便已完成，接下来即可对其进行仿真验证，以确定其
+功能是否能够正常运行。
+
+60.5仿真验证
+              1.在进行仿真验证时，我们可以对数据输入和计数器部分作如下设
+         计：
+
+              2.设计两个 8 位的数 wrdata1 和 wrdata2 分别作为 cache1 和 cache2
+         的输入数据。当 wrreq1 有效时，wrdata1 自加，当 wrreq2 有效时，
+         wrdata2 自加。数据超出 8 位后便会溢出清零。
+
+              3.设计两个 4 位的计数器，cnt1 和 cnt2，分别 wrdata1 和 wrdata2 的
+         溢出计数器。每当 wrdata1 和 wrdata2 溢出时，相应计数器的值便会加
+         1。当 wrdata1 和 wrdata2 的写使能信号 wrreq1 和 wrreq2 为低电平时，
+         对应计数器便会被清零。
+
+              4.完成了输入设计后接下来便是激励的产生，该部分设计如下：
+
+              5.对系统进行复位
+
+              6.让 wrreq1 和 wrreq2 变为高电平，此时数据开始写入 cache1 和
+         cache2
+
+              7.延时一段时间后将 wrreq1 信号变为低电平，此时 cache1 中数据
+         停止写入
+
+              8.延时一段时间后将 wrreq2 信号变为低电平，wrreq1 信号变为高电
+         平。此时 cache2 停止写入数据，cache1 开始写入数据
+
+              9.延时一段时间后结束仿真，观察波形
+
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+
+     本次仿真验证的代码如下：
+ `timescale 1ns/1ps
+
+ module controller_top_tb;
+
+      reg clk;
+      reg rst_n;
+      wire wrclk1;
+      reg wrreq1;
+      reg [7:0]wrdata1;
+
+      reg [7:0]wrdata2;
+      reg wrreq2;
+      reg fifo1_aclr;
+      reg fifo2_aclr;
+      wire wrclk2;
+
+      wire wrclk;
+      wire fifo_aclr;
+      wire fifo_wrreq;
+      wire [7:0] fifo_wrdata;
+
+      assign wrclk1 = clk;
+      assign wrclk2 = clk;
+
+      initial clk = 1;
+      always#10 clk = ~clk;
+
+      controller_top controller_top(
+          .clk(clk),
+          .rst_n(rst_n),
+
+          .wrclk1(clk),
+          .fifo1_aclr(fifo1_aclr),
+          .wrdata1(wrdata1),
+          .wrreq1(wrreq1),
+
+          .wrclk2(clk),
+          .fifo2_aclr(fifo2_aclr),
+          .wrdata2(wrdata2),
+          .wrreq2(wrreq2),
+
+          .wrclk(wrclk),
+
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+           .fifo_aclr(fifo_aclr),
+           .fifo_wrreq(fifo_wrreq),
+           .fifo_wrdata(fifo_wrdata)
+      );
+
+      initial begin
+          rst_n = 0;
+          wrreq1 = 0;
+          wrreq2 = 0;
+          fifo1_aclr = 1;
+          fifo2_aclr = 1;
+          #201;
+          rst_n = 1;
+          fifo1_aclr = 0;
+          #3;
+          fifo2_aclr = 0;
+          #201;
+          wrreq1 = 1;
+          wrreq2 = 1;
+          #30000;
+          wrreq1 = 0;
+          wrreq2 = 1;
+          #30000;
+          wrreq1 = 1;
+          wrreq2 = 0;
+          #30000;
+          $stop;
+      end
+
+      always@(posedge clk)
+      if(!rst_n)
+          wrdata1 <= 0;
+      else if(wrreq1)
+          wrdata1 <= wrdata1 + 1'b1;
+      else
+          wrdata1 <= 0;
+
+      always@(posedge clk)
+      if(!rst_n)
+          wrdata2 <= 0;
+      else if(wrreq2)
+          wrdata2 <= wrdata2 + 1'b1;
+      else
+          wrdata2 <= 0;
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                 小梅哥 FPGA 团队                    武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                 开发板 培训 项目研发三位一体
+
+
+
+ endmodule
+     设计完了激励文件后接下来即可运行仿真，分析波形数据了。
+
+60.5.1仿真波形分析
+     本次仿真文件为 control_top_tb，仿真得到的波形如图 60-5 所示。
+
+
+
+
+                                         图 60-5 仿真波形图
+
+
+     因为这次仿真涉及的信号较多，所以后面我们将一一需要验证的信号进行
+梳理，检验本次设计的正确性。
+
+ 60.5.1.1输入数据
+
+     我们对本次仿真的波形图放大，观察输入数据其图像如图 60-6 所示。
+
+
+
+
+                                    图 60-6 输入数据波形图
+
+
+     从图中我们可以看到 wrreq1 和 wrreq2 有效时，wrdata1 和 wrdata2 自加，当
+计数值达到 16’hff（即十进制 255）时，输入数据溢出清零。该部分波形结果
+与设计预想的一致，证明输入数据的逻辑设计正确。
+
+ 60.5.1.2dcfifo 读出数据量及计数器 cnt
+
+     根据功能设计我们知道，当 cache1 的 rdusedw1 信号值达到 1282 时，其读
+店铺：https://xiaomeige.taobao.com                         官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                  技术群组：
+                 小梅哥 FPGA 团队                武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力             开发板 培训 项目研发三位一体
+
+
+请求信号 cache1_rdreq 有效，controller 模块便会读取 cache1 中 1282 个数据。随
+后判断 cache2 的 rdusedw2 信号值是否达到 1282，如果达到便会读取 cache2 中
+1282 个数据。仿真中对 cache2 和 cache2 数据的读取如图 60-7 中○
+                                            1○2 两个红框
+所示。
+
+
+
+
+                                     图 60-7 数据读取波形
+
+
+
+
+                          图 60-8 开始数据读取时使能信号与计数器变化
+
+
+     可以看到图 60-8 中 cache1_rdreq 是在 rdusedw1 值为 1283 时才开始跳变为上
+升沿，出现该现象并不是说明我们设计出现了错误。在上个时钟上升沿时，
+rdusedw1 的值已经变为了 1282，对 rdusedw1 值的判断语句则是在当前时钟上升
+沿执行，而此时 rdusedw1 的值已经被更新为 1283，因此该点对应的值正确。此
+时，cache1 中的数据开始读出。
+
+店铺：https://xiaomeige.taobao.com                      官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/               技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+
+
+
+                          图 60-9 结束数据读取时使能信号与计数器变化
+
+
+     可以看到图 60-9 中 cnt 的值大于 1281 时，cache1_rdreq 变为下降沿，此时
+停止从 cache1 中读取数据。
+
+ 60.5.1.3输出使能信号及输出数据
+
+     因为当 cache1 中的数据读取到 controller 模块时，输出使能信号 fifo_wrreq
+信号便会由低电平跳变为高电平。当 controller 模块停止对 cache 数据读取时，
+输出使能信号 fifo_wrreq 信号便会由高电平跳变为低电平。所以，当读 cache1 的
+数据时，即 cache1_rdreq 信号变为高电平时，fifo_wrreq 为高电平；而在读
+cache2 的数据时，会舍弃掉前两个数据，controller 在读取数据时一个时钟上升
+沿只会读取一个数据，所以 cache2_rdreq 信号为高电平两个时钟上升沿后，
+fifo_wrreq 才会变为高电平。
+     图 60-10 为 controller 模块输出一行拼接的图像数据，输出使能信号和输出
+数据与 cache1_rdreq、cache2_rdreq 的关系。将 controller 模块开始输出 cache1 数
+据时的图像放大，得到图 60-11。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                 小梅哥 FPGA 团队              武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+
+
+
+                                 图 60-10 数据输出仿真波形图
+
+
+
+
+                              图 60-11 数据输出开始时相应信号变化
+
+
+     可以看到图 60-11 中，当 cache1_rdreq 转变为高电平时，fifo_wrreq 信号也
+转变为高电平，此时 controller 模块的输出使能有效，数据开始输出，证明该部
+分设计正确。
+     将 controller 开始输出 cache2 数据时的图像放大，得到图 60-12。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                      官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/               技术群组：
+                 小梅哥 FPGA 团队                    武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                 开发板 培训 项目研发三位一体
+
+
+
+
+                                 图 60-12 数据输出结束时相应信号变化
+
+
+     可以看到图 60-12 中，当 cache1_rdreq 变为低电平时，control 模块停止读取
+cache1 中的数据，fifo_wrreq 信号转变为低电平。此时 cache2_rdreq 转变为高电
+平，fifo_wrreq 信号在经过两个时钟上升沿后跳变为上升沿，该部分与理论结果
+一致，证明该部分设计正确。
+     综上所诉，输出使能信号和输出数据部分设计正确。
+     通过对上述信号分析比对，我们对本次模块设计的功能进行了验证，确定
+了本次设计的正确性。考虑到仿真结果具有参考价值，接下来我们还需要为设
+计分配引脚以进行板级验证。
+
+60.6引脚约束
+     本次设计引脚分配表如所示。
+                                         表 60-2 引脚分配表
+
+               Signial Name         Pin NO.      Signial Name       Pin NO.
+               camera1_data[7]      E14          camera2_data[7]    C19
+               camera1_data[6]      E13          camera2_data[6]    C18
+               camera1_data[5]      F14          camera2_data[5]    B18
+               camera1_data[4]      F13          camera2_data[4]    B17
+               camera1_data[3]      A19          camera2_data[3]    D16
+               camera1_data[2]      A18          camera2_data[2]    E16
+               camera1_data[1]      A16          camera2_data[1]    C17
+               camera1_data[0]      A15          camera2_data[0]    D17
+               camera1_rst_n        A14          camera2_rst_n      B16
+               camera1_pwdn         A13          camera2_pwdn       B15
+               camera1_xclk         C13          camera2_xclk       F16
+               camera1_pclk         B13          camera2_pclk       E17
+店铺：https://xiaomeige.taobao.com                              官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                       技术群组：
+                 小梅哥 FPGA 团队              武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力            开发板 培训 项目研发三位一体
+
+               camera1_href        D14     camera2_href      D20
+               camera1_vsync       D15     camera2_vsync     C20
+               camera1_sdat        C14     camera2_sdat      E19
+               camera1_sclk        C15     camera2_sclk      D19
+               eth_txd[3]          Y22     eth_mdio          W17
+               eth_txd[2]          W21     eth_rst_n         V22
+               eth_txd[1]          W22     eth_txen          AA19
+               eth_txd[0]          U21     clk               Y18
+               eth_gtxc            U22     rst_n             F15
+               eth_mdc             AA18
+
+     分配完成后，随后生成 fs 文件，等待生成完成后便可以连接硬件准备板级
+验证了。
+
+60.7板级验证
+     因为 ACX720-GW5A138 开发板本身自带有 40pin 的拓展接口和一个千兆网
+口 接 口 ， 满 足 本 次 系 统 设 计 的 需 求 。 所 以 本 次 板 级 验 证 将 使 用 ACX720-
+GW5A138 开发板来进行本项目的板级验证。
+
+60.7.1系统所需硬件
+     本次设计所需硬件如下：
+
+              1.ACX720-GW5A138 开发板 x1
+
+              2.双目摄像头 x1
+
+              3.DC 电源线 x1
+
+              4.高云下载器 x1
+
+              5.千兆网线 x1
+
+60.7.2硬件连接
+     本次系统设计硬件方面连接如图 60-13 所示。
+
+              1.将双目摄像头与开发板 40pin 扩展接口相连（如果是用的双目转
+         接板，则是将转接板在开发板 40pin 扩展接口上，然后将 OV5640 接在
+         转接板上）。
+
+              2.用网线将开发板网口和电脑网口连接。
+
+              3.连接好下载器。
+
+              4.连接好电源，电源线最好连接电源适配器。
+店铺：https://xiaomeige.taobao.com                       官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                技术群组：
+                 小梅哥 FPGA 团队                    武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                 开发板 培训 项目研发三位一体
+
+
+
+
+                                         图 60-13 硬件连接
+
+
+     连接完毕后接下来即可进行程序下载和验证了。
+
+60.7.3下载与验证
+     本次板级验证的工程名为 ov5640x2_udp_rgmii，连接好硬件后对应的下载
+与验证操作如下：
+
+              1.将开发板左侧的电源拨码开关拨到 ON 侧。
+
+              2.将生成的 fs 文件下载至开发板中，注意这一步一定要先于下面的
+         步骤执行。
+
+              3.在电脑上进入【控制面板】->【网络和 Internet】->【查看网络状
+         态和任务】，查看网络连接状态，如图 60-14 所示。当看到在活动网络
+         中有本地连接存在时，表明开发板和电脑的网络已经连通。至于显示
+         的无法连接到网络选项，意思是指无法连接到互联网获取网络上的数
+         据，这是正常的，无需在意。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                         官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                  技术群组：
+                 小梅哥 FPGA 团队                武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力             开发板 培训 项目研发三位一体
+
+
+
+
+                                    图 60-14 网路连接状态
+
+              4.点击“本地连接”文字，查看该网络状态，确认当前连接速度为
+         千兆速率（1000.0Mbps），如图 60-15 所示。
+
+
+
+
+                                     图 60-15 以太网速率
+
+
+     在上述本地连接状态中，点击属性，并在弹出的属性对话框中双击
+【Internet 协议版本 4（TCP/Ipv4）】选项，然后在弹出的属性对话框中 设置静态
+
+店铺：https://xiaomeige.taobao.com                      官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/               技术群组：
+                 小梅哥 FPGA 团队                  武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力               开发板 培训 项目研发三位一体
+
+
+IP 地址，如图 60-16 所示。
+
+
+
+
+                                     图 60-16 静态 IP 设置
+
+              5.开启电脑巨型帧。在“设备管理器\网络适配器\Realtek PCle GbE
+         Family Controller 属性\高级\巨型帧” （此处也可能是其他名称，具体
+         以用户所使用设备型号为准），如图 60-17 所示。
+
+
+
+
+                                     图 60-17 巨型帧设置
+
+              6.由于本测试工程不支持 ARP 协议，因此我们还需要通过 netsh 方
+店铺：https://xiaomeige.taobao.com                         官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                  技术群组：
+                 小梅哥 FPGA 团队                    武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                 开发板 培训 项目研发三位一体
+
+         式来强制将开发板的 IP 地址和 MAC 地址关联在一起。这样，当 PC 发
+         送给 192.168.0.2 的数据包的时候，目标 MAC地址自动为开发板的 MAC
+         地址。
+
+     操作时先以管理员身份运行 cmd.exe 程序（该文件在 C:\Windows\System32
+路径下），也就是我们常说的命令行窗口。由于有用户反应在使用时无法成功绑
+定 arp，经过分析就 是操作权限不够，所以这里强调要以管理员身份运行
+cmd.exe。
+     打开 cmd 窗口之后，依次执行如下命令：
+
+              （1）查看电脑网卡名称，有线网卡的大概率为“以太网”
+ netsh interface IPV4 show interface
+
+
+
+
+                                 图 60-18 查看电脑的网卡名称
+
+              （2）根据自己的网卡名称，笔者电脑网卡名称为“以太网”，用
+         下述命令执行静态绑定，如果网卡名称不同，需要自行修改命令然后
+         执行。
+ netsh -c interface ipv4 add neighbors "以太网" "192.168.0.2" "00-0a-35-01-fe-c0"
+
+
+
+
+                                         图 60-19 静态绑定
+店铺：https://xiaomeige.taobao.com                         官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                  技术群组：
+                 小梅哥 FPGA 团队                武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力             开发板 培训 项目研发三位一体
+
+              （3）最后用查看绑定结果，执行如下命令。
+ arp -a
+
+
+
+
+                                    图 60-20 查看绑定结果
+
+              7.打开小梅哥 UDP 摄像头上位机，并按照如图 60-21 所述设置各项
+          参数。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                      官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/               技术群组：
+                 小梅哥 FPGA 团队               武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力            开发板 培训 项目研发三位一体
+
+                                图 60-21 小梅哥 UDP 摄像头界面
+
+              本机 IP，对应当前实验所用电脑的 IP 地址，前面已经按照要求
+         设置为了 192.168.0.3，所以这里直接填写该地址。
+
+              本机端口，对应当前实验所用电脑接收图像时使用的网络端口，
+         该端口在 FPGA 程序中定义为了 6102，所以这里也要设置为 6102 才能
+         正确显示图像。
+
+              远程 IP，对应 FPGA 开发板使用的 IP 地址，也就是代码中的
+         src_ip 值。例程使用的为 192.168.0.2。
+
+              远程端口，对应 FPGA 开发板使用的端口号，也就是代码中的
+         src_port 值，例程使用的为 5000。
+
+              分辨率，对应了摄像头输出的图像分辨率大小，本实验中，每个
+         摄像头输出的图像分辨率为 640*720，因此经过数据拼接后的图像分辨
+         率为 1280*720。
+
+              保存图片，该按钮在软件停止接收图像后，点击可以保存最后界
+         面上显示的图像内容到文件。
+
+              连接/停止，该按钮可以开始和停止接收并显示图像，当所有参
+         数设置好之后，点击该按钮即可开始接收并显示图像。
+
+              8.设置好参数后，点击链接按钮即可开始接收并显示图像内容。
+
+              9.该软件运行时需要关闭防火墙，软件自带关闭防火墙功能，点击
+         连接时会提示是否关闭防火墙，勾选专用网络和公共网络两个选项，
+         然后点击【允许访问按钮】即可。如果还是无法关闭，考虑软件权限
+         不够，以管理员身份运行本软件即可，如图 60-22 所示。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                         官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                  技术群组：
+                 小梅哥 FPGA 团队                武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力             开发板 培训 项目研发三位一体
+
+
+
+
+                                     图 60-22 关闭防火墙
+
+
+     连接成功后，可以看到软件显示图像如图 60-23 所示
+
+
+
+
+                                    图 60-23 采集显示图像
+
+
+     可以看到显示出来的画面色彩鲜艳亮丽，图像整体饱和度高，图像比例正
+常，没有任何压缩错位现象，本次双目摄像头数据拼接模块的设计成功。
+
+
+店铺：https://xiaomeige.taobao.com                      官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/               技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+
+60.8常见问题说明
+     对于本节工程需要注意的有以下两点。
+
+              1.在进行以太网传输前，需要确认电脑是否支持千兆传输，同事还
+         需打开巨型帧，否则数据将无法传输显示。
+
+              2.特别需要注意：如果是通过其他工程而来的摄像头工程，要确认
+         摄像头初始化管脚的片上上拉电阻（2 组 SCCB 信号）已经开启。否则
+         摄像头有可能不会初始化成功，进而不会有图像输出。
+
+60.8.1总结与思考
+     本节设计实现了一个数据拼接模块，通过对两个摄像头采集的数据分开处
+理并传输，实现了对双目摄像头图像数据的拼接显示。学习本节时，读者可以
+参考相应的视频教程相互理解印证，建议读者能够跟随本实验内容，完整的进
+行整个实验。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+

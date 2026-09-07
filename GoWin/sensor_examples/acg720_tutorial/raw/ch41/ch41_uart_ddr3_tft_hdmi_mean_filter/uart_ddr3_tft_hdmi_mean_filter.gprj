@@ -1,0 +1,39 @@
+<?xml version="1" encoding="UTF-8"?>
+<!DOCTYPE gowin-fpga-project>
+<Project>
+    <Template>FPGA</Template>
+    <Version>5</Version>
+    <Device name="GW5AT-138B" pn="GW5AT-LV138PG484AC1/I0">gw5at138b-012</Device>
+    <FileList>
+        <File path="src/bit8_trans_bit16/bit8_trans_bit16.v" type="file.verilog" enable="1"/>
+        <File path="src/ddr3_ctrl_2port/ddr3_ctrl_2port.v" type="file.verilog" enable="1"/>
+        <File path="src/ddr3_ctrl_2port/fifo_ddr3_adapter.v" type="file.verilog" enable="1"/>
+        <File path="src/ddr3_memory_interface/ddr3_memory_interface.v" type="file.verilog" enable="1"/>
+        <File path="src/ddr3_pll/ddr3_pll.v" type="file.verilog" enable="1"/>
+        <File path="src/disp_driver/disp_driver.v" type="file.verilog" enable="1"/>
+        <File path="src/disp_driver/disp_parameter_cfg.v" type="file.verilog" enable="1"/>
+        <File path="src/dvi_encoder.v" type="file.verilog" enable="1"/>
+        <File path="src/gowin_ddr/gowin_ddr.v" type="file.verilog" enable="1"/>
+        <File path="src/gowin_prom/rom_red_x77.v" type="file.verilog" enable="1"/>
+        <File path="src/image_buffer/image_buffer.v" type="file.verilog" enable="1"/>
+        <File path="src/image_rx_ctrl/image_rx_ctrl.v" type="file.verilog" enable="1"/>
+        <File path="src/image_stitche/image_stitche_x.v" type="file.verilog" enable="1"/>
+        <File path="src/mean_filter/mean_filter.v" type="file.verilog" enable="1"/>
+        <File path="src/mean_filter/shift_register_2taps/shift_register_2taps.v" type="file.verilog" enable="1"/>
+        <File path="src/pll/pll.v" type="file.verilog" enable="1"/>
+        <File path="src/rd_data_fifo/rd_data_fifo.v" type="file.verilog" enable="1"/>
+        <File path="src/rgb2gray/rgb2gray.v" type="file.verilog" enable="1"/>
+        <File path="src/rom_blue_x29/rom_blue_x29.v" type="file.verilog" enable="1"/>
+        <File path="src/rom_green_x150/rom_green_x150.v" type="file.verilog" enable="1"/>
+        <File path="src/shift_reg.v" type="file.verilog" enable="1"/>
+        <File path="src/shift_reg_ram/shift_reg_ram.v" type="file.verilog" enable="1"/>
+        <File path="src/test_dat_gen/colour_bar_dat_gen.v" type="file.verilog" enable="1"/>
+        <File path="src/test_dat_gen/rom_image.v" type="file.verilog" enable="1"/>
+        <File path="src/test_dat_gen/rom_image_extract.v" type="file.verilog" enable="1"/>
+        <File path="src/test_dat_gen/test_dat_gen.v" type="file.verilog" enable="1"/>
+        <File path="src/uart_byte_rx/uart_byte_rx.v" type="file.verilog" enable="1"/>
+        <File path="src/uart_ddr3_tft_hdmi_mean_filter.v" type="file.verilog" enable="1"/>
+        <File path="src/wr_data_fifo/wr_data_fifo.v" type="file.verilog" enable="1"/>
+        <File path="src/uart_ddr3_tft_hdmi_mean_filter.cst" type="file.cst" enable="1"/>
+    </FileList>
+</Project>

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE gowin-fpga-project>
+<Project>
+    <Template>FPGA</Template>
+    <Version>5</Version>
+    <Device name="GW5AT-138B" pn="GW5AT-LV138PG484AC1/I0">gw5at138b-012</Device>
+    <FileList>
+        <File path="src/cdc/async_frame_fifo.v" type="file.verilog" enable="1"/>
+        <File path="src/ethernet/crc32_d8.v" type="file.verilog" enable="1"/>
+        <File path="src/ethernet/ip_checksum.v" type="file.verilog" enable="1"/>
+        <File path="src/ethernet/eth_udp_rx_gmii.v" type="file.verilog" enable="1"/>
+        <File path="src/ethernet/eth_udp_tx_gmii.v" type="file.verilog" enable="1"/>
+        <File path="src/ethernet/eth_arp_icmp_rx_gmii.v" type="file.verilog" enable="1"/>
+        <File path="src/ethernet/eth_arp_icmp_tx_gmii.v" type="file.verilog" enable="1"/>
+        <File path="src/ethernet/rgmii_to_gmii.v" type="file.verilog" enable="1"/>
+        <File path="src/ethernet/gmii_to_rgmii.v" type="file.verilog" enable="1"/>
+        <File path="src/protocol/fpga_control_packet_rx.v" type="file.verilog" enable="1"/>
+        <File path="src/protocol/fpga_telemetry_packet_tx.v" type="file.verilog" enable="1"/>
+        <File path="src/protocol/fpga_status_packet_tx.v" type="file.verilog" enable="1"/>
+        <File path="src/sensors/ov5640_dvp_capture.v" type="file.verilog" enable="1"/>
+        <File path="src/sensors/imu_sample_commit.v" type="file.verilog" enable="1"/>
+        <File path="src/sensors/range_validity_monitor.v" type="file.verilog" enable="1"/>
+        <File path="src/control/range_safety_limiter.v" type="file.verilog" enable="1"/>
+        <File path="src/control/local_avoidance_fsm.v" type="file.verilog" enable="1"/>
+        <File path="src/control/path_segment_executor.v" type="file.verilog" enable="1"/>
+        <File path="src/control/autonomous_motion_controller.v" type="file.verilog" enable="1"/>
+        <File path="src/motion_mode_arbiter.v" type="file.verilog" enable="1"/>
+        <File path="src/motor/wheel_speed_controller.v" type="file.verilog" enable="1"/>
+        <File path="src/motor/differential_drive_control.v" type="file.verilog" enable="1"/>
+        <File path="src/system/control_command_watchdog.v" type="file.verilog" enable="1"/>
+        <File path="src/system/demo_path_rom.v" type="file.verilog" enable="1"/>
+        <File path="src/system/robot_rtl_core.v" type="file.verilog" enable="1"/>
+        <File path="src/vendor/gowin/gowin_pll.v" type="file.verilog" enable="1"/>
+        <File path="src/vendor/gowin/gowin_pll_mod.v" type="file.verilog" enable="1"/>
+        <File path="src/vendor/gowin/pll_init.v" type="file.verilog" enable="1"/>
+        <File path="src/ethernet/acg720_robot_network_rgmii.v" type="file.verilog" enable="1"/>
+        <File path="src/ethernet/acg720_robot_network_offline_top.v" type="file.verilog" enable="1"/>
+        <File path="constraints/acg720_udp_loopback.cst" type="file.cst" enable="1"/>
+        <File path="constraints/acg720_robot_network_offline.sdc" type="file.sdc" enable="1"/>
+    </FileList>
+</Project>

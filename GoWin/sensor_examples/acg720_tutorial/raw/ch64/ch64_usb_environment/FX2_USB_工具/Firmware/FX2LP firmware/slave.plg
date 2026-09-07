@@ -1,0 +1,73 @@
+<html>
+<body>
+<pre>
+<h1>µVision2 Build Log</h1>
+<h2>Project:</h2>
+C:\Users\Administrator\Desktop\FX2LP firmware\slave.uv2
+Project File Date:  12/31/2020
+
+<h2>Output:</h2>
+Build target 'Target 1'
+compiling FW.C...
+assembling DSCR.A51...
+compiling slave.c...
+SLAVE.C(242): error C202: 'I2C_Addr': undefined identifier
+SLAVE.C(244): error C202: 'DB_Addr': undefined identifier
+SLAVE.C(254): error C202: 'LED_ADDR': undefined identifier
+SLAVE.C(257): error C202: 'BTN_ADDR': undefined identifier
+SLAVE.C(266): error C202: 'VR_GET_CHIP_REV': undefined identifier
+Target not created
+Build target 'Target 1'
+compiling FW.C...
+assembling DSCR.A51...
+compiling slave.c...
+linking...
+*** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
+    SEGMENT: ?PR?_LED_OFF?SLAVE
+*** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
+    SEGMENT: ?PR?_LED_ON?SLAVE
+Program Size: data=47.6 xdata=4486 code=2673
+creating hex file from "slave"...
+User command #1: hex2bix -i -f 0xC2 slave.iic slave.hex
+Intel Hex file to EZ-USB Binary file conversion utility
+Copyright (c) 1997-2005, Cypress Semiconductor Inc.
+2718 Bytes written.
+Total Code Bytes = 2673
+Conversion completed successfully.
+"slave" - 0 Error(s), 2 Warning(s).
+Build target 'Target 1'
+compiling FW.C...
+assembling DSCR.A51...
+compiling slave.c...
+linking...
+*** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
+    SEGMENT: ?PR?_LED_OFF?SLAVE
+*** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
+    SEGMENT: ?PR?_LED_ON?SLAVE
+Program Size: data=47.6 xdata=4486 code=2673
+creating hex file from "slave"...
+User command #1: hex2bix -i -f 0xC2 slave.iic slave.hex
+Intel Hex file to EZ-USB Binary file conversion utility
+Copyright (c) 1997-2005, Cypress Semiconductor Inc.
+2718 Bytes written.
+Total Code Bytes = 2673
+Conversion completed successfully.
+"slave" - 0 Error(s), 2 Warning(s).
+Build target 'Target 1'
+compiling FW.C...
+assembling DSCR.A51...
+compiling slave.c...
+linking...
+*** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
+    SEGMENT: ?PR?_LED_OFF?SLAVE
+*** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
+    SEGMENT: ?PR?_LED_ON?SLAVE
+Program Size: data=47.6 xdata=4486 code=2673
+creating hex file from "slave"...
+User command #1: hex2bix -i -f 0xC2 slave.iic slave.hex
+Intel Hex file to EZ-USB Binary file conversion utility
+Copyright (c) 1997-2005, Cypress Semiconductor Inc.
+2718 Bytes written.
+Total Code Bytes = 2673
+Conversion completed successfully.
+"slave" - 0 Error(s), 2 Warning(s).

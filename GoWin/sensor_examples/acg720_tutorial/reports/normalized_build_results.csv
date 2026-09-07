@@ -1,0 +1,3 @@
+"chapter","project_file","requested_top","observed_top","status","exit_code","elapsed_seconds","errors","log"
+"44","normalized/ch44_dvp_capture/dvp_capture.gprj","DVP_Capture","DVP_Capture","PASS","0","1.608","0","reports/normalized_logs/DVP_Capture.log"
+"44","normalized/ch44_camera_init/camera_init.gprj","camera_init","camera_init","PASS","0","2.271","0","reports/normalized_logs/camera_init.log"

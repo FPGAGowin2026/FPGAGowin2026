@@ -1,0 +1,26 @@
+<?xml version="1" encoding="UTF-8"?>
+<!DOCTYPE gowin-fpga-project>
+<Project>
+    <Template>FPGA</Template>
+    <Version>5</Version>
+    <Device name="GW5AT-138B" pn="GW5AT-LV138PG484AC1/I0">gw5at138b-012</Device>
+    <FileList>
+        <File path="src/DVP_Capture/DVP_Capture.v" type="file.verilog" enable="1"/>
+        <File path="src/camera_init/camera_init.v" type="file.verilog" enable="1"/>
+        <File path="src/camera_init/i2c_control/i2c_bit_shift.v" type="file.verilog" enable="1"/>
+        <File path="src/camera_init/i2c_control/i2c_control.v" type="file.verilog" enable="1"/>
+        <File path="src/camera_init/ov5640_init_table_jpeg.v" type="file.verilog" enable="1"/>
+        <File path="src/camera_init/ov5640_init_table_rgb.v" type="file.verilog" enable="1"/>
+        <File path="src/camera_init/ov7725_init_table_rgb.v" type="file.verilog" enable="1"/>
+        <File path="src/fifo_top/fifo_top.v" type="file.verilog" enable="1"/>
+        <File path="src/gowin_pll/gowin_pll.v" type="file.verilog" enable="1"/>
+        <File path="src/top/fx2_stream_in_ov5640_rgb.v" type="file.verilog" enable="1"/>
+        <File path="src/usb/usb_cmd.v" type="file.verilog" enable="1"/>
+        <File path="src/usb/usb_cmd_rx.v" type="file.verilog" enable="1"/>
+        <File path="src/usb/usb_stream_in.v" type="file.verilog" enable="1"/>
+        <File path="src/usb/usb_stream_out.v" type="file.verilog" enable="1"/>
+        <File path="src/usb_send_ctrl/usb_send_ctrl.v" type="file.verilog" enable="1"/>
+        <File path="src/fx2_stream_in_ov5640_rgb.cst" type="file.cst" enable="1"/>
+        <File path="src/fx2_stream_in_ov5640_rgb.rao" type="file.gao" enable="1"/>
+    </FileList>
+</Project>

@@ -1,0 +1,1116 @@
+                 小梅哥 FPGA 团队                 武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力               开发板 培训 项目研发三位一体
+
+
+
+       二端口 DDR3 控制器（ddr3_ctrl_2port）设计
+                 |----02_设计实例
+ 工程源码
+                 |----ch37_ddr3_ctrl_2port
+ 相关视频课程
+ 说明
+
+      章节导读
+
+      本节将主要介绍 DDR3 二端口控制器的一种设计方法。通过完成本次 DDR3 二
+端口控制器设计，读者能够简化大容量缓存的操作控制，从而实现仅需犹如
+FIFO 般简便的操作，就可以享受 DDR 的巨大存储容量的这样一个现实应用。
+
+
+37.1DDR 存储器的应用局限
+      在前面的内容中，我们对高云 DDR3 IP 的配置以及时序都进行的了说明。
+虽然借助 IP 核可以成功的实现 FPGA 和 DDR3 存储器之间的数据通信，但是该
+IP 核在使用上因有较大的局限而在实际应用上并不方便。
+      我们知道，数据的存储核读出需满足如下基本原则：对于一个存储器来说，
+在进行写操作是，如果存储器已满或将满时，则不应再向其中写入数据，即使
+写入数据也是无效的。如果在进行读操作时，存储器已空或将空，则不应再从
+其中读出数据，否则读出的数据也是无效的。
+      在某些典型条件下，针对上述原则，我们如果不加额外的处理手段而单单
+只使用 DDR3 控制器 IP 核，则数据的读写有效性就有可能无法得到保证，具体
+如下：
+      首先，虽然 DDR3 控制器提供给用户的 clk_out 时钟频率是固定的，用户只
+需要按照该固定频率写入和读出数据即可，但是大部分硬件也会有自身的固定
+工作频率和数据读写频率，甚至有的器件固定工作频率、数据读写频率和
+DDR3 的 clk_out 时钟频率相差极大。存储器和外设硬件的读写频率差异，很有
+可能将导致 DDR3 的 clk_out 时钟无法满足写入侧或读出侧的硬件读写速率需求，
+从而读写两端速率不匹配。如果读写速率不匹配，则不但 DDR3 与外设的数据
+交互会存在跨时钟域的问题，还会导致 DDR3 读写出错。
+      其次，即使 DDR3 的读写速率刚好也可以满足硬件外设的读写速率，还会
+存在数据读写连续的问题。在有的外设发送或接收有效数据并不是连续的前提
+下，我们如果设置 DDR3 控制器 IP 核时，默认外设每一拍发送的数据都是有效
+店铺：https://xiaomeige.taobao.com                     官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/              技术群组：
+                 小梅哥 FPGA 团队                       武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                    开发板 培训 项目研发三位一体
+
+
+数据，而不针对数据读写不连续现象作其他收发控制，则也会导致数据读写出
+错。
+     此外，为了保证数据的交互速率高效，DDR3 IP 核典型的应用数据交互位
+宽为 128 位，而我们的外设又多以 8 位核 16 位等低位宽读写居多，这样，位宽
+的不匹配也会成为数据读写核缓存的一大障碍。
+     凡此种种，直接使用 DDR3 控制器，会存在的问题可以总结如下图 37-1 所
+示。
+                                    读写时钟              单一Ui时钟
+                                    频率不同              能满足数据      读数据硬件
+                                    跨时钟域              读写侧速率
+                     写数据硬件          怎么办?               需求吗?
+
+
+
+
+                                         DDR3控制器IP核+DDR3存储器
+
+
+
+                                          读写数据     读写数据
+                                          不连续怎     位宽不同
+                                           么办?     怎么办?
+
+
+
+                         图 37-1 直接使用 DDR 控制器 IP 核会遇到实际问题
+
+
+     值得庆幸的是，以上种种 DDR3 控制器应用上的障碍，都能够通过在读写
+端各添加一个 FIFO 来获得较好解决。如果读写端各添加一个 FIFO 对写入和读
+出数据进行缓存，既可以解决跨时钟域的读写问题，又可以适配多种多样的外
+设读写速率需求，同时，还可以满足数据在固定频率下非连续写和非连续读、
+位宽不匹配等种种问题。
+     因此，我们有必要借助前面讲解的内容，对 DDR3 控制器 IP 和进行深入设
+计。
+
+37.2模块整体结构框图
+     经过对交互数据的端口分析，可以绘制出 DDR3 二端口控制器设计框图。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                                官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                         技术群组：
+                            小梅哥 FPGA 团队                                                   武汉芯路恒科技
+                         专注于培养您的 FPGA 独立开发能力                                              开发板 培训 项目研发三位一体
+
+                  clk
+            clk_200m
+              pll_lock
+            sys_rst_n
+                                                                                                      ddr3_ctrl_2port
+              pll_stop
+
+
+
+
+                                                                                                                               cmd_ready
+                                                                                                                              wr_data_rdy
+                                                                                                                                 rd_data
+                                                                                                   clk                        rd_data_valid
+                                         ui_clk                                             memory_clk                       rd_data_end
+                                         rst_n         fifo_ddr3_adapter                       pll_lock                    init_calib_complete
+                                 init_calib_complete                                           rst_n                                               init_calib_complete
+                                                                                                                                clk_out
+                                       app_rdy
+                                                                                             pll_stop                           ddr_rst
+                                     app_wdf_rdy
+                                                                           app_cmd              cmd                            O_ddr_addr
+                                  app_rd_data_valid                        app_en             cmd_en
+                                                                                                                                                  ddr3_addr
+                                     app_rd_data                                                                              O_ddr_ba
+                                       rd_load           wr_data_fifo      app_addr             addr                         O_ddr_cs_n
+                                                                                                                                                  ddr3_ba
+              rd_load                                                      app_wdf_data      wr_data                                              ddr3_cs_n
+                                       wr_load                                                            DDR3_Memory        O_ddr_ras_n
+              wr_load                                                      app_wdf_wren     wr_data_en                                            ddr3_ras_n
+                                   app_addr_rd_min                                                                           O_ddr_cas_n
+   app_addr_rd_min                 app_addr_rd_max                                                        _Interface_Top                          ddr3_cas_n
+                                                                           app_wdf_end      wr_data_end                      O_ddr_we_n
+  app_addr_rd_max                                                                                                                                 ddr3_we_n
+                                     rd_bust_len                                           wr_data_mask                      O_ddr_clk
+        rd_bust_len                                                         wrfifo_full
+                                                                                                sr_req                                            ddr3_ck_p
+                                  app_addr_wr_min
+  app_addr_wr_min                                                          rdfifo_empty                                      O_ddr_clk_n
+                                   app_addr_wr_max                                            ref_req                                             ddr3_ck_n
+ app_addr_wr_max                     wr_bust_len                             rfifo_dout        burst                          O_ddr_cke
+                                                                                                                                                 ddr3_cke
+       wr_bust_len                      wr_clk                                                                               O_ddr_odt
+                                                                                                                                                 ddr3_odt
+               wr_clk                wfifo_wren                                                                              O_ddr_reset_n
+                                                         rd_data_fifo                                                                             ddr3_reset_n
+         wfifo_wren                   wfifo_din                                                                              O_ddr_dqm
+           wfifo_din                                                                                                                             ddr3_dm
+                                                                                                                             IO_ddr_dq           ddr3_dq
+                                         rd_clk
+                rd_clk                                                                                                       IO_ddr_dqs          ddr3_dqs_p
+                                      rfifo_rden
+          rfifo_rden                                                                                                        IO_ddr_dqs_n
+                                                                                                                                                 ddr3_dqs_n
+
+                                                                                                                                                 wrfifo_full
+                                                                                                                                                  rdfifo_empty
+                                                                                                                                                 rfifo_dout
+
+
+
+                                                       图 37-2 DDR3 二端口控制器模块组成框图
+
+
+         该控制器由如下几个部分构成：
+
+                          1.DDR3 读写控制的 IP 核（DDR3_Memory_Interface_Top）。
+
+                          2.读写 FIFO 和 DDR3 IP 核数据交互控制模块（fifo_ddr3_adapter）。
+
+                          3.写 FIFO 模块（wr_ddr3_fifo）：负责将上游外设传递而来的数据
+                     写入 DDR3 控制器。
+
+                          4.读 FIFO 模块（rd_ddr3_fifo）：负责将 DDR3 控制器内部数据读出
+                     到下游。
+
+                          5.将模块组进行整合的顶层模块（ddr3_ctrl_2port）。
+
+         从以上模块组成框图中我们不难发现，该模块组设计完成后，实际应用时，
+只需要在工程中合理描述写 FIFO 的写端口核读 FIFO 的读端口对应关系，就可
+以有效完成 DDR3 的读写控制。至于 DDR3 控制器和 DDR3 器件的数据交互、
+FIFO 和 DDR3 控制器 IP 核的数据交互，我们则不必过多关心。
+
+37.3模块端口描述
+         按照上面的模块组设计方案，我们实际再对 DDR3 控制器进行读写控制时，
+只需要重点对写 FIFO 的写侧端口和读 FIFO 的读侧端口进行输入输出信号对应
+即可。
+                                                        表 37-1 ddr3_ctrl_2port 模块端口说明
+
+ 端口名                         方向                 描述
+
+
+ 时钟、复位、初始化等接口
+ clk                         I                  DDR3 参考输入时钟，50M
+
+店铺：https://xiaomeige.taobao.com                                                                                    官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                                                                             技术群组：
+                       小梅哥 FPGA 团队            武汉芯路恒科技
+                专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+ pll_lock              I    如果 memory_clk 为 PLL 倍频输入，此接口接 PLL 的 pll_lock 管脚，如果
+                            用户不使用 PLL，此接口接高电平
+ pll_stop              O    pll_stop 是在 GW5A(S)(T)器件环境下存在的控制信号，是控制 memory_clk
+                            的开关，低有效。
+ clk_200m              I    提供给 DDR3 控制器的基本工作时钟，要求 200MHz (使用 5A 器件时，需
+                            根据具体型号选用 400MHz)
+ sys_rst_n             I    外部复位信号
+ init_calib_complete   O    DDR3 初始化完成标志信号
+
+
+ 用户接口
+ rd_load               I    输出源更新信号
+ wr_load               I    输入源更新信号
+ app_addr_rd_min       I    读 DDR3 的起始地址
+ app_addr_rd_max       I    读 DDR3 的结束地址
+ rd_bust_len           I    从 DDR3 中读数据时的突发长度
+ app_addr_wr_min       I    写 DDR3 的起始地址
+ app_addr_wr_max       I    写 DDR3 的结束地址
+ wr_bust_len           I    向 DDR3 中写数据时的突发长度
+ wr_clk                I    写 FIFO 的写时钟信号
+ wfifo_wren            I    写 FIFO 的写使能信号，给高电平表示往 FIFO 中写入数据
+ wfifo_din             I    写入到写 FIFO 中的数据信号
+ wrfifo_full           O    写 FIFO 的写满标识信号，用于标识当前 FIFO 是否有被写满
+ rd_clk                I    读 FIFO 的读操作工作时钟
+ rfifo_rden            I    读 FIFO 的读数据使能控制信号，给高电平表示从 FIFO 中读出数据
+ rdfifo_empty          O    读 FIFO 的读空标识信号，用于标识当前 FIFO 是否为空（即 FIFO 内有无
+                            数据）
+ rfifo_dout            O    读 FIFO 的读数据输出
+ 接 DDR3 管脚接口（仿真中与 ddr3_model 对接）
+ ddr3_dq               IO   数据输入、输出：双向数据总线
+ ddr3_dqs_n            IO   差分信号对，DDR3 SDRAM 数据选通信号
+ ddr3_dqs_p
+ ddr3_addr             O    Row 地址（激活命令）、Column 地址（读、写命令）
+ ddr3_ba               O    Bank 地址
+ ddr3_ras_n            O    Row 地址选通信号
+ ddr3_cas_n            O    Column 地址选通信号
+ ddr3_we_n             O    Row 写使能
+ ddr3_reset_n          O    DDR3 SDRAM 复位信号
+ ddr3_ck_p             O    差分信号对，提供给 DDR3 SDRAM 的时钟信号
+ ddr3_ck_n
+ ddr3_cke              O    DDR3 SDRAM 时钟使能信号
+ ddr3_cs_n             O    片选，低有效
+ ddr3_dm               O    DDR3 SDRAM 数据屏蔽信号
+ ddr3_odt              O    内存信号端接电阻控制
+
+      下方的代码给出的模块例化模板。至于参数的设置和端口信号的连接方法，
+
+店铺：https://xiaomeige.taobao.com                          官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                   技术群组：
+                 小梅哥 FPGA 团队                   武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                开发板 培训 项目研发三位一体
+
+
+可查看上述端口列表描述。
+ ddr3_ctrl_2port ddr3_ctrl_2port(
+     .clk(clk)                 ,      //50M 时钟信号
+     //.pll_stop(pll_stop)            , //控制信号，根据具体型号选用
+     .pll_lock(pll_lock)            ,
+     .clk_200m(ddr3_clk200m)            ,      //DDR3 参考时钟信号
+     .sys_rst_n(ddr3_rst_n)           ,      //外部复位信号
+     .init_calib_complete(ddr3_init_done) ,    //DDR 初始化完成信号
+
+      //用户接口
+      .rd_load(rdfifo_clr)                    ,   //输出源更新信号
+      .wr_load(wrfifo_clr)                    ,   //输入源更新信号
+      .app_addr_rd_min(28'd0)     ,          //读 DDR3 的起始地址
+      .app_addr_rd_max(app_addr_max)            ,   //读 DDR3 的结束地址
+      .rd_bust_len(burst_len)                ,   //从 DDR3 中读数据时的突发长度
+      .app_addr_wr_min(28'd0)     ,          //写 DD3 的起始地址
+      .app_addr_wr_max(app_addr_max)            ,   //写 DDR 的结束地址
+      .wr_bust_len(burst_len)                ,   //向 DDR3 中写数据时的突发长度
+
+      .wr_clk(wrfifo_clk)                    ,//wr_fifo 的写时钟信号
+      .wfifo_wren(wrfifo_wren)                 , //wr_fifo 的写使能信号
+      .wfifo_din(wrfifo_din)                  , //写入到 wr_fifo 中的数据
+      .wrfifo_full(),
+      .rd_clk(rdfifo_clk)                    , //rd_fifo 的读时钟信号
+      .rfifo_rden(rdfifo_rden)                , //rd_fifo 的读使能信号
+      .rdfifo_empty(),
+      .rfifo_dout(rdfifo_dout)                , //rd_fifo 读出的数据信号
+
+      //DDR3
+      .ddr3_dq(ddr_dq)                   ,     //DDR3 数据
+      .ddr3_dqs_n(ddr_dqs_n)                  ,   //DDR3 dqs 负
+      .ddr3_dqs_p(ddr_dqs)                  ,   //DDR3 dqs 正
+      .ddr3_addr(ddr_addr)                   ,   //DDR3 地址
+      .ddr3_ba(ddr_bank)                     ,   //DDR3 banck 选择
+      .ddr3_ras_n(ddr_ras)                  ,   //DDR3 行选择
+      .ddr3_cas_n(ddr_cas)                  ,   //DDR3 列选择
+      .ddr3_we_n(ddr_we)                  ,    //DDR3 读写选择
+      .ddr3_reset_n(ddr_reset_n)                ,   //DDR3 复位
+      .ddr3_ck_p(ddr_ck)                 ,    //DDR3 时钟正
+      .ddr3_ck_n(ddr_ck_n)                   ,   //DDR3 时钟负
+      .ddr3_cke(ddr_cke)                    ,   //DDR3 时钟使能
+      .ddr3_cs_n(ddr_cs)                  ,    //DDR3 片选
+      .ddr3_dm(ddr_dm)                    ,    //DDR3_dm
+      .ddr3_odt(ddr_odt)                        //DDR3_odt
+ );
+
+
+店铺：https://xiaomeige.taobao.com                          官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                   技术群组：
+                 小梅哥 FPGA 团队                  武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力               开发板 培训 项目研发三位一体
+
+
+37.4模块使用说明
+     从模块的整体结构框图可以看出，里面包含 4 各子模块，其中 rd_data_fifo
+和 wr_data_fifo 为双时钟 FIFO IP，DDR3_Memory_Interface_Top 是 DDR3 控制
+器 IP，fifo_ddr3_adapter 模块是我们设计接口转换模块。
+
+37.4.1DDR3_Memory_Interface_Top 模块
+     该 IP 的详细配置参略前面 “DDR 控制器的使用”一节的内容。
+
+37.4.2wr_data_fifo
+     wr_data_fifo 是双时钟 FIFO IP，其具体配置如下图 37-3 所示。
+
+
+
+
+                                     图 37-3 写 FIFO 配置
+
+
+
+
+店铺：https://xiaomeige.taobao.com                         官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                  技术群组：
+                 小梅哥 FPGA 团队                  武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力               开发板 培训 项目研发三位一体
+
+
+37.4.3rd_data_fifo
+     rd_data_fifo 也是双时钟 FIFO IP，具体配置如下图 37-4 所示。
+
+
+
+
+                                     图 37-4 读 FIFO 配置
+
+
+     这样，我们的读写 FIFO，就配置完成了。
+
+37.4.4fifo_ddr3_adapter 模块
+     fifo_ddr3_adapter 模块内部除去例化了上述两个 FIFO 模块以外，主要就是
+实现 FIFO 和 DDR3 之间的数据交互。
+     我们来梳理一下整个数据的流向，用户首先将数据写入到 wr_data_fifo 中，
+然后将 wr_data_fifo 中的数据读出放至 DDR3 中，最后将 DDR3 中的数据读出放
+至 rd_data_fifo 中，由用户去读取。wr_data_fifo 的读时钟由用户给，写时钟是
+
+店铺：https://xiaomeige.taobao.com                         官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                  技术群组：
+                 小梅哥 FPGA 团队                      武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                    开发板 培训 项目研发三位一体
+
+
+DDR 输出的用户时钟 clk_out，rd_data_fifo 的写时钟为 clk_out，读时钟交由用
+户去给，整个的数据流向如下图 37-5 所示。
+      用户侧给出需要写入的数据                   数据写入至DDR中          将DDR中数据读取出来                  用户侧将数据读出
+                      wr_data_fifo                DDR                 rd_data_fifo
+
+
+
+                             图 37-5 fifo_ddr3_adapter 模块的数据流向
+
+
+     接下来我们对 fifo_ddr3_adapter 模块的代码设计进行说明。
+
+37.4.4.1读写 FIFO 代码设计
+              1.写 FIFO 代码设计
+
+     写 FIFO 的输入数据信号 Data、写时钟 WrClk、写使能信号 wfifo_wren 都由
+外部用户侧控制，在该模块中我们不需要做任何处理，只需要将其引出即可，
+并把写 FIFO 的写满信号引出，方便用户端判断是否能向 FIFO 中写入数据，当
+FIFO 被写满之后，应该停止向 FIFO 中数据，否则，则继续向 FIFO 中写入数据。
+     写 FIFO 的复位控制，一个是由外部的复位信号 rst_n 信号控制，还有一个
+就是根据输入源更新信号 wr_load 进行控制，将 wr_load 信号移位寄存后，产生
+一段复位电平，充分复位 FIFO。写 FIFO 的读使能信号由 DDR 控制器的用户端
+的写数据使能信号 app_wdf_wren 控制，读出的数据信号给到 DDR 控制器的写
+数据信号 app_wdf_data。写 FIFO 的实现代码如下所示：
+ input            ui_clk                         ,    //DDR 用户时钟信号
+ input            rst_n                          ,    //外部按键复位信号
+ input    [15:0] wfifo_din                       , //写入到 wr_fifo 中的数据
+ input            wr_load                        ,   //输入源更新信号
+ input            wr_clk                         ,//wr_fifo 的写时钟信号
+ input            wfifo_wren                     , //wr_fifo 的写使能信号
+ output           wrfifo_full                    , //写 FIFO 为满信号
+ output           app_wdf_wren                   ,   //DDR3 用户写使能信号
+ output   [127:0] app_wdf_data                   ,   //写入进 DDR 的数据
+
+ reg          wfifo_rst_h                ;   //wfifo 复位信号，高有效
+ wire [9:0] wfifo_rcount;
+ wire [127:0] wfifo_dout                 ; //从 wr_fifo 中读出的数据，需要写入进
+ DDR 中
+ reg [15:0] wr_load_d                    ;   //由输入源场信号移位拼接得到
+ reg          wrfifo_load_d0             ;
+ wire         wfifo_rden                 ;
+
+ assign wfifo_rden =       app_wdf_wren;
+
+店铺：https://xiaomeige.taobao.com                             官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                      技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+ assign app_wdf_data = wfifo_dout;
+
+ //对输入源场信号进行移位寄存
+ always @(posedge wr_clk or negedge rst_n) begin
+     if(!rst_n)begin
+         wrfifo_load_d0 <= 1'b0;
+         wr_load_d <= 16'b0;
+     end
+     else begin
+         wrfifo_load_d0 <= wr_load;
+         wr_load_d <= {wr_load_d[14:0],wrfifo_load_d0};
+     end
+ end
+
+ //产生一段复位电平，满足 fifo 复位时序
+ always @(posedge wr_clk or negedge rst_n) begin
+     if(!rst_n)
+         wfifo_rst_h <= 1'b0;
+     else if(wr_load_d[0] && !wr_load_d[15])
+         wfifo_rst_h <= 1'b1;
+     else
+         wfifo_rst_h <= 1'b0;
+ end
+
+ wr_data_fifo wr_data_fifo(
+     .Data(wfifo_din), //input [15:0] Data
+     .Reset(~rst_n|wfifo_rst_h), //input Reset
+     .WrClk(wr_clk), //input WrClk
+     .RdClk(ui_clk), //input RdClk
+     .WrEn(wfifo_wren), //input WrEn
+     .RdEn(wfifo_rden), //input RdEn
+     .Wnum(), //output [12:0] Wnum
+     .Rnum(wfifo_rcount), //output [9:0] Rnum
+     .Almost_Empty(), //output Almost_Empty
+     .Almost_Full(), //output Almost_Full
+     .Q(wfifo_dout), //output [127:0] Q
+     .Empty(), //output Empty
+     .Full(wrfifo_full) //output Full
+ );
+
+              2.读 FIFO 代码设计
+
+     读 FIFO 的 写 使 能 信 号 是 DRR3 控 制 器 输 出 的 读 出 数 据 有 效 信 号
+app_rd_data_valid，写数据信号是从 DDR3 控制器读取出来的数据 app_rd_data，
+写时钟信号是 DDR3 控制器输出的用户时钟信号 ui_clk。写 FIFO 的复位控制，
+一个是由外部的复位信号 rst_n 信号控制，还有一个就是根据输入源更新信号
+店铺：https://xiaomeige.taobao.com                    官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/             技术群组：
+                 小梅哥 FPGA 团队                 武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力               开发板 培训 项目研发三位一体
+
+
+rd_load 进行控制，将 rd_load 信号移位寄存后，产生一段复位电平，充分复位
+FIFO。
+     读 FIFO 的读使能信号、读时钟信号、读出的数据信号我们都不需要在
+fifo_ddr3_adapter 模块内实现，只需要将其引出，交由用户端口去使用，读 FIFO
+的 rdfifo_empty 信号也需引出，引出该信号之后，方便在读取数据的时候进行判
+断，只有当读 FIFO 中有数据时，也就是 rdfifo_empty 信号为低时，才有数据需
+要我们去读取，读 FIFO 的实现代码如下所示：
+ input            app_rd_data_valid         ,   //DDR 读数据有效信号
+ input    [127:0] app_rd_data               ,
+ input            rd_clk                    , //rd_fifo 的读时钟信号
+ input            rfifo_rden                , //rd_fifo 的读使能信号
+ output           rdfifo_empty              , //rd_fifo 的为空信号
+ output   [15:0] rfifo_dout                  //rd_fifo 读出的数据信号
+
+ reg [15:0] rd_load_d                    ; //由输出源场信号移位拼接得到
+ wire [127:0] rfifo_din                  ; //写入 rd_fifo 中的数据
+ reg          rdfifo_rst_h               ; //rfifo 复位信号，高有效
+ wire [9:0] rfifo_wcount;
+
+ assign rfifo_wren = app_rd_data_valid;
+ assign rfifo_din = app_rd_data;
+
+ //对输出源场信号进行移位寄存
+ always @(posedge ui_clk or negedge rst_n) begin
+     if(!rst_n) begin
+         rd_load_d <= 1'b0;
+         rdfifo_load_d0 <= 1'b0;
+     end
+     else begin
+         rd_load_d <= {rd_load_d[14:0],rdfifo_load_d0};
+         rdfifo_load_d0 <= rd_load;
+     end
+ end
+
+ //产生一段复位电平，满足 fifo 复位时序
+ always @(posedge ui_clk or negedge rst_n) begin
+     if(!rst_n)
+         rdfifo_rst_h <= 1'b0;
+     else if(rd_load_d[0] && !rd_load_d[14])
+         rdfifo_rst_h <= 1'b1;
+     else
+         rdfifo_rst_h <= 1'b0;
+ end
+
+店铺：https://xiaomeige.taobao.com                       官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                技术群组：
+                 小梅哥 FPGA 团队                    武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                 开发板 培训 项目研发三位一体
+
+ rd_data_fifo rd_data_fifo(
+     .Data(rfifo_din), //input [127:0] Data
+     .Reset(~rst_n|rdfifo_rst_h), //input Reset
+     .WrClk(ui_clk), //input WrClk
+     .RdClk(rd_clk), //input RdClk
+     .WrEn(rfifo_wren), //input WrEn
+     .RdEn(rfifo_rden), //input RdEn
+     .Wnum(rfifo_wcount), //output [9:0] Wnum
+     .Rnum(), //output [12:0] Rnum
+     .Almost_Empty(), //output Almost_Empty
+     .Almost_Full(), //output Almost_Full
+     .Q(rfifo_dout), //output [15:0] Q
+     .Empty(rdfifo_empty), //output Empty
+     .Full() //output Full
+ );
+     通过上述描述完成了读写 FIFO 侧的代码设计，接下来就需要完成最重要的
+FIFO 和 DDR3 控制器之间数据交互的状态机的设计。
+
+37.4.4.2FIFO 与 DDR3 控制器数据交互代码设计
+
+     FIFO 与 DDR3 控制器进行数据交互，我们可以通过一段式状态机去实现，
+首先上电一开始处于 IDLE（空闲状态），然后 DDR3 初始化完成之后跳转到
+DDR3_DONE（DDR3 初始化完成状态），然后根据不同的跳转早读\写状态，最
+后从读写状态再跳转到 DDR3_DONE 状态，状态转移图如下所示，具体的跳转
+条件将会在后面的内容中进行说明。
+
+
+
+               IDLE             DDR3_DONE           WRITE              READ
+
+
+
+
+                                         图 37-6 状态转移图
+
+
+     下面将讲解每个状态如何去实现。
+
+              1.IDLE（空闲状态）
+
+     在前面讲解 DDR3 控制器使用的时候，我们就说过，DDR3 控制器支持读写
+的最大一个条件就是必须等到其初始化完成之后，所以 IDLE 状态实现代码非常
+简单，就是等到 DDR3 初始化完成之后，跳转到 DDR3_DONE 状态，实现代码
+如下所示：
+ IDLE:begin
+店铺：https://xiaomeige.taobao.com                             官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                      技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+       if(init_calib_complete)
+           state <= DDR3_DONE;
+       else
+           state <= IDLE;
+ end
+
+              2.DDR3_DONE（DDR3 初始化完成状态）
+
+       当处于 DDR3_DONE 状态的时候，有如下几种情况需要考虑。
+
+              （1）当检测到写入更新标志之后，对地址进行复位计数，并且将
+         写地址设置为写起始地址信号。实现代码如下所示：
+
+ if(wr_rst) begin   //当检测到写入更新标志之后，对地址进行复位计数
+     state <= DDR3_DONE;
+     wr_addr_cnt <= 24'd0;
+     app_addr_wr <= app_addr_wr_min_a;
+ end
+       上述代码中的 wr_rst 信号就是检测到的写入更新标志脉冲信号，也就是将
+wr_load 信号进行打拍处理，解决跨时钟域问题，然后检测其上升沿信号，就得
+到了 wr_rst 信号，实现代码如下所示：
+ always @(posedge ui_clk or negedge rst_n)   begin
+     if(~rst_n)begin
+         wr_load_d0 <= 0;
+         wr_load_d1 <= 0;
+     end
+     else begin
+         wr_load_d0 <= wr_load;
+         wr_load_d1 <= wr_load_d0;
+     end
+ end
+
+ //输入源复位标志信号
+ always@(posedge ui_clk or negedge rst_n) begin
+     if(~rst_n)
+         wr_rst <= 0;
+     else if(wr_load_d0 && !wr_load_d1)
+         wr_rst <= 1;
+     else
+         wr_rst <=0;
+ end
+
+              （2）当读写地址达到设定的最大读写地址之后，将地址信号设置
+         为读写的起始地址并且清除读写地址计数信号，实现代码如下所示：
+
+ else if(app_addr_rd >= app_addr_rd_max_a - 8) begin//读到读地址结束
+     state <= DDR3_DONE;
+店铺：https://xiaomeige.taobao.com                      官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/               技术群组：
+                 小梅哥 FPGA 团队              武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力            开发板 培训 项目研发三位一体
+
+      rd_addr_cnt <= 24'd0;
+      app_addr_rd <= app_addr_rd_min_a;
+ end
+ else if(app_addr_wr >= app_addr_wr_max_a - 8) begin //写结束
+     state <=DDR3_DONE;
+     wr_addr_cnt <= 24'd0;
+     app_addr_wr <= app_addr_wr_min_a;
+ end
+
+              （3）FIFO 控制模块优先处理 DDR3 写请求，以免写 FIFO 溢出时，
+         用于写入 DDR3 的数据丢失，当写 FIFO 中的数据量大于写突发长度时，
+         也就是写 FIFO 中的可读数据个数 wfifo_rcount 大于一次突发长度的时
+         候，执行写 DDR3 操作。实现代码如下所示：
+
+ else if(wfifo_rcount >= wr_bust_len_a) begin
+     state <= WRITE; //跳至写操作
+     wr_addr_cnt <= 24'd0;
+     app_addr_wr <= app_addr_wr;
+ end
+
+              （4）当帧复位 raddr_rst_h 信号到来时，将 raddr_rst_h 信号拉高一
+         段时间之后，进入读状态，此时读地址读起始地址，实现代码如下所
+         示：
+
+ else if(raddr_rst_h) begin
+     if(raddr_rst_h_cnt >= 11'd201) begin
+         state <= READ;
+         rd_addr_cnt <= 24'd0;
+         app_addr_rd <= app_addr_rd_min_a;
+     end
+     else begin
+         state <= READ;
+         rd_addr_cnt <= 24'd0;
+         app_addr_rd <= app_addr_rd;
+     end
+ end
+     上述代码中的 raddr_rst_h 信号就是对输出源更新信号进行寄存，然后检测
+其上升沿信号，并将 raddr_rst_h 信号拉高，当读地址变成设定的读地址的起始
+值，将 raddr_rst_h 信号拉低。raddr_rst_h_cnt 信号是对输出源的帧复位脉冲信号
+进行计数，这样就防止了 FIFO 还没有复位完全就写入数据的情况，实现代码如
+下所示：
+ //对输入的更新信号进行打拍处理
+ always @(posedge ui_clk or negedge rst_n)   begin
+     if(~rst_n)begin
+
+店铺：https://xiaomeige.taobao.com                      官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/               技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+          rd_load_d0 <= 0;
+          rd_load_d1 <= 0;
+       end
+       else begin
+           rd_load_d0 <= rd_load;
+           rd_load_d1 <= rd_load_d0;
+       end
+ end
+
+ //对输出源的读地址做个帧复位脉冲
+ always @(posedge ui_clk or negedge rst_n) begin
+     if(~rst_n)
+         raddr_rst_h <= 1'b0;
+     else if(rd_load_d0 && !rd_load_d1)
+         raddr_rst_h <= 1'b1;
+     else if(app_addr_rd == app_addr_rd_min_a)
+         raddr_rst_h <= 1'b0;
+     else
+         raddr_rst_h <= raddr_rst_h;
+ end
+
+     //对输出源的帧复位脉冲进行计数
+ always @(posedge ui_clk or negedge rst_n) begin
+     if(~rst_n)
+         raddr_rst_h_cnt <= 11'b0;
+     else if(raddr_rst_h)
+         raddr_rst_h_cnt <= raddr_rst_h_cnt + 1'b1;
+     else
+         raddr_rst_h_cnt <= 11'b0;
+ end
+
+              （5）当读 FIFO 中的数据量小于读突发长度时，执行读 DDR3 操
+         作。代码如下所示：
+
+ else if(rfifo_wcount <= rd_bust_len_a) begin
+     state <= READ;     //跳到读操作
+     rd_addr_cnt <= 24'd0;
+     app_addr_rd <= app_addr_rd; //读地址不变
+ end
+       DDR3_DONE 状态的完整实现代码如下所示：
+ DDR3_DONE:begin
+     if(wr_rst) begin   //当检测到写入更新标志之后，对地址进行复位计数
+         state <= DDR3_DONE;
+         wr_addr_cnt <= 24'd0;
+         app_addr_wr <= app_addr_wr_min_a;
+     end
+     else if(app_addr_rd >= app_addr_rd_max_a - 8) begin//读到读地址结束
+店铺：https://xiaomeige.taobao.com                    官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/             技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+          state <= DDR3_DONE;
+          rd_addr_cnt <= 24'd0;
+          app_addr_rd <= app_addr_rd_min_a;
+       end
+       else if(app_addr_wr >= app_addr_wr_max_a -8) begin //写结束
+           state <=DDR3_DONE;
+           wr_addr_cnt <= 24'd0;
+           app_addr_wr <= app_addr_wr_min_a;
+       end
+       else if(wfifo_rcount >= wr_bust_len_a) begin
+           state <= WRITE; //跳至写操作
+           wr_addr_cnt <= 24'd0;
+           app_addr_wr <= app_addr_wr;
+       end
+       else if(raddr_rst_h) begin
+           if(raddr_rst_h_cnt >= 11'd201) begin
+               state <= READ;
+               rd_addr_cnt <= 24'd0;
+               app_addr_rd <= app_addr_rd_min_a;
+           end
+           else begin
+               state <= READ;
+               rd_addr_cnt <= 24'd0;
+               app_addr_rd <= app_addr_rd;
+           end
+       end
+       else if(rfifo_wcount <= rd_bust_len_a) begin
+           state <= READ;     //跳到读操作
+           rd_addr_cnt <= 24'd0;
+           app_addr_rd <= app_addr_rd; //读地址不变
+       end
+       else begin
+           state <= state;
+           wr_addr_cnt <= 24'd0;
+           rd_addr_cnt <= 24'd0;
+       end
+ end
+
+              3.WRITE（写状态）
+
+       在写状态时，当写地址计数器达到一次写操作的时候并且握手信号使能
+app_rdy 和写数据有效使能信号 app_wdf_rdy 信号同时为高的情况下，代表此时
+我们将 FIFO 中存储的数据写入到 DDR 中，满足写条件的时候，设置写计数进
+行 wr_addr_cnt 增加 1，并且 DDR3 用户的侧的地址加 8，为什么要加 8 呢？这
+是因为用户端在每一个用户时钟进行一个 128bit 的数据的传输，在 DDR3 物理
+
+店铺：https://xiaomeige.taobao.com                   官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/            技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+
+芯片需要分 8 次传输，每次传输一个位宽 16bit，8 次就需要 8 个地址，当
+wr_addr_cnt 的 值 等 于 一 次 突 发 长 度 时 ， 代 表 一 次 突 发 写 入 完 成 回 到
+DDR3_DONE 状态，等待下一次突发传送，实现代码如下所示：
+ WRITE: begin
+     if(wr_addr_cnt == (wr_bust_len_a - 1) && app_rdy && app_wdf_rdy)
+ begin
+         state <= DDR3_DONE;
+         app_addr_wr<=app_addr_wr + 8;//DDR 突发长度为 8，一次写入 8 个数据
+     end
+     else if((app_rdy) && app_wdf_rdy) begin //写条件满足
+         wr_addr_cnt <= wr_addr_cnt + 1'd1;
+         app_addr_wr <= app_addr_wr + 8;
+     end
+     else begin //写条件不满足
+         wr_addr_cnt <= wr_addr_cnt;
+         app_addr_wr <= app_addr_wr;
+     end
+ end
+
+              4.READ（读状态）
+
+     当 app_rdy 信号为高时，表示此时可以从 DDR 中读出数据，并设置读计数
+rd_addr_cnt 加 1，地址加 8，这里加 8 的原因在和写操作地址加 8 的原因一样。
+当 rd_addr_cnt 等于一次读突发长度时，返回 DDR3_DONE 状态，等待下一次读
+操作，实现代码如下所示：
+ READ: begin
+     if(rd_addr_cnt == (rd_bust_len_a - 1) && app_rdy) begin
+         state <= DDR3_DONE;
+         app_addr_rd <= app_addr_rd + 8;
+     end
+     else if(app_rdy) begin
+         rd_addr_cnt <= rd_addr_cnt + 1'd1; //用户地址计数器每次加一
+         app_addr_rd <= app_addr_rd + 8;
+     end
+     else begin
+         rd_addr_cnt <= rd_addr_cnt;
+         app_addr_rd <= app_addr_rd;
+     end
+ end
+     通过上述讲解，完成最核心的状态机的设计。
+     但是在对 DDR3 控制进行操作的时候，还有关于读写命令的控制，在写状
+态且写有效，或者在读状态时，将命令使能信号 app_en 拉高，否则 app_en 信号
+为低，代码如下所示：
+店铺：https://xiaomeige.taobao.com                  官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/           技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+ assign app_en = ((state == WRITE && (app_rdy && app_wdf_rdy))
+                     ||(state == READ && app_rdy)) ? 1'b1:1'b0;
+     在写状态其写有效的情况下，拉高 DDR3 控制的写使能信号 app_wdf_wren，
+否则为低，代码如下所示：
+ assign app_wdf_wren=(state==WRITE&&(app_rdy&&app_wdf_rdy))? 1'b1:1'b0;
+     由于我们 DDR3 芯片时钟和用户时钟分频选择 4：1，突发长度为 8，所以
+app_wdf_end 信号 app_wdf_wren 信号一致。
+ assign app_wdf_end = app_wdf_wren;
+     当状态处于读操作的时候，将 app_cmd 设置为 1，否则为 0，代表需要向
+DDR3 中写入数据。
+ assign app_cmd = (state == READ) ? 3'd1 :3'd0;
+     最后当状态处于读状态时，将 DDR3 控制器的地址信号 app_addr 为读地址
+信号 app_addr_rd，否则为写地址信号 app_addr_wr。
+ always @(*) begin
+     if(~rst_n)
+         app_addr <= 0;
+     else if(state == READ )
+         app_addr <= app_addr_rd;
+     else
+         app_addr <= app_addr_wr;
+ end
+     讲解至此，fifo_ddr3_adapter 模块的设计就算完成了，完整的代码请自行查
+看工程源代码。最后在 ddr3_ctrl_2port 模块中，例化 fifo_ddr3_adapter 模块和
+DDR3_Memory_Interface_Top 模块，将需要的端口引出，ddr3_ctrl_2port 模块就
+设计完成，接下来我们将会对设计的 ddr3_ctrl_2port 模块进行仿真分析。
+
+37.5模块仿真分析
+
+37.5.1仿真文件设计
+     对上述设计的模块设计内容进行分析和综合直至没有错误和警告。新建名
+称为 ddr3_ctrl_2port_tb 的仿真文件，在仿真文件中我们需要添加 DDR3 仿真模
+型，用于模拟向 DDR 芯片中写入和读出数据，具体仿真的 testbench 设计的结构
+框图如下图 37-7 所示。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                   官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/            技术群组：
+                 小梅哥 FPGA 团队                  武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                开发板 培训 项目研发三位一体
+
+
+
+
+        时钟、复位                                            ddr3_ctrl_2port_tb
+
+          数据产生
+                                ddr3_ctrl_2port                    ddr3_model
+          数据读取
+
+
+
+                               图 37-7ddr3_ctrl_2port_tb 仿真架构
+
+
+     从上述图中可以看出，在仿真设计除去 ddr3_ctrl_2port 和 ddr3_model 这两
+个模块以外，还需要产生时钟和复位、数据产生和数据读取的激励。为了简单
+处理，仿真时钟 DDR 控制器时钟采用产生 200MHz 时钟 ddr3_clk200m，写侧
+FIFO 的写时钟和读侧 FIFO 的读时钟均采用 100Mhz 时钟，DDR3 控制器的参考
+时钟采用 50MHz 的时钟。200MHz 的时钟周期 5ns，即每 2.5ns 翻转一次，
+100MHz 时钟的时钟周期为 10ns，即每 5ns 翻转一次，50MHz 时钟的时钟周期
+为 20ns，即每 10ns 翻转一次，时钟产生代码如下。注意这里仿真的时间单位和
+精度分别使用 1ns 和 100ps，即使用`timescale 1ns/100ps。
+ initial ddr3_clk200m = 1'b1;
+ always #2.5 ddr3_clk200m = ~ddr3_clk200m;
+
+ initial wrfifo_clk = 1'b1;
+ always #5 wrfifo_clk = ~wrfifo_clk;
+
+ initial rdfifo_clk = 1'b1;
+ always #5 rdfifo_clk = ~rdfifo_clk;
+
+ initial clk = 1'b1;
+ always #10 clk = ~clk;
+     数据的产生的激励设计上将其封装成任务 task 形式，方便调用。具体代码
+如下，该任务的具体功能是在调用这个任务和给定的输入参数 data_begin 和
+wr_data_cnt 时 ，向 wr_ddr3_fifo 中写 入以 起始数据 data_begin 开始递增的
+wr_data_cnt 个数据。
+ task wr_data;
+     input [15:0]data_begin;
+     input [15:0]wr_data_cnt;
+     begin
+     wrfifo_wren = 1'b0;
+     wrfifo_din = data_begin;
+     @(posedge wrfifo_clk);
+店铺：https://xiaomeige.taobao.com                            官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                     技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+     #1 wrfifo_wren = 1'b1;
+     repeat(wr_data_cnt)
+     begin
+         @(posedge wrfifo_clk);
+         wrfifo_din = wrfifo_din + 1'b1;
+     end
+     #1 wrfifo_wren = 1'b0;
+     end
+ endtask
+     数据读取的激励设计上采用与数据产生类似的方式，封装成任务 task 形式，
+具体代码如下。任务的具体功能是在调用这个任务和给定的输入参数
+rd_data_cnt 时，向 rd_ddr3_fifo 中读出 rd_data_cnt 个数据。
+ task rd_data;
+     input [15:0]rd_data_cnt;
+     begin
+     rdfifo_rden = 1'b0;
+     @(posedge rdfifo_clk);
+         #1 rdfifo_rden = 1'b1;
+         repeat(rd_data_cnt)
+         begin
+             @(posedge rdfifo_clk);
+         end
+     #1 rdfifo_rden = 1'b0;
+     end
+ endtask
+     仿真中加入了 DDR 控制器 IP 模块，在写入数据前需要产生 pll_clock 信号
+并且产生 wr_load 信号，初始化完成之后，通过调用 wr_data 事件写入数据，写
+入的初始值为 1，写入 1024 个数据，数据写完之后，产生 rd_load 信号，然后调
+用 rd_data 事件读取 1024 个数据，具体代码如下所示：
+ initial begin
+     ddr3_rst_n = 1'b0;
+     wr_load = 1'b1;
+     wrfifo_wren = 1'b0;
+     wrfifo_din = 16'd0;
+     rd_load = 1'b1;
+     rdfifo_rden = 1'b0;
+     pll_lock   = 1'b0;
+     #201;
+     ddr3_rst_n = 1'b1;
+     pll_lock   = 1'b1;
+     #200;
+     wr_load = 1'b0;
+     rd_load = 1'b0;
+     @(posedge ddr3_init_done);
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                 小梅哥 FPGA 团队               武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力             开发板 培训 项目研发三位一体
+
+       #200;
+       wr_data(16'd1,16'd1024);
+       #2000;
+       rd_load = 1'b1;
+       #20;
+       rd_load = 1'b0;
+       #20000;
+       rd_data(16'd1024);
+       #15000;
+       $stop;
+ end
+       最后就是例化 ddr3_ctrl_2port 模块和 ddr3_model 模块，进行端口定义和连
+接，这样整体的仿真 tb 文件就设计完成了，完整的仿真模块代码，请自行查看
+src 文件夹下的 tb 文件夹下的源文件。
+
+37.5.2仿真波形分析
+       建立 Modelsim 仿真工程，然后将本次实验需要的文件添加至工程中，建立
+仿真工程的步骤请读者前面“Gowin 联合 Modelsim 仿真实验”一节内容，然后
+将 fifo_ddr3_adapter 模块的信号添加进行观察，操作如下所示。
+
+
+
+
+                        图 37-8 添加 fifo_ddr3_adapter 模块的信号进行观察
+
+
+       然后点击      开始运行仿真，仿真时间比较长，需要我们等待大概 3ms 左右，
+
+整个仿真就运行完成，整个波形图如下图 37-9 所示。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                        官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                 技术群组：
+                 小梅哥 FPGA 团队                武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力             开发板 培训 项目研发三位一体
+
+
+
+
+                                    图 37-9 仿真整体效果图
+
+
+     我们对读写的具体波形分析。
+     首先是写操作，在本次仿真中，我们写入的数据是 1024 个 16 位的数据，
+一次突发长度 burst_len 为 64，这个突发长度是从 FIFO 中每次读取到 DDR 中的
+突发长度，1024 个 16 位的数据对应的就是需要向 DDR 控制器中写入 128 个
+（1024*16/128）个 128 位的数据，每次突发长度为 64，那么我们就需要 2
+（128/64）次突发，将 1024 个 16 位的数据最终写入到 DDR 中，具体波形如下
+图 37-10 所示。
+
+
+
+
+                                图 37-10 突发写 2 次的仿真体现
+
+
+     对第一次突发写 DDR 操作部分的波形进行放大，其波形图如下图 37-11 所
+示。
+
+
+
+
+                                图 37-11 第一次突发写的放大观察
+
+
+     从波形图可以看到一次写数据操作流程如下：
+
+              （1）首先所有的读写操作都必须在初始化信号被拉高之后执行。
+
+              （2）在 app_wdf_rdy 和 app_rdy 信号同时位高时，方可发送命令进
+         行写操作。
+
+              （3）发送的时候，首先需要拉高 app_en 信号，然后给出写命令
+         （app_cmd 为 0），同时给出地址和需要写入的数据。
+
+     一次写操作过程中，数据写入流程与我们设计预期是一致的，然后我们对
+写入的数据波形的开头进行放大，波形图如下图 37-12 所示。写入的每个数据是
+
+店铺：https://xiaomeige.taobao.com                        官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                 技术群组：
+                 小梅哥 FPGA 团队               武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力            开发板 培训 项目研发三位一体
+
+
+由写 FIFO 写入 8 个 16bit 数据拼接而成的 128bit 数据，具体拼接过程是由写
+FIFO 完成，app_addr 地址每次增加 8，这里加 8 的原因在前面的代码设计中我
+们已经做过介绍，是因为用户端在每一个用户时钟进行一个 128bit 的数据的传
+输，在 DDR3 物理芯片需要分 8 此传输，每次传输一个位宽 16bit，8 次就需要 8
+个地址，这与我们预期一致。然后放大第一次突发写入的最后的数据，波形图
+有如下图 37-13 所示，从写入的数据内容可以判断，写入的 16 位的数据从
+0x001~0x200，也就是一共写入了 512 个 16 位的数据，也就是 64 个 128 位的数
+据，与一次突发需要写入的数据个数一致，
+
+
+
+
+                              图 37-12 第一次突发写入的最开始数据
+
+
+
+
+                               图 37-13 第一次突发写入的最后数据
+
+
+     然后是读操作，读操作有效是在产生 rd_load 信号，之后，波形图如下图
+37-14 所示。
+
+
+
+
+                                  图 37-14 突发读操作波形图
+
+
+     读操作的一般流程如下所示：
+
+              （1）在 app_rdy 为高电平的时候，将 app_en 信号拉高，并给出读
+         命令（app_cmd 为 1），同时给出需要的读取的数据对应的地址，这些
+         将会被传输给 DDR 控制器进行处理；
+
+              （2）间隔一段时间之后，对应地址存储的数据将会被读出，读出
+         的数据并非都是有效的，只有当 app_rd_data_valid 信号为高电平的时候，
+店铺：https://xiaomeige.taobao.com                      官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/               技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+         代表读出的数据有效，是我们所需要的数据
+
+     从整体上看，写 FIFO 中写入的数据是 0x1~0x4000 一共 1024 个连续递增的
+数据，波形与仿真代码是一致的，下面是整个写入数据的写入第一个数据与最
+后一个数据的波形图。
+
+
+
+
+                              图 37-15 写入数据整体效果与关键信息
+
+
+     读 FIFO 读出的数据同样是 0x1~0x4000 一共 1024 个连续递增的数据。
+
+
+
+
+                              图 37-16 读出数据整体效果与关键信息
+
+
+     从写入数据和最后读出数据的一致性说明 ddr3_ctrl_2port 模块工作正常。同
+时需要注意的是，高云在新版本更新之后所提供的库是有问题的，笔者在进行
+仿真时等待了半个多小时，DDR3 的初始化信号才拉高，本次仿真才正常进行
+读写，同时还出现过一直无法拉高 DDR3 初始化信号拉高的情况出现。
+
+37.6思考与总结
+     本 章 实 验 主 要 讲 解 了 ddr3_ctrl_2port 模 块 的 具 体 设 计 与 仿 真 分 析 ，
+
+店铺：https://xiaomeige.taobao.com                   官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/            技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+
+ddr3_ctrl_2port 模块将会方便用户去使用 DDR3 控制器存储数据，不仅解决了跨
+时钟域的问题，还解决了数据位宽的转换以及数据读写连续的问题。通过本节
+内容让我们对 DDR3 控制器的读写操作有了进一步的理解，在后面的实验中，
+我们使用 ddr3_ctrl_2port 模块进行一些实际的应用，比如图像处理或者数据采集
+相关的一些案例。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+

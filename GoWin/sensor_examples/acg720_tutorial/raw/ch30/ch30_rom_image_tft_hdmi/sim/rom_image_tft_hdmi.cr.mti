@@ -1,0 +1,62 @@
+D:/work/waresoft/Gowin2/workspace/720-138K/ch32_rom_image_tft_hdmi/src/image_extract/image_extract.v {1 {vlog -work work -vopt -stats=none D:/work/waresoft/Gowin2/workspace/720-138K/ch32_rom_image_tft_hdmi/src/image_extract/image_extract.v
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module image_extract
+
+Top level modules:
+	image_extract
+
+} {} {}} D:/work/waresoft/Gowin2/workspace/720-138K/ch32_rom_image_tft_hdmi/src/gowin_prom/gowin_prom.v {1 {vlog -work work -vopt -stats=none D:/work/waresoft/Gowin2/workspace/720-138K/ch32_rom_image_tft_hdmi/src/gowin_prom/gowin_prom.v
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module Gowin_pROM
+
+Top level modules:
+	Gowin_pROM
+
+} {} {}} D:/work/waresoft/Gowin2/workspace/720-138K/ch32_rom_image_tft_hdmi/src/gowin_pll/gowin_pll.v {1 {vlog -work work -vopt -stats=none D:/work/waresoft/Gowin2/workspace/720-138K/ch32_rom_image_tft_hdmi/src/gowin_pll/gowin_pll.v
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module Gowin_PLL
+
+Top level modules:
+	Gowin_PLL
+
+} {} {}} D:/work/waresoft/Gowin2/workspace/720-138K/ch32_rom_image_tft_hdmi/src/disp_driver/disp_parameter_cfg.v {1 {vlog -work work -vopt -stats=none D:/work/waresoft/Gowin2/workspace/720-138K/ch32_rom_image_tft_hdmi/src/disp_driver/disp_parameter_cfg.v
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+
+} {} {}} D:/work/waresoft/Gowin2/workspace/720-138K/ch32_rom_image_tft_hdmi/src/disp_driver/disp_driver.v {1 {vlog -work work -vopt -stats=none D:/work/waresoft/Gowin2/workspace/720-138K/ch32_rom_image_tft_hdmi/src/disp_driver/disp_driver.v
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module disp_driver
+
+Top level modules:
+	disp_driver
+
+} {} {}} D:/work/waresoft/Gowin2/workspace/720-138K/ch32_rom_image_tft_hdmi/src/rom_image_tft_hdmi.v {1 {vlog -work work -vopt -stats=none D:/work/waresoft/Gowin2/workspace/720-138K/ch32_rom_image_tft_hdmi/src/rom_image_tft_hdmi.v
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module rom_image_tft_hdmi
+
+Top level modules:
+	rom_image_tft_hdmi
+
+} {} {}} D:/work/waresoft/Gowin2/workspace/720-138K/ch32_rom_image_tft_hdmi/src/tb/rom_image_tft_tb.v {1 {vlog -work work -vopt -stats=none D:/work/waresoft/Gowin2/workspace/720-138K/ch32_rom_image_tft_hdmi/src/tb/rom_image_tft_tb.v
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module rom_image_tft_tb
+
+Top level modules:
+	rom_image_tft_tb
+
+} {} {}} D:/work/waresoft/Gowin2/workspace/720-138K/ch32_rom_image_tft_hdmi/src/dvi_encoder/dvi_encoder.v {1 {vlog -work work -vopt -stats=none D:/work/waresoft/Gowin2/workspace/720-138K/ch32_rom_image_tft_hdmi/src/dvi_encoder/dvi_encoder.v
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module dvi_encoder
+-- Compiling module encode
+-- Compiling module serdes_4b_10to1
+
+Top level modules:
+	dvi_encoder
+
+} {} {}} D:/work/waresoft/Gowin2/workspace/720-138K/ch32_rom_image_tft_hdmi/src/gowin_ddr/gowin_ddr.vo {1 {vlog -work work -vopt -stats=none D:/work/waresoft/Gowin2/workspace/720-138K/ch32_rom_image_tft_hdmi/src/gowin_ddr/gowin_ddr.vo
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module Gowin_DDR
+
+Top level modules:
+	Gowin_DDR
+
+} {} {}}

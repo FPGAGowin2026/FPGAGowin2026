@@ -1,0 +1,630 @@
+                 小梅哥 FPGA 团队                 武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力               开发板 培训 项目研发三位一体
+
+
+
+                  5 时序逻辑电路设计之计数器
+                      |----02_设计实例
+      工程源码
+                      |----ch5_bin_counter
+      相关视频
+ 课程
+      说明
+
+      章节导读
+
+      时序逻辑电路是指电路任何时刻的稳态输出不仅取决于当前的输入，还与
+前一时刻输入形成的状态有关。这跟组合逻辑电路相反，组合逻辑的输出只会
+跟目前的输入成一种函数关系。换句话说，时序逻辑拥有储存元件来存储信息，
+而组合逻辑则没有。
+
+      时序逻辑电路分为很多种，本节将以最常用的计数器为例学习简单的时序
+逻辑电路设计，并比较与组合逻辑电路的区别。 此处设计一个计数器，使
+ACX720-GW5A138 开发板上的 LED 状态每 500ms 翻转一次。ACX720-GW5A138 开发
+板上晶振为 50MHz，也就是说时钟周期为 20ns，这样可以计算得出 500ms =
+500_000_000ns/20ns = 25_000_000，即需要计数器计数 25_000_000 次，也就
+是需要一个至少 25 位的计数器（225>25_000_000>224）。且每当计数次数达到
+需要清零并重新计数。
+
+
+5.1 计数器工作原理
+      计数器的核心元件是触发器，基本功能是对脉冲进行计数，其所能记忆脉
+冲最大的数目称为该计数器的模/值。计数器常用在分频、定时等处。计数器的
+种类很多，按照计数方式的不同可以分为二进制计数器、十进制计数器以及任
+意进制计数器，按照触发器的时钟脉冲信号来源可分为同步计数器与异步计数
+器。按照计数增减可分为加法计数器、减法计数器以及可逆计数器。
+      Verilog HDL 之所以被称为硬件电路描述语言，就是因为我们不是在类似 C
+一样进行普通的编程，而是在编写一个实际的硬件电路。下面将设计一个计数
+器，通过计数器控制一个 led 闪。上面提到计数器即为加法器、比较器、寄存器
+以及选择器构成，如下图 5-1 所示。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                     官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/              技术群组：
+                 小梅哥 FPGA 团队                     武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                   开发板 培训 项目研发三位一体
+
+
+
+
+                 ADD   MUX2_1
+
+                           A SEL
+       1'b1
+                                OUT      D
+                                                                           D
+       25'b0               B                     cnt[24:0]     EQUAL
+                                             Q
+                                                 25'd24_999_999 ==          CE Q     led
+         clk
+                                          CLR                    clk
+                                                                               CLR
+      reset_n
+                                                      reset_n
+
+                                   图 5-1 计数器控制 led 逻辑电路图
+
+
+     开发板上 LED 硬件电路如下图 5-2 所示，可以看出当控制端输出高电平时
+LED 亮。这里只需要每当计数器值记满后，翻转 LED 的控制端即可实现 LED 按
+照要求亮灭。
+
+
+
+
+                                   图 5-2 开发板上 LED 电路原理图
+
+
+5.2 计数器 Verilog 实现
+     由上面分析可以得出本设计的模块接口示意图如下图 5-3 所示，其各端口的
+功能描述如下表 5-1 所示。
+
+
+
+店铺：https://xiaomeige.taobao.com                                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                          技术群组：
+                 小梅哥 FPGA 团队                        武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                     开发板 培训 项目研发三位一体
+
+
+                              clk
+                                                           led
+                                             bin_counter
+                            reset_n
+
+
+
+                                          图 5-3 计数器模块示意图
+
+                                    表 5-1 计数器模块端口功能描述
+
+                  端口名称              I/O        端口功能描述
+                  clk               I          模块的工作时钟，频率为 50MHz，
+                  reset_n           I          模块复位，低电平复位
+                  led               O          LED 控制端，输出低电平时 LED 灯亮
+
+
+5.2.1 工程建立
+     依据前面相关章节所述，新建一个名为 bin_counter 的工程。双击桌面
+Gowin 软件的图标打开 Gowin 开发环境，按如下操作步骤进行：
+
+              （1）起始页——点击 New Project。
+
+              （2）New 页面——点击 OK。
+
+              （3）Project Name 界面——工程名 bin_counter，设置工程路径，
+         点击 Next。
+
+              （4）Select Device 界面——选择芯片型号，根据自己板卡上的
+         FPGA 芯片进行选择（芯片上面对应的有型号），然后点击 Next。
+
+              （5）Summary 界面——点击 Finish，完成工程的创建。
+
+     建立好的工程如下图 5-4 所示。
+
+
+
+
+                                        图 5-4 工程建立完成示意图
+
+店铺：https://xiaomeige.taobao.com                                  官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                           技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+
+5.2.2 代码设计
+     从计数器模块框图以及计数器模块端口功能表的分析设计可得出端口列表。
+ module bin_counter
+ (
+     clk,
+     reset_n,
+     led
+ );
+     input clk;
+     input reset_n;
+     output led;
+     reg led;
+
+ endmodule
+     从实验原理中可以看出需要一个计数器，因为计数器是从 0 开始计数而不
+是 1，因此在计数值计数到 25'd24_999_999 时清零而不是计数到 25'd25_000_000
+时清零，这里计数器最大值使用 parameter 进行参数化定义表示，使用参数化定
+义的好处是通过修改 parameter 中定义最大值的数值可以全部修改设计中用到的
+这个参数。具体代码如下。
+ parameter MCNT = 24_999_999;
+
+ reg [24:0]cnt;     //定义计数器寄存器
+
+ //计数器计数进程
+ always@(posedge clk or negedge reset_n)
+ if(reset_n)
+     cnt <= 25'd0;
+ else if(cnt == MCNT)
+     cnt <= 25'd0;
+ else
+     cnt <= cnt + 1'b1;
+     当计数器计数到预设的值后就让 led 取反一次，来达到亮灭翻转的目的。
+ //led 输出控制进程
+ always@(posedge clk or negedge reset_n)
+ if(reset_n)
+     led <= 1'b1;
+ else if(cnt == MCNT)
+     led <= ~led;
+ else
+     led <= led;
+
+
+
+
+店铺：https://xiaomeige.taobao.com                 官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/          技术群组：
+                 小梅哥 FPGA 团队               武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力            开发板 培训 项目研发三位一体
+
+
+5.3 功能仿真验证
+     将上面的设计内容进行分析和综合直至没有错误以及警告。新建计数器仿
+真文件。具体步骤如下。
+
+              （1）点击工具栏中的                 新建仿真文件。
+
+              （2）New 弹窗中选择 Verilog File，点击 OK。
+
+              （3）New Verilog file 弹 窗 中 Name 一 栏 中 给 文 件 命 名 为
+         bin_counter_tb，其它默认，点击 OK，仿真文件建立成功。
+
+     如下图 5-5 所示，在 Design->Verilog Files 中出现新建的仿真文件，双击文
+件名进入编辑窗口。
+
+
+
+
+                                 图 5-5 仿真文件新建成功示意图
+
+
+     仿真激励产生一个周期为 20ns 的时钟 clk 和复位信号，并且例化了需要测
+试的 bin_counter.v。
+ `timescale 1ns/1ns
+ `define CLOCK_PERIOD 20
+
+ module bin_counter_tb();
+     reg clk;
+     reg reset_n;
+     wire led;
+     bin_counter bin_counter_inst (
+         .clk(clk),
+         .reset_n(reset_n ),
+         .led(led)
+     );
+
+      initial clk = 1;
+      always #(`CLOCK_PERIOD/2) clk = ~clk;
+
+      initial begin
+
+店铺：https://xiaomeige.taobao.com                      官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/               技术群组：
+                 小梅哥 FPGA 团队              武汉芯路恒科技
+            专注于培养您的 FPGA 独立开发能力          开发板 培训 项目研发三位一体
+
+            reset_n = 1'b0;
+            #(`CLOCK_PERIOD *200 + 1);
+            reset_n = 1'b1;
+            #2000000000;
+            $stop;
+      end
+
+ endmodule
+     仿真文件添加完成之后，进行分析综合，查看是否有语法错误，检查无误
+之后，使用 Modelsim 对工程进行仿真验证。
+
+5.3.1 建立 Modelsim 仿真工程
+     建立 Modelsim 仿真工程，操作如下所示：
+
+              （1）工程目录下，新建一个 sim 文件夹用于存放仿真工程文件。
+
+              （2）点击 Modelsim 图标，进入 Modelsim 软件。
+
+              （3）依次点击 File->New->Project，新建一个仿真工程。
+
+              （4）Create Project 弹 窗 中 Project Name 一 栏 中 给 工 程 命 名 为
+         bin_counter，点击 Browse 选择工程目录下的 sim 文件夹用于存放工程，
+         点击 OK。
+
+              （5）弹出 Add items to the Project 的对话框，点击 Add Existing
+         File->Browse 添 加 本 次 实 验 所 需 的 仿 真 文 件 ：bin_counter.v 和
+         bin_counter _tb.v，点击 OK。
+
+              （6）点击 Compile->Compile All，编译所有文件。
+
+     编译成功之后，如下图 5-6 所示，如果出现错误，请根据提示进行修改。
+
+
+
+
+                                  图 5-6 文件编译成功示意图
+
+
+店铺：https://xiaomeige.taobao.com                     官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/              技术群组：
+                 小梅哥 FPGA 团队               武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+
+5.3.2 配置仿真环境
+     仿真工程建立并编译完成之后，接下来就需要进行仿真环境的配置，操作
+如下所示：
+
+              （1）我们在 project 状态栏中右键点击，然后选择“Add to Project”
+         -> “Simulation Configuration…”。
+
+              （2）进入 Add Simulation Configuration 页面，我们在 Design 标签
+         页面中选择 work 库中的“bin_counter_tb”模块作为设计顶层，点击复
+         制模块名作为仿真配置“Simulation Configuration Name”的命名，确保
+         命名保持一致。
+
+              （3）点击“Optimization Options…”，在“Optimization Options..”
+         设置栏中选择“Apply full visibility to all modules(full debug module)”，
+         点击“OK”。
+
+              （4）点击“libraries”设置栏，在“Search libraries(-L)”一栏中点
+         击 “Add…” 添 加 我 们 新 建 的 高 云 的 库 文 件 “gw5at”， 在 “Search
+         Libraries First(-Lf)”同样选择库文件“gw5at”，最后点击“Save”保存
+         设置。
+
+     通过上述步骤完成了对仿真环境配置，保存配置后，我们可以看到在
+“project”栏产生了仿真配置文件“bin_counter_tb”，如下图 5-7 所示。
+
+
+
+
+                                 图 5-7 仿真文件生成成功示意图
+
+
+5.3.3 仿真界面波形观察
+     我们首先需要双击新生成的仿真文件“bin_counter_tb”，进入“sim”界面，
+在“sim”界面我们可以添加我们想要观察模块的波形，选中模块 bin_counter_tb，
+
+右键点击选择“Add Wave”，进入 Wave 窗口，点击工具栏中的                            全速运行，仿
+
+真停止后点击           ，波形如下图 5-8。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                      官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/               技术群组：
+                 小梅哥 FPGA 团队                  武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                开发板 培训 项目研发三位一体
+
+
+
+
+                                         图 5-8 波形图
+
+
+     从图中得出结论如下：可以看出高低电平变化的时间均是 500000000ns 也就
+是 0.5s，符合既定的设计要求，至此功能仿真结束
+     上述仿真时间单位为 us，要判断 led 输出高低电平时间还需要自己通过时间
+单位换算，不太直观，可以对仿真显示时间单位进行设置修改，具体步骤如下。
+
+              （1）如下图 5-9 所示，在黄色框出区间内，鼠标右键点击，选择
+         并点击 Grid,Timeline & Cursor Control…
+
+
+
+
+                                图 5-9 设置仿真显示时间单位入口
+
+              （2）出现如下图 5-10 所示的窗口，红色圈主的地方就是设置显示
+         单位的地方，通过下拉框选择将 us/ns 改为 ms。（这里的时间单位根据
+         实际仿真时间长度进行改变，选择一个合适的单位便于观察波形即可）。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                      官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/               技术群组：
+                 小梅哥 FPGA 团队             武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力           开发板 培训 项目研发三位一体
+
+
+
+
+                               图 5-10 设置仿真显示时间单位界面
+
+
+     更改显示时间单位后去观察波形高低电平的时间，如下图 5-11 所示，显示
+单位已经更改为 ms 了，高低电平时间为 500ms。与上面是一样的，就是显示时
+间单位有所变化。
+
+
+
+
+                            图 5-11 更改仿真显示时间单位后的波形图
+
+
+     在进行上述的功能仿真时可以发现电脑需要运行的时间较长，这是由于计
+数器的计数值太大。可以通过更改仿真计数的最大值来缩短仿真时间。这里介
+绍两种更改方式，第一种方式是将设计文件 bin_counter.v 中使用 parameter 进行
+参数化定义的计数值最大值修改为 24_999，具体代码如下。
+ parameter MCNT = 24_999;
+     第二种方式是在仿真文件 bin_counter_tb.v 中将计数器的最大值修改为
+24_999，具体代码如下。
+ defparam bin_counter_inst.MCNT = 24_999;
+     通过上面两种方式在能验证设计正确性的基础上缩短仿真时间。比较上面
+的不同方式，可以发现，方式二相对来说会好些，方式二能够在不改变设计代
+码的前提下，仅仅通过仿真代码上的设计就可以实现缩短仿真时间的目的。修
+改后的仿真波形如下图 5-12 所示，波形图中高低电平变化时间变为 0.5ms，相
+店铺：https://xiaomeige.taobao.com                  官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/           技术群组：
+                 小梅哥 FPGA 团队                  武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力               开发板 培训 项目研发三位一体
+
+
+比 500ms 缩短了 1000 倍，也可以说明功能仿真正确。需要注意的是，修改代码
+之后，都需要重新在 Modelsim 重新编译、跑仿真。
+
+
+
+
+                              图 5-12 缩小计数值后的功能仿真波形
+
+
+5.4 板级调试与验证
+     本次实验的板级验证环节，主要验证以下几个目标：
+
+              1.能否正确将生成的 fs 文件下载至开发板。
+
+              2.下载完成后，开发板上的 LED 灯是否每隔 1S 中闪烁一次。
+
+     系统所需硬件：
+
+              1.ACX720-GW5A138 开发板。
+
+              2.高云下载器及下载线。
+
+              3.12V 的供电电源
+
+              4.硬件条件符合实验要求，具有完全开发功能的 PC 机一台。
+
+5.4.1 添加 I/O 约束
+     在 Gowin 软件右边的 Process 界面点击 FloorPlanner，新建一个.cst 文件存放
+I/O 约束，如下图 5-13 所示。
+
+
+
+
+                                     图 5-13 新建 I/O 约束
+
+
+     进入 FloorPlanner 界面之后，点击下方的 I/O Constraints 进入 I/O 约束界面。
+根据原理图对管脚位置进行添加，添加完成后如下图 5-14 所示。
+店铺：https://xiaomeige.taobao.com                         官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                  技术群组：
+                 小梅哥 FPGA 团队                 武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力               开发板 培训 项目研发三位一体
+
+
+
+
+                                     图 5-14 引脚分配界面
+
+
+     这样管脚约束添加完成了。但是此时约束内容保存在内存中，还没有写入
+文件，点击工具栏保存按钮，或者直接 Ctrl+S。
+     关闭 FloorPlanner 界面之后，点击右侧的 Design，可以看到我们新添加
+的.cst 文件，双击可查看文件内容，如下图 5-15 所示。
+
+
+
+
+                                     图 5-15 I/O 约束文件
+
+
+5.4.2 添加时序约束
+     我们需要点击 Process 界面的“Timing Constraints Editor”进行时序约束，
+此时会弹出本工程没有约束文件，是否想要创建约束文件，点击 OK 即可，如
+下图 5-16 所示。
+
+
+
+
+                                   图 5-16 创建时序约束文件
+
+
+     随后进入时序约束界面，如下图 5-17 所示。
+
+店铺：https://xiaomeige.taobao.com                        官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                 技术群组：
+                 小梅哥 FPGA 团队                武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力             开发板 培训 项目研发三位一体
+
+
+
+
+                                     图 5-17 时序约束界面
+
+
+     选中 Timing Constraints 下的 Clocks，在右侧空白处，右键单击选择 Create
+Clock，如下图 5-18 所示。
+
+
+
+
+                                 图 5-18 创建时钟约束操作步骤
+
+
+     弹出 Create Clock 界面，如下图 5-19 所示。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                      官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/               技术群组：
+                 小梅哥 FPGA 团队                   武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                开发板 培训 项目研发三位一体
+
+
+
+
+                                   图 5-19 Create Clock 界面
+
+
+     对上图所示所示的各项参数进行简要说明：
+
+              1.Clock Name：时钟名，支持字母或下划线开头的标识符。
+
+              2.Period：周期，默认 10，浮点型，精确到千分位。
+
+              3.Frequency：频率。默认 100，浮点型，精确到千分位。
+
+              4.Rising：上升沿时刻，浮点型，精确到千分位。
+
+              5.Falling：下降沿时刻，浮点型，精确到千分位。
+
+              6.Objects：指定作用目标，通过                    选择进行内容的自动填充。
+
+              7.Add：在同一源上添加多个时钟时需要勾选。
+
+     我们点击          进行约束时钟的选择设置，弹出如下图 5-20 所示的窗口，
+
+
+
+
+店铺：https://xiaomeige.taobao.com                             官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                      技术群组：
+                 小梅哥 FPGA 团队                   武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                开发板 培训 项目研发三位一体
+
+
+
+
+                                  图 5-20 Select Objects 界面
+
+
+     这里需要约束的时钟是从管脚进来的 50M 系统时钟，依次点击 Search->clk->
+    ->OK，操作如下图 5-21 所示。
+
+
+
+
+                                  图 5-21 选择需要约束的时钟
+
+
+     然后重新回到 Create Clock 界面，时钟命名为 clk，周期为 20ns，频率为
+50Mhz，Rising 为 0，Falling，最终 Create Clock 界面如下图 5-22 所示。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                              官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                       技术群组：
+                 小梅哥 FPGA 团队                  武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力               开发板 培训 项目研发三位一体
+
+
+
+
+                                 图 5-22 Create Clock 配置界面
+
+
+     添加完成之后，可以看到右侧空白处有了我们刚刚添加的时钟约束，点击
+
+    进行保存，如下图 5-23 所示。
+
+
+
+
+                                     图 5-23 保存时序约束
+
+
+     通 过 上 述 操 作 ， 完 成 了 50Mhz 时 钟 的 时 序 约 束 ， 关 闭 Gowin Timing
+Constraints Editor 界面，此时在 Design 界面，可以看到我们添加的时序约束文件
+bin_counter.sdc，双击可以查看约束文件内容，如下图 5-24 所示。
+
+
+
+
+                                 图 5-24 查看时序约束文件方式
+店铺：https://xiaomeige.taobao.com                             官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                      技术群组：
+                 小梅哥 FPGA 团队                    武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力                 开发板 培训 项目研发三位一体
+
+
+5.4.3 布局布线
+     点击 Process 中的 Place & Route 进行布局布线，布局布线成功之后，会生成
+fs 文件，Console 提示如下图 5-25。
+
+
+
+
+                                 图 5-25 fs 文件生成成功示意图
+
+
+5.4.4 硬件连接
+     将下载器、电源依次连接至开发板，整体的硬件连接如下图 5-26 所示。
+
+
+
+
+                                         图 5-26 硬件连接图
+
+
+5.4.5 下载 fs 文件
+     点击 Program Device，进入下载界面，然后弹出 Cable Setting 界面，点击
+
+Save，然后点击             下载文件，下载完成之后，如下图 5-27 所示。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                         官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/                  技术群组：
+                 小梅哥 FPGA 团队               武汉芯路恒科技
+           专注于培养您的 FPGA 独立开发能力             开发板 培训 项目研发三位一体
+
+
+
+
+                                    图 5-27 下载成功示意图
+
+
+     Program 完成后，可以看到 LED0 每间隔 1S 亮灭翻转一次。实验证明，设
+计达到预期。
+
+5.5 思考与总结
+     本章以计数器为例学习了简单的时序逻辑设计，并简要介绍了一下时钟约
+束的方法。读者请以此为基础，设计出逻辑电路驱动 LED 灯以不同的频率闪烁，
+并进行仿真以及板级验证。
+
+
+
+
+店铺：https://xiaomeige.taobao.com                      官方网站：www.corecourse.cn
+技术博客：http://www.cnblogs.com/xiaomeige/               技术群组：
+

@@ -1,0 +1,12 @@
+<?xml version="1" encoding="UTF-8"?>
+<!DOCTYPE gowin-fpga-project>
+<Project>
+    <Template>FPGA</Template>
+    <Version>5</Version>
+    <Device name="GW5AT-138B" pn="GW5AT-LV138PG484AC1/I0">gw5at138b-012</Device>
+    <FileList>
+        <File path="src/key_filter.v" type="file.verilog" enable="1"/>
+        <File path="src/key_filter_tb.v" type="file.verilog" enable="0"/>
+        <File path="src/key_model.v" type="file.verilog" enable="0"/>
+    </FileList>
+</Project>

@@ -1,0 +1,3 @@
+"chapter","role","archive","sha256","status","extracted_files","hdl_files","gowin_projects","output","log"
+"33","board_project","raw/ch33/ch33_uart_eeprom/A.rar","b5ade8af8edd046c48faaac73e8532dde78a01d765fcb4aa35ec6636908e0278","PASS","76","18","1","raw/ch33/ch33_uart_eeprom/nested_A","reports/nested_extract_logs/ch33_A.log"
+"33","simulation_project","raw/ch33/ch33_uart_eeprom/B.rar","2739d817e60f5a89b107f84abf251fb11a1d06741223d99314a9714da91bd705","PASS","80","11","1","raw/ch33/ch33_uart_eeprom/nested_B","reports/nested_extract_logs/ch33_B.log"

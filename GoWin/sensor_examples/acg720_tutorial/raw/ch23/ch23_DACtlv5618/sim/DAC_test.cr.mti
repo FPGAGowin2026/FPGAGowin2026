@@ -1,0 +1,22 @@
+D:/work/waresoft/Gowin2/workspace/720-138K/ch25_DACtlv5618/src/DAC_test.v {1 {vlog -work work -vopt -stats=none D:/work/waresoft/Gowin2/workspace/720-138K/ch25_DACtlv5618/src/DAC_test.v
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module DAC_test
+
+Top level modules:
+	DAC_test
+
+} {} {}} D:/work/waresoft/Gowin2/workspace/720-138K/ch25_DACtlv5618/src/tlv5618_tb.v {1 {vlog -work work -vopt -stats=none D:/work/waresoft/Gowin2/workspace/720-138K/ch25_DACtlv5618/src/tlv5618_tb.v
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module tlv5618_tb
+
+Top level modules:
+	tlv5618_tb
+
+} {} {}} D:/work/waresoft/Gowin2/workspace/720-138K/ch25_DACtlv5618/src/tlv5618.v {1 {vlog -work work -vopt -stats=none D:/work/waresoft/Gowin2/workspace/720-138K/ch25_DACtlv5618/src/tlv5618.v
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module tlv5618
+
+Top level modules:
+	tlv5618
+
+} {} {}}

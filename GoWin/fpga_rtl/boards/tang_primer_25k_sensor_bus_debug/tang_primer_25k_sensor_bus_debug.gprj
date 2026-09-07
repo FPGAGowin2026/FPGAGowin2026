@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE gowin-fpga-project>
+<Project>
+    <Template>FPGA</Template>
+    <Version>5</Version>
+    <Device name="GW5A-25B" pn="GW5A-LV25MG121NC1/I0">gw5a25b-003</Device>
+    <FileList>
+        <File path="src/bus_debug_uart_rx.v" type="file.verilog" enable="1"/>
+        <File path="src/bus_debug_uart_tx.v" type="file.verilog" enable="1"/>
+        <File path="src/sensor_bus_debug_console.v" type="file.verilog" enable="1"/>
+        <File path="../../../sensor_examples/common/i2c_register8_master.v" type="file.verilog" enable="1"/>
+        <File path="../../../sensor_examples/ina219_i2c/src/ina219_i2c.v" type="file.verilog" enable="1"/>
+        <File path="../../../sensor_examples/mpu6050_i2c/src/mpu6050_i2c.v" type="file.verilog" enable="1"/>
+        <File path="../../../sensor_examples/vl53l0x_i2c/src/vl53l0x_i2c.v" type="file.verilog" enable="1"/>
+        <File path="../../../sensor_examples/vl53l1x_i2c/src/vl53l1x_i2c.v" type="file.verilog" enable="1"/>
+        <File path="../../../sensor_examples/icm20602_spi/src/icm20602_spi.v" type="file.verilog" enable="1"/>
+        <File path="../../../sensor_examples/icm42688p_spi/src/icm42688p_spi.v" type="file.verilog" enable="1"/>
+        <File path="../../../sensor_examples/imu660ra_spi/src/imu660ra_spi.v" type="file.verilog" enable="1"/>
+        <File path="../../../sensor_examples/imu660rx_spi/src/imu660rx_spi.v" type="file.verilog" enable="1"/>
+        <File path="../../../sensor_examples/imu963ra_spi/src/imu963ra_spi.v" type="file.verilog" enable="1"/>
+        <File path="../../../sensor_examples/lis3mdl_spi/src/lis3mdl_spi.v" type="file.verilog" enable="1"/>
+        <File path="../../../sensor_examples/menc15a_spi/src/menc15a_spi.v" type="file.verilog" enable="1"/>
+        <File path="../../../sensor_examples/mt6816_spi/src/mt6816_spi.v" type="file.verilog" enable="1"/>
+        <File path="src/tang_primer_25k_sensor_bus_debug_top.v" type="file.verilog" enable="1"/>
+        <File path="constraints/tang_primer_25k_sensor_bus_debug.cst" type="file.cst" enable="1"/>
+        <File path="constraints/tang_primer_25k_sensor_bus_debug.sdc" type="file.sdc" enable="1"/>
+    </FileList>
+</Project>
