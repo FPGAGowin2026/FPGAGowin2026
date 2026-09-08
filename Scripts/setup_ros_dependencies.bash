@@ -29,7 +29,7 @@ _prepend_ros_dependency_path() {
     *":${path}:"*) return 0 ;;
   esac
   printf -v "${variable_name}" '%s' "${path}${current_value:+:${current_value}}"
-  export "${variable_name}"
+  export "${variable_name?}"
 }
 
 _prepend_ros_dependency_path AMENT_PREFIX_PATH "${_ros_prefix}"

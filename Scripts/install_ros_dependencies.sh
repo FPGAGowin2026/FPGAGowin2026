@@ -10,7 +10,10 @@ readonly packages=(
   ros-humble-nav2-bringup
 )
 
-if [[ "$(. /etc/os-release && printf '%s' "${VERSION_CODENAME:-}")" != "jammy" ]]; then
+# 系统提供的版本元数据不在仓库中。
+# shellcheck disable=SC1091
+. /etc/os-release
+if [[ "${VERSION_CODENAME:-}" != "jammy" ]]; then
   echo "错误：本地依赖覆盖层只支持 Ubuntu 22.04 Jammy。" >&2
   exit 1
 fi
