@@ -110,16 +110,10 @@ CRC16-CCITT-FALSE 参数：多项式 `0x1021`、初值 `0xffff`、不反射输�
 - 软件急停置位时立即清除缓存速度；解除急停后必须收到新的 `/cmd_vel` 才能恢复非零命令。
 - `link_timeout_ms` 只控制 ROS 诊断中的在线判定。FPGA 的 PHY、报文心跳和 PWM 看门狗仍是独立的最终安全层。
 
-## 当前实现与验证状态
+## 实现与验证入口
 
-- C++17 实现在独立 [`fpga_gateway`](https://github.com/FPGAGowin2026/fpga_gateway) 仓库；同步后的本地路径为 `ros_ws/src/robot/fpga_gateway`，逐字段编解码，不直接复制结构体内存。
-- 4 项 GTest 覆盖黄金向量、三类报文往返、CRC/头部/长度拒绝和序号回绕，当前全部通过。
-- `fake_fpga_node` 与 `fpga_gateway_node` 的本机 UDP 闭环达到约 100 Hz，并已验证速度命令、超时归零、软件急停和断链诊断。
-- `fpga_rtl` `main` 提交 `7922400` 已实现 Control 固定 31 字节解析、CRC16-CCITT-FALSE、头部/长度拒绝、重复/倒序检查和 `0xffffffff → 0` 回绕；模块级 10 项自检覆盖黄金向量、应用 CRC、以太网错误、错误版本、30/32 字节异常长度、重复序号和回绕。
-- 系统骨架的控制看门狗在物理急停、严重故障或离开 Jetson 模式时清除缓存速度；条件解除后必须接收新的合法 Control 报文才能恢复协同运动。
-- Telemetry 固定 72 字节和 Status 固定 38 字节编码均已接入 UDP/IPv4/以太网发送顶层；端到端 testbench 对返回字段、IPv4 checksum、应用 CRC16 和 FCS 做字节级检查，并验证 100 Hz/10 Hz 调度与发送 FIFO 背压。
-- 两个时钟域使用深度 4 的整记录异步 FIFO；Control 只有在 FCS 与网络层检查完成后才提交，返回报文在应用编码完成后才提交。复位异步置位、分别在网络域和系统域两拍同步释放。
-- 官方通用 RGMII/IPv4/UDP 回环已使用帧感知缓存完成坏 FCS 原子拒绝；自检还注入描述符 FIFO Full，断言负载写指针回滚，并用不同负载验证拒绝帧不会污染下一合法帧。真实 FIFO 填满时的读写竞争仍待器件/板级验证。
-- `tb_robot_network_e2e` 以不同频率和相位的网络/系统时钟完成 72 项检查，覆盖连续 ICMP、各层错误拒绝、合法 Control 进入 `robot_rtl_core`、Telemetry/Status 返回、序号、FIFO 满、测距减速/停车、看门狗、急停、严重故障和复位。
-- 独立 `tb_async_frame_fifo` 以不同频率、相位和复位时刻完成 23 项检查，覆盖 Gray 指针单比特变化、满/空、整记录顺序、溢出拒绝与复位恢复。
-- 以上协议行为均通过 Icarus RTL 功能仿真；14-I/O 离线 wrapper 的内部时钟 P&R/STA 也达到 125 MHz 网络目标且 setup/hold 违规为 0。但该 wrapper 使用安全常量和离线 `/2` 系统时钟，且未约束未知 PHY/PCB I/O 延迟，因此仍不能证明 RGMII 板级时序、PHY 断链看门狗、真实传感器单位换算或物理 PWM 关闭。
+C++17 逐字段编解码位于 `ros_ws/src/robot/fpga_gateway`，由 `ros_ws` 仓库统一维护；RTL 位于独立 `FPGA_ws` 仓库。协议黄金向量、模块与网络端到端测试结果统一见 [handoff](./handoff.md#51-rtl-仿真证据快照)，主机测试记录见该文第 5 节。
+
+系统在物理急停、严重故障或离开 Jetson 模式时清除缓存速度；条件解除后须收到新的合法 Control 才能恢复协同运动。Control 在 FCS 和网络层检查完成后才提交，返回报文在应用编码完成后才提交；两个时钟域使用深度 4 的整记录异步 FIFO，复位异步置位，并分别在网络域和系统域两拍同步释放。
+
+RTL 仿真和离线 wrapper 的内部 STA 不证明真实 PHY 断链、传感器单位换算或物理 PWM 关闭。实板联调必须重新验证这些行为。
