@@ -1,7 +1,9 @@
 /FPGA_ws/
+GoWin/Gowin_V1.9.12.03/
 
-# The outer workspace is vendored under GoWin/ as a source-only snapshot.
-# Keep reproducible sources and project inputs, but ignore generated outputs.
+
+# GoWin contains local EDA, reference projects, sensor examples and documents.
+# Keep reproducible inputs visible, but ignore generated outputs.
 /GoWin/**/.git/
 /GoWin/**/.svn/
 /GoWin/**/impl/
@@ -24,6 +26,10 @@
 /GoWin/**/*.log
 /GoWin/**/*.result
 /GoWin/**/*.timing_paths
+/GoWin/**/*.lic
+
+# gowingame is maintained as an independent Git repository.
+/gowingame/
 
 # ROS 工作区统一由独立仓库维护。
 /ros_ws/

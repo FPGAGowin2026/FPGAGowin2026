@@ -3,7 +3,9 @@ set -euo pipefail
 
 project_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 target="${project_root}/ros_ws"
-url="https://github.com/FPGAGowin2026/ros_ws.git"
+readonly url="https://github.com/FPGAGowin2026/ros_ws.git"
+
+# 保留原脚本名作为入口；现在统一同步工作区，不再逐包克隆。
 
 if [[ -e "${target}/.git" ]]; then
   echo "更新 ros_ws"

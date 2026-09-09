@@ -1,10 +1,11 @@
 # FPGAGowin2026
 
-本仓库保存 FPGAGowin2026 项目的总体方案、接口文档以及 FPGA 和 ROS 2 工作区入口。FPGA 和 ROS 2 工作区分别使用独立仓库维护，全部自研 ROS 2 包统一保存在 `ros_ws` 仓库。自研运行时节点统一使用 C++17 与 `rclcpp`，Python 只保留给 ROS 2 launch。
+本仓库保存 FPGAGowin2026 项目的总体方案、接口文档以及 FPGA 和 ROS 2 工作区入口。FPGA 主线、Tang Primer 20K 软核实验和 ROS 2 工作区分别使用独立仓库维护。全部自研 ROS 2 包统一保存在 `ros_ws` 仓库。自研运行时节点统一使用 C++17 与 `rclcpp`，Python 只保留给 ROS 2 launch。
 
 ## 独立仓库
 
 - [`fpga_rtl`](https://github.com/FPGAGowin2026/fpga_rtl)：ACG720 FPGA RTL、仿真与后续 Gowin 工程。
+- [`gowingame`](https://github.com/FPGAGowin2026/gowingame)：Tang Primer 20K 上的 PicoRV32、RT-Thread Nano、机器人控制与轻量定位实验，不属于 ACG720/GW5AT 主线。
 - [`ros_ws`](https://github.com/FPGAGowin2026/ros_ws)：统一管理网关、bringup、导航、视觉和任务控制包。
 
 ## 获取工作区
@@ -13,10 +14,11 @@
 git clone https://github.com/FPGAGowin2026/FPGAGowin2026.git
 cd FPGAGowin2026
 ./Scripts/sync_fpga_workspace.sh
+./Scripts/sync_gowingame.sh
 ./Scripts/sync_ros_packages.sh
 ```
 
-脚本首次运行时分别克隆 FPGA 工作区和整个 ROS 2 工作区；再次运行时对已有的独立仓库执行快进更新。若目标目录不是独立 Git 仓库，脚本会停止，不覆盖其中的文件。
+脚本首次运行时分别克隆两个 FPGA 相关仓库和整个 ROS 2 工作区；再次运行时对已有的独立仓库执行 `git pull --ff-only`。若目标目录不是独立 Git 仓库，脚本会停止，不覆盖其中的文件。
 
 ## FPGA 仿真
 
@@ -75,9 +77,11 @@ ros2 launch robot_navigation mapping.launch.py \
 
 ```text
 FPGAGowin2026/
-├── FPGA_ws/                  # FPGA RTL、仿真与集成说明
-├── Scripts/                   # 工作区辅助脚本
-├── docs/                      # 总体方案、交接记录和 UDP 协议
+├── FPGA_ws/                  # 独立仓库：ACG720/GW5AT FPGA 主线
+├── gowingame/                # 独立仓库：Tang Primer 20K 软核实验
+├── GoWin/                    # 本地 EDA、参考工程和传感器示例
+├── Scripts/                  # 工作区同步与环境脚本
+├── docs/                     # 单层项目文档、专项报告和参考资料
 └── ros_ws/                    # 独立仓库：全部自研 ROS 2 包
     └── src/
         ├── external/          # 本地 ROS 依赖覆盖层，整体忽略、不上传
