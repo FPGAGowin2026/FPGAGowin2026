@@ -24,3 +24,6 @@
 /GoWin/**/*.log
 /GoWin/**/*.result
 /GoWin/**/*.timing_paths
+
+# ROS 工作区统一由独立仓库维护。
+/ros_ws/

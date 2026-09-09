@@ -72,16 +72,16 @@ Jetson 协同模式：
 ## 5. 当前仓库状态
 
 - 已建立 `ros_ws/src/robot` 和 `ros_ws/src/external`；`external` 保存不写入系统目录的 ROS 2 Humble 二进制依赖覆盖层，通过 `Scripts/install_ros_dependencies.sh` 安装，并由 `Scripts/setup_ros_dependencies.bash` 激活。该目录整体忽略，不上传到 Git。
-- `fpga_gateway` 已作为独立私有仓库发布，包含 C++17 固定二进制协议、POSIX UDP 网关、主机侧 `fake_fpga_node` 和 4 项 GTest。
-- `robot_bringup` 已作为独立私有仓库发布，包含仿真与硬件两套 launch、集中 YAML 参数，以及一项自动化 ROS 主机闭环 launch 测试。
-- 父仓库新增 `robot_navigation`、`vision_bridge` 和 `mission_control` 三个 C++17/`rclcpp` 原型包：分别提供 EKF/SLAM/Nav2、红色单目标观测，以及“到搜索区—搜索—对准—接近—停车”状态机。Python 只保留给 ROS 2 launch；原型稳定并需要独立发布时再拆仓库。
+- `ros_ws/src/robot/fpga_gateway` 由 `ros_ws` 私有仓库统一管理，包含 C++17 固定二进制协议、POSIX UDP 网关、主机侧 `fake_fpga_node` 和 4 项 GTest。
+- `ros_ws/src/robot/robot_bringup` 由 `ros_ws` 私有仓库统一管理，包含仿真与硬件两套 launch、集中 YAML 参数，以及一项自动化 ROS 主机闭环 launch 测试。
+- `ros_ws` 包含 `robot_navigation`、`vision_bridge` 和 `mission_control` 三个 C++17/`rclcpp` 原型包：分别提供 EKF/SLAM/Nav2、红色单目标观测，以及“到搜索区—搜索—对准—接近—停车”状态机。Python 只保留给 ROS 2 launch。
 - 当前网关发布版本增加了轮式里程计与 IMU 的非零协方差参数，`robot_bringup` YAML 提供对应初值；这些值只用于主机融合起步，必须用真实静止、直行和定点旋转数据重新标定。
 - [`fpga_rtl`](https://github.com/FPGAGowin2026/fpga_rtl) 已作为独立私有仓库发布，包含 Verilog-2001 模式仲裁器和一项自检 testbench；运行 `Scripts/sync_fpga_workspace.sh` 可将其首次克隆或快进更新到 `FPGA_ws/`。
-- 父仓库不重复保存三个已发布独立仓库的源码；运行 `Scripts/sync_ros_packages.sh` 可将两个 ROS 2 通信包首次克隆或快进更新到 `ros_ws/src/robot/`。三个高级功能原型包当前由父仓库直接保存。
+- 父仓库不重复保存独立仓库源码；运行 `Scripts/sync_ros_packages.sh` 可首次克隆或快进更新整个 `ros_ws/`，五个自研 ROS 包统一管理。
 - 协议源文件为 [`udp_protocol.md`](./udp_protocol.md)，当前只定义控制、综合遥测和状态三类报文，不含参数或轨迹段上传。
 - `FPGA_ws` 当前是 `fpga_rtl` 的独立检出。从父仓库干净克隆后通过同步脚本获取该仓库；`acg720_udp_loopback.gprj` 保留官方回环基线，新增 `acg720_robot_network.gprj` 引用机器人网络集成顶层和全部 RTL 依赖。器件仍为 `GW5AT-LV138PG484AC1/I0`；机器人工程只复用已知 RGMII 约束，不猜测系统时钟、电机、编码器、IMU、测距或急停引脚。
 - 本机商业版 `Gowin_V1.9.12.03` 与 License 位于父仓库忽略的 `GoWin/` 目录；`gwlicense.ini` 已指向本地 License。2026-08-24 已在可读取本机网卡标识的环境完成官方 UDP 回环和机器人网络顶层综合。受限沙箱无法访问 `AF_NETLINK` 时会误报 hostid 不匹配；这不是 License 本身失效。
-- `build/`、`install/`、`log/`、Python 缓存、`src/external/` 和两个独立通信包目录已由 `ros_ws/.gitignore` 排除，不进入父仓库提交。
+- `build/`、`install/`、`log/`、Python 缓存和 `src/external/` 由 `ros_ws/.gitignore` 排除；父仓库整体忽略 `ros_ws/`。
 - 已从 ACG720 官方第 58 章工程导入 RGMII/GMII、IPv4/UDP 收发和 UDP 回环 RTL 到 `FPGA_ws/src/ethernet/`，并在此基线上增加帧原子提交、IPv4/UDP 校验和检查和机器人网络连接。第 52 章资料只作为 ARP 帧字段与发送边界参考；最小 responder 判定由本项目实现。ICMP Echo Reply 也是项目 RTL，不能宣称来自不含完整 Ping 的第 58 章。
 - 官方 UDP 回环已改为帧感知负载缓存：负载在 FCS 判定前只暂存，合法帧才与元数据原子提交，坏 FCS、负载区满或描述符 FIFO 满均回滚整帧写指针。自检按“合法帧—坏 FCS—描述符 FIFO Full 信号注入—不同负载合法帧”顺序验证 72 字节逐字节回环、写指针回滚、拒绝帧不发送和下一帧不受污染；真实 FIFO 计数填满与读写竞争仍留待 Gowin FIFO/板级验证。
 - `acg720_robot_network_rgmii` 已将合法 IPv4/UDP Control 通过深度 4 整帧 CDC FIFO 送入 `robot_rtl_core`，再将 72 字节 Telemetry 与 38 字节 Status 编码为完整 UDP/IPv4/以太网帧。网络域和系统域分别同步释放复位；返回 CDC FIFO、固定 100 Hz/10 Hz 调度和单发送仲裁器已接入。电机 PWM/方向端口在集成顶层保持未连接。
@@ -149,8 +149,8 @@ LD_LIBRARY_PATH=../GoWin/Gowin_V1.9.12.03/IDE/lib \
 ### 5.3 Git 发布边界
 
 - `fpga_rtl` 的 `main` 已发布到 `7922400`，包含模式仲裁器、官方 UDP 回环、FCS 原子拒绝、协议、CDC、传感器、电机、自主运动、系统级 RTL、离线综合/布局布线工程和自检 testbench。
-- `fpga_gateway` 的 `main` 已发布到 `88f760c`，`robot_bringup` 的 `main` 已发布到 `c188c99`。
-- 父仓库直接发布 `robot_navigation`、`vision_bridge`、`mission_control`、依赖脚本和项目文档；两个通信包仍由同步脚本从独立仓库获取。
+- ROS 工作区统一使用 `ros_ws` 仓库，沿用原 `fpga_gateway` 历史；原通信包发布基线为 `88f760c` 和 `c188c99`。
+- 父仓库发布依赖脚本和项目文档；五个自研 ROS 包均由同步脚本从 `ros_ws` 仓库获取。
 - `ros_ws/src/external/` 是安装脚本在本机重建的依赖覆盖层，整体忽略且不上传；可上传的环境入口为 `Scripts/setup_ros_dependencies.bash`。
 
 ## 6. 下一步

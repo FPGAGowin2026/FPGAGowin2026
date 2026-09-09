@@ -1,12 +1,11 @@
 # FPGAGowin2026
 
-本仓库保存 FPGAGowin2026 项目的总体方案、接口文档以及 FPGA 和 ROS 2 工作区入口。已发布的 FPGA、网关与 bringup 源码使用独立仓库维护；尚在快速迭代的导航、视觉和任务包暂由本仓库直接维护。自研运行时节点统一使用 C++17 与 `rclcpp`，Python 只保留给 ROS 2 launch。
+本仓库保存 FPGAGowin2026 项目的总体方案、接口文档以及 FPGA 和 ROS 2 工作区入口。FPGA 和 ROS 2 工作区分别使用独立仓库维护，全部自研 ROS 2 包统一保存在 `ros_ws` 仓库。自研运行时节点统一使用 C++17 与 `rclcpp`，Python 只保留给 ROS 2 launch。
 
 ## 独立仓库
 
 - [`fpga_rtl`](https://github.com/FPGAGowin2026/fpga_rtl)：ACG720 FPGA RTL、仿真与后续 Gowin 工程。
-- [`fpga_gateway`](https://github.com/FPGAGowin2026/fpga_gateway)：Jetson 与 FPGA 之间的 UDP 网关和主机侧 FPGA 模拟器。
-- [`robot_bringup`](https://github.com/FPGAGowin2026/robot_bringup)：网关参数、仿真启动、硬件启动和主机闭环测试。
+- [`ros_ws`](https://github.com/FPGAGowin2026/ros_ws)：统一管理网关、bringup、导航、视觉和任务控制包。
 
 ## 获取工作区
 
@@ -17,7 +16,7 @@ cd FPGAGowin2026
 ./Scripts/sync_ros_packages.sh
 ```
 
-脚本首次运行时分别克隆 FPGA 工作区和两个 ROS 2 功能包；再次运行时对已有的独立仓库执行快进更新。若目标目录不是独立 Git 仓库，脚本会停止，不覆盖其中的文件。
+脚本首次运行时分别克隆 FPGA 工作区和整个 ROS 2 工作区；再次运行时对已有的独立仓库执行快进更新。若目标目录不是独立 Git 仓库，脚本会停止，不覆盖其中的文件。
 
 ## FPGA 仿真
 
@@ -79,12 +78,12 @@ FPGAGowin2026/
 ├── FPGA_ws/                  # FPGA RTL、仿真与集成说明
 ├── Scripts/                   # 工作区辅助脚本
 ├── docs/                      # 总体方案、交接记录和 UDP 协议
-└── ros_ws/
+└── ros_ws/                    # 独立仓库：全部自研 ROS 2 包
     └── src/
         ├── external/          # 本地 ROS 依赖覆盖层，整体忽略、不上传
         └── robot/
-            ├── fpga_gateway       # 独立仓库：UDP 网关与 FPGA 模拟器
-            ├── robot_bringup      # 独立仓库：通信启动与闭环测试
+            ├── fpga_gateway       # UDP 网关与 FPGA 模拟器
+            ├── robot_bringup      # 通信启动与闭环测试
             ├── robot_navigation   # 本仓库 C++：融合、SLAM、Nav2 与激光仿真
             ├── vision_bridge      # 本仓库 C++：单目标观测与合成相机
             └── mission_control    # 本仓库 C++：搜索、对准、接近、停车任务
