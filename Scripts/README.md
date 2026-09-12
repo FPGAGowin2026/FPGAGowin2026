@@ -7,6 +7,7 @@
 | `sync_fpga_workspace.sh` | 将 `FPGAGowin2026/fpga_rtl` 同步到 `FPGA_ws/` |
 | `sync_gowingame.sh` | 将 `FPGAGowin2026/gowingame` 同步到 `gowingame/` |
 | `sync_ros_packages.sh` | 将 `FPGAGowin2026/ros_ws` 整体同步到 `ros_ws/`，保留旧脚本名 |
+| `sync_llm_workspace.sh` | 将 `FPGAGowin2026/llm_ws` 本地语音语义导航系统同步到 `llm_ws/` |
 | `setup_ros_dependencies.bash` | 使用 `source` 激活本地依赖覆盖层 |
 | `push_git.sh` | 自动暂存、提交指定仓库的改动，再推送到 `origin` 同名分支 |
 
@@ -19,6 +20,7 @@
 ./Scripts/push_git.sh main "更新项目脚本与文档"
 ./Scripts/push_git.sh FPGA_ws "更新 FPGA 逻辑"
 ./Scripts/push_git.sh gowingame "更新软核实验"
+./Scripts/push_git.sh llm_ws "更新本地语音语义导航系统"
 ```
 
 按需选择一个命令执行。脚本会提交所选仓库中全部未忽略的新增、修改和删除文件，包括此前已暂存的内容；执行前可用 `git status` 检查范围。独立子仓库需要分别执行，两个 ROS 通信包统一通过 `ros_ws` 提交。
@@ -26,6 +28,14 @@
 `main` 参数代表主项目仓库，不限定分支名。没有新改动时跳过提交，继续推送当前分支。脚本不自动拉取或强制推送；如果推送失败，本地提交保留，处理远端分歧或连接问题后可重新运行。
 
 推送脚本的离线检查：`python3 Scripts/test_push_git.py`。
+
+## 本地语音语义导航工作区
+
+```bash
+./Scripts/sync_llm_workspace.sh
+```
+
+首次运行克隆 `https://github.com/FPGAGowin2026/llm_ws.git`，已有独立仓库时执行快进更新。父仓库忽略整个 `llm_ws/`，系统源码和文档通过 `push_git.sh llm_ws "提交说明"` 单独提交。运行与环境配置参见 `llm_ws/voice_asr/README.md`。
 
 ## ROS 工作区初始化
 

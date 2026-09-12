@@ -4,13 +4,13 @@ set -euo pipefail
 project_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 
 if [[ $# != 2 || -z "${2//[[:space:]]/}" ]]; then
-  echo "用法：$0 {main|ros_ws|FPGA_ws|gowingame} \"提交说明\"" >&2
+  echo "用法：$0 {main|ros_ws|FPGA_ws|gowingame|llm_ws} \"提交说明\"" >&2
   exit 1
 fi
 
 case "$1" in
   main) target="${project_root}" ;;
-  ros_ws|FPGA_ws|gowingame) target="${project_root}/$1" ;;
+  ros_ws|FPGA_ws|gowingame|llm_ws) target="${project_root}/$1" ;;
   *) echo "错误：未知仓库 $1" >&2; exit 1 ;;
 esac
 
