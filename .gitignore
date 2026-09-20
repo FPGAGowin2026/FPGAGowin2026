@@ -28,7 +28,7 @@ GoWin/Gowin_V1.9.12.03/
 /GoWin/**/*.timing_paths
 /GoWin/**/*.lic
 
-# gowingame is maintained as an independent Git repository.
+# 已退役的 gowingame 路径保持忽略，防止旧副本被父仓库意外收录。
 /gowingame/
 
 # ROS 工作区统一由独立仓库维护。
