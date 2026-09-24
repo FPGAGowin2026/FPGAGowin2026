@@ -1,18 +1,7 @@
-# GoWin 本地资源目录
+# GoWin 本地工具
 
-该目录只保存当前工程需要的本地工具、参考案例和传感器示例：
+当前板卡工程为 ACG720-60K，源码和构建入口位于 `../FPGA_ws/boards/acg720_60k_motor_closed_loop/`。
 
-- `Gowin_V1.9.12.03`：本机 Gowin EDA，整体由父仓库忽略。
-- `choiceRobot`：赛题与板级参考工程。
-- `sensor_examples`：传感器及数字接口验证示例。
+本目录只保留本机 Gowin V1.9.12.03 x64 安装目录和许可证。安装目录保持原位，构建脚本会从这里查找 `IDE/bin/gw_sh.exe`。这两项本机资源由父仓库忽略，不纳入 FPGA RTL 仓库。
 
-项目文档、专项报告和参考资料已统一迁移到 `../docs`。
-
-正式源码使用独立仓库维护：
-
-- FPGA RTL：`../FPGA_ws`，远端为 `FPGAGowin2026/fpga_rtl`。
-- UDP 网关：`../ros_ws/src/robot/fpga_gateway`。
-- ROS 2 启动与回归：`../ros_ws/src/robot/robot_bringup`。
-- Tang Primer 20K 软核实验：`../gowingame`。
-
-为避免双份源码继续分叉，本目录不再保存上述仓库的源码快照。Gowin 的 `impl/`、仿真数据库、码流、日志和临时文件仍由父仓库忽略。
+旧的 138K `choiceRobot` 工程和 `sensor_examples` 教程副本已从当前工作树移除；它们不参与 60K 工程。

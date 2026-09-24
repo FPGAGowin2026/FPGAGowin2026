@@ -9,7 +9,7 @@
 | [FPGA_ws](FPGA_ws/README.md) | 独立 `fpga_rtl` 仓库，统一维护 RTL、PicoRV32/总线/存储器、软核程序与仿真 |
 | [ros_ws](ros_ws/README.md) | Jetson ROS 2 通信、导航、视觉和任务包 |
 | [docs](docs/README.md) | 总体方案、数据契约与历史验证边界 |
-| `GoWin/` | 本地工具、官方资料与参考案例 |
+| `GoWin/` | 本机 Gowin EDA 与许可证；60K 工程位于 `FPGA_ws/` |
 | [llm_ws](llm_ws/README.md) | 独立语音实验，不是主线依赖 |
 
 原 gowingame 已退役，源码并入 FPGA_ws；完整旧仓库与未提交状态已本地归档，位置见 [handoff](docs/handoff.md)。迁移尚未提交或推送，远端仓库尚未同步此布局。

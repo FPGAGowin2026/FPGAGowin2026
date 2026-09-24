@@ -1,6 +1,6 @@
 /FPGA_ws/
 GoWin/Gowin_V1.9.12.03/
-
+GoWin/Gowin_V1.9.12.03_x64/
 
 # GoWin contains local EDA, reference projects, sensor examples and documents.
 # Keep reproducible inputs visible, but ignore generated outputs.

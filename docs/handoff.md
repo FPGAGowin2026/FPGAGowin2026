@@ -1,26 +1,34 @@
 # 项目交接与证据边界
 
-更新：2026-09-20。已完成工作区合并、麦轮控制逻辑与 Tang Primer 25K 单电机辨识工程，接下来在 Windows 端进行实物验证。修改尚未提交或推送 Git；未恢复已删除的旧固件/差速工程，未修改 ROS 包。
+更新：2026-09-23。当前 FPGA 板卡为 ACG720-60K，唯一在用的电机板级工程为 `FPGA_ws/boards/acg720_60k_motor_closed_loop/`，通用逻辑位于 `mecanum_motor_closed_loop_core.sv`。GPIO0 是待接线确认的候选预留；通道恒等映射、零极性、计数和测速比例均为软件占位。软件仿真与离线构建不证明线束、电平、方向或真实电机闭环。未烧录、未连接串口发送运动指令、未操作硬件；未提交或推送 Git，未修改 ROS。
 
 ## Windows 接续入口
 
-首先阅读 [25K 电机辨识：Windows 端接续](Tang_Primer_25K电机辨识.md#windows-端接续2026-09-20-交接)。该文档集中保存当前接线、搬运清单、码流哈希、Windows 构建示例、串口指令和待测表。
+先读 [ACG720-60K 闭环说明](../FPGA_ws/docs/acg720_60k_motor_closed_loop.md)、[Windows 构建说明](../FPGA_ws/docs/windows_motor_build.md)和[日志分析说明](../FPGA_ws/docs/motor_log_analyzer.md)。当前源码、参数和候选 GPIO 表均在独立 `FPGA_ws` 仓库中；父仓库忽略该目录，复制或归档时需一起保留。
 
-- 当前实物任务：确认上A/上B/下A/下B四通道对应的车轮位置及电机/编码器极性，尚无实测结论。
-- 当前可下载产物：`FPGA_ws/boards/tang_primer25k_motor_id/impl/pnr/motor_id.fs`，目标25K **B版**，SRAM临时下载；实际器件版本待现场核对。
-- 当前辨识工程已在Linux通过自检仿真、综合、布局布线及出码流；未在Windows重建或下载，未验证实际电机。
-- 独立麦轮闭环 `mecanum_motor_control.sv` 只有RTL自检证据，不要把辨识工程出码流等同于麦轮闭环已完成板级验证。
-- 父仓库忽略独立 `FPGA_ws/`，两处均有未提交/未跟踪内容，码流另被忽略。Windows只拉取父仓库不足以继续；需复制当前工作树与码流，或另行安排两个仓库的发布。本次仅更新文档，不执行提交/推送。
+```powershell
+cd E:\project\FPGA_workspace\FPGAGowin2026\FPGA_ws
+.\Scripts\run_motor_closed_loop_sim.ps1 -WslDistribution Ubuntu-22.04
+.\Scripts\build_motor.ps1 -Project acg720_60k_motor_closed_loop -GowinSh <gw_sh.exe 完整路径>
+```
+
+- 按实际接线更新 CST 中的 GPIO0 球位，并在参数文件中分别设置驱动输出映射、编码器输入映射及电机/编码器极性。
+- 读取每个输出轴的编码器每圈计数，核对轮径与底盘几何，再整定测速比例和 PI 参数。当前 `COUNTS_PER_REV_CANDIDATE=0` 表示未知，`MM_PER_TICK_Q16=168` 仅是原型占位。
+- 构建与仿真记录位于 Git 忽略的 `FPGA_ws/build/`；换端复查需要显式复制。
 
 ## 1. 当前基线
 
-Jetson Orin Nano＋四轮麦轮；AT8236、IMU660RC（图片标明 LSM6DSV16XTR）、保留 IMU963RA、OV5640 和 N10。功能正确与开发速度优先，安全基础暂不实现。IMU660RC 驱动和实时反射链尚未完成。麦轮电机逻辑已新增独立 RTL 与两项功能自检，尚未完成网络接入、板级工程与实车验证。
+Jetson Orin Nano＋四轮麦轮，采用 AT8236、IMU660RC（用户确认 LSM6DSV16XTR、SPI）、保留 IMU963RA、OV5640 和 N10。OV5640 使用板载 DDR3 帧缓存和 TFT，按用户指定的 ch45 参考工程配置开发；细节见[摄像头与 TFT 接入基线](../FPGA_ws/docs/acg720_60k_ov5640_tft.md)。功能正确与开发速度优先，安全基础暂不实现。IMU660RC 驱动和实时反射链尚未完成。当前电机原型以 ACG720-60K 为目标；尚未提供电机驱动和编码器接线表，GPIO0、通道轮位和极性均待现场确认。
+
+### 摄像头、IMU 与赛题接续（2026-09-23）
+
+- 参考工程位于 `E:\project\FPGA_workspace\ch45_ov5640_ddr3_tft`，其 `.gprj` 目标为 GW5AT-60B，配置为 OV5640 800×480 RGB565、DDR3 帧缓存及 5 寸 800×480 TFT；参考时钟为 XCLK 24 MHz、SCCB 400 kHz、TFT 像素时钟 33 MHz。该工程未并入当前 `FPGA_ws` 主线，也没有本车实板显示证据。
+- 参考 CST 文件头仍标 138K，未启用的 `camera_pll.ipc` 指向 25K。实施时应核对 60K 管脚并用最新可用且支持 GW5AT-60B 的 Gowin IP Generator 重新生成实际所需 PLL、DDR3/FIFO IP；不能把旧生成文件或历史码流作为完成证据。
+- IMU660RC 的器件型号与 SPI 接口已确定，仍缺实际连线、驱动、安装轴向和板测。赛题基础任务包含摄像头/姿态实时显示、编码器运动闭环、测距减速停车与路径点导航；交付顺序和验收门槛见[后续开发计划](后续开发计划.md)。
 
 ### 电机控制补充（2026-09-20）
 
-新增 `rtl/motor/mecanum_motor_control.sv`：四轮 IK/FK、协调限速、目标斜坡、四路 QEP/测速/PI/AT8236 输出；复用单轮 PI，并将积分限幅表达式改为 64 位，避免较大 GAIN_SHIFT 时提前溢出。新增 `sim/motor/` 两项自检及 `Scripts/run_motor_sim.sh`，Icarus 11.0 实跑通过。`-Wall` 的数组敏感列表提示不影响结果。参数、接口和测试边界见 [总体方案第 5 节](系统总体方案.md#5-运动控制与轻量本体估计)。未修改 N10、ROS、旧 AT8236 实验顶层或安全模块；未提交、推送 Git。
-
-单电机辨识补充：新增 Tang Primer 25K B 版板级工程，接线按用户上A/上B/下A/下B提供，轮序尚未知。点动/串口自检及 Gowin 综合、布局布线、出码流通过，未烧录或实物验证；详见 [操作文档](Tang_Primer_25K电机辨识.md)。
+`rtl/motor/mecanum_motor_control.sv` 实现四轮 IK/FK、协调限速、目标斜坡、四路编码器测速、PI 和 AT8236 输出。通用模块默认参数保持通用。ACG720 板级工程使用恒等通道映射作为临时占位；`MOTOR_REVERSE`、`ENCODER_REVERSE` 为 0000 未标定值。80 mm 轮径是规格参考，轴距 180 mm、轮距 200 mm 是估值，每圈计数尚未知，速度比例与 PI 参数均为原型值。复位上电默认停止，UART 运动命令有限时长且不能续时。
 
 ## 2. 合并后的工作区
 
@@ -44,11 +52,11 @@ Jetson Orin Nano＋四轮麦轮；AT8236、IMU660RC（图片标明 LSM6DSV16XTR�
 
 ## 4. 验证边界
 
-已通过文件映射与哈希检查（51 个搬移文件、21 个原位 N10 源文件、29 个仿真文件），未发现遗漏或额外源码；SoC include 路径、相对固件路径及脚本语法检查通过。离线模拟 Git 检查确认旧同步/发布入口退出且不调用 Git；Git 忽略规则与 diff --check 通过。这些检查不代替 HDL 编译。上述工作区迁移检查当时没有重跑 HDL 验证。其后已新增独立25K电机辨识工程/约束并完成仿真、综合、布局布线和码流生成，详见开头的最新证据；整车主线仍无完整板级集成，未进行板测。加密 IP、N10 历史测试缺失依赖等原有边界保持。
+已通过文件映射与哈希检查（51 个搬移文件、21 个原位 N10 源文件、29 个仿真文件），未发现遗漏或额外源码；SoC include 路径、相对固件路径及脚本语法检查通过。离线模拟 Git 检查确认旧同步/发布入口退出且不调用 Git；Git 忽略规则与 diff --check 通过。这些检查不代替 HDL 编译。之后新增日志分析工具、通用麦轮闭环核心和 ACG720-60K 板级工程，当前仿真和构建证据见本交接入口。整车主线仍无实车板测。加密 IP、N10 历史测试缺失依赖等原有边界保持。
 
 ## 5. 历史验证档案的阅读规则
 
-以下原记录主要截至 2026-08-27，保留用于追溯旧差速工程；包含当时的“当前”“已完成”和百分比，不指代现工作树或新基线。旧命令、临时工具、Gowin 工程与产物可能已不存在，不能作为当前可复跑入口。专项记录另见 [调研报告](./2026高云FPGA选题3_工程交付与传感器调研报告.md)。
+以下原记录主要截至 2026-08-27，保留用于追溯旧差速工程；包含当时的“当前”“已完成”和百分比，不指代现工作树或新基线。旧命令、临时工具、Gowin 工程与产物可能已不存在，不能作为当前可复跑入口。原专项调研报告已从当前工作树删除，不能再作为当前接续入口。
 
 ## 6. 历史差速工程记录
 
@@ -157,4 +165,4 @@ LD_LIBRARY_PATH=../GoWin/Gowin_V1.9.12.03/IDE/lib \
 
 ### 6.5 独立专项工程
 
-[工程交付与传感器调研报告](./2026高云FPGA选题3_工程交付与传感器调研报告.md) 记录了 2026-08-29 的 `Choice3_Robot_25K`、`Choice3_Robot_138K`、29 个传感器示例和 ACG720 教程审计。25K 的板测是物理驱动禁用的片上激励/UART 场景，138K Choice3 仅有仿真和综合。它们与 `FPGA_ws` 网络主线分别统计，不把专项工程的四轮配置或验证结果自动并入本主线。
+`GoWin/choiceRobot/Choice3_Robot_138K` 和 `GoWin/sensor_examples/acg720_tutorial/portable_138k_bist` 是独立的 138K 专项工程。它们的历史验证结果与 `FPGA_ws` 网络主线分别统计，不自动并入本主线。

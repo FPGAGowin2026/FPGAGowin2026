@@ -1,6 +1,0 @@
-"chapter","project_file","requested_top","observed_top","status","exit_code","elapsed_seconds","errors","diagnostic","reason","log"
-"15","raw/ch15/ch15_ram_ip/ram_ip.gprj","Gowin_SP","Gowin_SP","PASS","0","1.331","0","","原工程自动选择 ram_tb；核心 IP 顶层应单独验证","reports/semantic_top_logs/ch15_Gowin_SP.log"
-"16","raw/ch16/ch16_fifo_ip/fifo_ip.gprj","fifo_top","fifo_top","PASS","0","1.42","0","","原工程自动选择 fifo_ip_tb；核心 FIFO 顶层应单独验证","reports/semantic_top_logs/ch16_fifo_top.log"
-"51","raw/ch51/ch51_gmii_rgmii_gmii/gmii_rgmii_gmii.gprj","gmii_to_rgmii","gmii_to_rgmii","PASS","0","1.322","0","","本章包含两个独立转换方向，不能让工具自动选择 Gowin_PLL","reports/semantic_top_logs/ch51_gmii_to_rgmii.log"
-"51","raw/ch51/ch51_gmii_rgmii_gmii/gmii_rgmii_gmii.gprj","rgmii_to_gmii","rgmii_to_gmii","PASS","0","1.307","0","","本章包含两个独立转换方向，不能让工具自动选择 Gowin_PLL","reports/semantic_top_logs/ch51_rgmii_to_gmii.log"
-"66","raw/ch66/ch66_FX2_Stream_OUT/FX2_Stream_OUT.gprj","usb_stream_out","usb_stream_out","PASS","0","1.413","0","","原工程启用 testbench 导致综合错误；硬件设计顶层是 usb_stream_out","reports/semantic_top_logs/ch66_usb_stream_out.log"

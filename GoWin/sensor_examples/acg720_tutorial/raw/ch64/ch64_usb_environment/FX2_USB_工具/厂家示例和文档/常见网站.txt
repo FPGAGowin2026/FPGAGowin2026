@@ -1,5 +1,0 @@
-AN75779 - How to Implement an Image Sensor Interface Using EZ-USB? FX3? in a USB Video Class (UVC) Framework
-http://www.cypress.com/documentation/application-notes/an75779-how-implement-image-sensor-interface-using-ez-usb-fx3-usb
-
-USB2.0 Camera Interface Using FX2LP? and Lattice CrossLink FPGA - KBA222479
-https://community.cypress.com/docs/DOC-14406

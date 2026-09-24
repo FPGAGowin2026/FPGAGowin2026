@@ -1,8 +1,0 @@
-Clk = 1'h1
-Rst_n = 1'h1
-DAC_DATA = 16'hcaaa
-Start = 1'h0
-Set_Done = 1'h1
-DAC_CS_N = 1'h0
-DAC_DIN = 1'h0
-DAC_SCLK = 1'h1
