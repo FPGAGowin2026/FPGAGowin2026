@@ -13,7 +13,7 @@ cd E:\project\FPGA_workspace\FPGAGowin2026\FPGA_ws
 ```
 
 - 按实际接线更新 CST 中的 GPIO0 球位，并在参数文件中分别设置驱动输出映射、编码器输入映射及电机/编码器极性。
-- 读取每个输出轴的编码器每圈计数，核对轮径与底盘几何，再整定测速比例和 PI 参数。当前 `COUNTS_PER_REV_CANDIDATE=0` 表示未知，`MM_PER_TICK_Q16=168` 仅是原型占位。
+- 读取每个输出轴的编码器每圈计数，核对轮径与底盘几何，再整定测速比例和 PI 参数。当前板级先采用商家 R20-ABOT 源码的 `COUNTS_PER_REV_CANDIDATE=122880`、`MM_PER_TICK_Q16=164`；这些数值尚未经本车实测确认。
 - 构建与仿真记录位于 Git 忽略的 `FPGA_ws/build/`；换端复查需要显式复制。
 
 ## 1. 当前基线
