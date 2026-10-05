@@ -23,7 +23,7 @@
 
 UDP 双向诊断及视频共存已完成实板验收，用户确认电机辨认完成。IMU/N10/编码器 BX72 v1 遥测已有远端 round5 短窗口实板记录，本地 296674D6 融合候选已完成离线回归、完整构建及内部 STA，未烧录；最新结果由[基线记录](../FPGA_ws/boards/BX72_138K_robot/docs/baseline_unification_20261005.md)维护。
 
-已有四轮运动学、速度环和七状态定点 EKF，不再把这些列为从零开发任务。当前需验证标定与真实响应，并复验已融合的 UDP 运动控制与停车。实现细节分别维护在[运动控制](../FPGA_ws/docs/motor_development.md)、[EKF](../FPGA_ws/docs/robot_fpga_ekf.md)与[数据契约](udp_protocol.md)，本文件不重复算法或寄存器。
+已有四轮运动学、速度环和七状态定点 EKF，不再把这些列为从零开发任务。当前需验证标定与真实响应，并复验已融合的 UDP 运动控制与停车。实现细节分别维护在[运动控制](motor_development.md)、[EKF](robot_fpga_ekf.md)与[数据契约](udp_protocol.md)，本文件不重复算法或寄存器。
 
 BX72 的 OV5640→DDR3→UDP 视频有实板证据，TFT 已移除；ACG720 保留 TFT。基础任务 1 的最终显示位置与独立运行要求需对应演示口径确认，不能只凭主机收包签收姿态显示。
 

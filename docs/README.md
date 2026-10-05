@@ -19,10 +19,11 @@
 | [BX72 双向 UDP](../FPGA_ws/boards/BX72_138K_robot/docs/bidirectional_udp.md) | C934 基本应答、视频共存与手动刷新邻居后的恢复验收 |
 | [BX72 传感器接入](../ros_ws/src/robot/fpga_gateway/BX72_SENSORS.md) | BX72 v1 五类接收、物理核对及 ROS 只读接入 |
 | [BX72 硬件接口](../FPGA_ws/boards/BX72_138K_robot/docs/hardware_interfaces.md) | 本板管脚、UART、电机控制与辨认记录边界 |
-| [运动控制开发](../FPGA_ws/docs/motor_development.md) | 运动学、参考参数、标定与日志分析 |
-| [两板 FPGA EKF](../FPGA_ws/docs/robot_fpga_ekf.md) | 已有七状态定点原型、时间处理和实车验证边界 |
+| [运动控制开发](motor_development.md) | 运动学、参考参数、标定与日志分析 |
+| [两板 FPGA EKF](robot_fpga_ekf.md) | 已有七状态定点原型、时间处理和实车验证边界 |
 | [ACG720 工程](../FPGA_ws/boards/ACG720_60K_robot/README.md) | 独立 TFT 集成、固件与未闭合整板时序 |
-| [验证历史](../FPGA_ws/docs/validation_history.md) | 两板阶段结果和证据使用范围 |
+| [公共 RTL 与研究模块](research_modules.md) | 保留源码范围、独立实验边界及回归入口 |
+| [验证历史](validation_history.md) | 两板阶段结果和证据使用范围 |
 
 当前身份以[项目状态](project_status_20261005.md)和候选清单为准，任务顺序见[开发计划](后续开发计划.md)。远端实板记录与本地候选验收分别管理。
 
@@ -36,3 +37,7 @@
 | [学习路线](嵌赛FPGA国测零基础详细学习路线.md) | 独立学习资料，不是项目排期 |
 
 历史文档中的旧路径、频率和默认参数只对应其记录日期；当前运行命令以板级和 ROS 包 README 为准。
+
+## 文档集中维护
+
+原 FPGA_ws/docs 的运动控制、两板 EKF、研究模块和验证历史已整体融合至本目录；板级专属接线/操作/验收手册仍随 boards 下工程维护。共享正文仅维护本目录一份，FPGA_ws 不再保留共享文档副本。

@@ -10,8 +10,8 @@
 | --- | --- |
 | 当前配置、命令与通信基线 | [BX72 README](../FPGA_ws/boards/BX72_138K_robot/README.md) |
 | 当前融合候选与传感器验收 | [候选验证记录](../FPGA_ws/boards/BX72_138K_robot/docs/baseline_unification_20261005.md)、[Jetson 接入](../ros_ws/src/robot/fpga_gateway/BX72_SENSORS.md) |
-| 辨认配置、测速和速度环 | [本板接口](../FPGA_ws/boards/BX72_138K_robot/docs/hardware_interfaces.md)、[运动控制开发](../FPGA_ws/docs/motor_development.md) |
-| 已有定点融合实现 | [两板 EKF](../FPGA_ws/docs/robot_fpga_ekf.md) |
+| 辨认配置、测速和速度环 | [本板接口](../FPGA_ws/boards/BX72_138K_robot/docs/hardware_interfaces.md)、[运动控制开发](motor_development.md) |
+| 已有定点融合实现 | [两板 EKF](robot_fpga_ekf.md) |
 | 保留的独立板卡工程 | [ACG720 README](../FPGA_ws/boards/ACG720_60K_robot/README.md) |
 
 ## 工作区与证据

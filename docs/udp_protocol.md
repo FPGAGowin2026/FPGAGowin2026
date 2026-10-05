@@ -185,7 +185,7 @@ CRC16-CCITT-FALSE 参数：多项式 `0x1021`、初值 `0xffff`、不反射输�
 
 ### 实现与验证入口
 
-C++17 逐字段编解码位于 `ros_ws/src/robot/fpga_gateway`，由 `ros_ws` 仓库统一维护；RTL 位于独立 `FPGA_ws` 仓库。本节线格式和黄金向量保留供旧 C++ 网关对照；早期差速工程命令不再列为当前入口。板级历史验证见[共享验证记录](../FPGA_ws/docs/validation_history.md)，现行主机入口见[网关 README](../ros_ws/src/robot/fpga_gateway/README.md)。
+C++17 逐字段编解码位于 `ros_ws/src/robot/fpga_gateway`，由 `ros_ws` 仓库统一维护；RTL 位于独立 `FPGA_ws` 仓库。本节线格式和黄金向量保留供旧 C++ 网关对照；早期差速工程命令不再列为当前入口。板级历史验证见[共享验证记录](validation_history.md)，现行主机入口见[网关 README](../ros_ws/src/robot/fpga_gateway/README.md)。
 
 系统在物理急停、严重故障或离开 Jetson 模式时清除缓存速度；条件解除后须收到新的合法 Control 才能恢复协同运动。Control 在 FCS 和网络层检查完成后才提交，返回报文在应用编码完成后才提交；两个时钟域使用深度 4 的整记录异步 FIFO，复位异步置位，并分别在网络域和系统域两拍同步释放。
 
