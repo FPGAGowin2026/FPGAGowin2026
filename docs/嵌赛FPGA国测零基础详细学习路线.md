@@ -1,11 +1,13 @@
 # 嵌赛 FPGA 国测零基础详细学习路线
 
-本文为独立学习资料，其学习安排不是机器人开发阶段；不据此增加软核 SLAM 或其他主线功能。 当前设计与工作区职责以 [系统总体方案](./系统总体方案.md) 为准：Jetson Orin Nano＋四轮麦轮＋FPGA 实时反射层，FPGA_ws 统一保存 RTL、软核硬件与程序，gowingame 已归档。
+本文为独立学习资料，其学习安排不是机器人开发阶段；不据此增加软核 SLAM 或其他主线功能。 当前设计与工作区职责以 [系统总体方案](./系统总体方案.md) 为准：Jetson Orin Nano＋四轮麦轮＋FPGA 实时反射层，FPGA_ws 保存当前 RTL、板级固件与回归源，生成缓存按需重建，gowingame 已退役。项目状态见[当前记录](project_status_20261005.md)，本文学习内容不作为功能验收证明。
 
 > 适用对象：没有数字电路和 Verilog 基础，或只会照着例程修改代码的学习者  
 > 默认学习强度：每天 1.5～2 小时，每周 6 天  
 > 建议总周期：3 天环境启动营 + 20 周正式学习  
 > 主要目标：能够在约 2 小时内独立完成一类 FPGA 国测题，得到正确仿真波形，并能解释自己的设计
+
+题库资料原存于另一台电脑的桌面，本机未保留该绝对路径；文中相应名称只作历史资料索引，不作为可点击的本地入口。
 
 ---
 
@@ -65,11 +67,11 @@
 
 本路线依据桌面题库中的以下材料整理：
 
-- [2019 年 FPGA 国测题图](<C:/Users/32035/Desktop/NUECSDC_FPGA_National_Competition_Verilog_Skills_Test_V1-main/NUECSDC_FPGA_National_Competition_Verilog_Skills_Test_V1-main/2019FPGA国赛基础能力测试/2019年FPGA国赛测试题.png>)
-- [2020 年 FPGA 国测题](<C:/Users/32035/Desktop/NUECSDC_FPGA_National_Competition_Verilog_Skills_Test_V1-main/NUECSDC_FPGA_National_Competition_Verilog_Skills_Test_V1-main/2020FPGA国赛基础能力测试/2020 年全国大学生 FPGA 创新设计竞赛现场测试题.pdf>)
-- [2023 年 FPGA 国测题](<C:/Users/32035/Desktop/NUECSDC_FPGA_National_Competition_Verilog_Skills_Test_V1-main/NUECSDC_FPGA_National_Competition_Verilog_Skills_Test_V1-main/2023FPGA国赛基础能力测试/2023年FPGA国赛能力测试题目.pdf>)
-- [2024 年 FPGA 国测题](<C:/Users/32035/Desktop/NUECSDC_FPGA_National_Competition_Verilog_Skills_Test_V1-main/NUECSDC_FPGA_National_Competition_Verilog_Skills_Test_V1-main/2024FPGA国赛基础能力测试/2024年FPGA国赛测试题.docx>)
-- [2025 年 FPGA 国测题](<C:/Users/32035/Desktop/NUECSDC_FPGA_National_Competition_Verilog_Skills_Test_V1-main/NUECSDC_FPGA_National_Competition_Verilog_Skills_Test_V1-main/2025FPGA国赛基础能力测试/2025年FPGA国赛测试题.pdf>)
+- 2019 年 FPGA 国测题图（历史题库资料）
+- 2020 年 FPGA 国测题（历史题库资料）
+- 2023 年 FPGA 国测题（历史题库资料）
+- 2024 年 FPGA 国测题（历史题库资料）
+- 2025 年 FPGA 国测题（历史题库资料）
 
 需要注意：
 
@@ -91,13 +93,13 @@
 
 直达入口：
 
-- [题库 README](<C:/Users/32035/Desktop/NUECSDC_FPGA_National_Competition_Verilog_Skills_Test_V1-main/NUECSDC_FPGA_National_Competition_Verilog_Skills_Test_V1-main/README.md>)
-- [2020 模块接口](<C:/Users/32035/Desktop/NUECSDC_FPGA_National_Competition_Verilog_Skills_Test_V1-main/NUECSDC_FPGA_National_Competition_Verilog_Skills_Test_V1-main/2020FPGA国赛基础能力测试/模块接口.txt>)
-- [2020 test1.v](<C:/Users/32035/Desktop/NUECSDC_FPGA_National_Competition_Verilog_Skills_Test_V1-main/NUECSDC_FPGA_National_Competition_Verilog_Skills_Test_V1-main/2020FPGA国赛基础能力测试/test1.v>)
-- [2020 test2.v](<C:/Users/32035/Desktop/NUECSDC_FPGA_National_Competition_Verilog_Skills_Test_V1-main/NUECSDC_FPGA_National_Competition_Verilog_Skills_Test_V1-main/2020FPGA国赛基础能力测试/test2.v>)
-- [2020 test3.v](<C:/Users/32035/Desktop/NUECSDC_FPGA_National_Competition_Verilog_Skills_Test_V1-main/NUECSDC_FPGA_National_Competition_Verilog_Skills_Test_V1-main/2020FPGA国赛基础能力测试/test3.v>)
-- [2020 test4.v](<C:/Users/32035/Desktop/NUECSDC_FPGA_National_Competition_Verilog_Skills_Test_V1-main/NUECSDC_FPGA_National_Competition_Verilog_Skills_Test_V1-main/2020FPGA国赛基础能力测试/test4.v>)
-- [牛客 Verilog 离线练习目录](<C:/Users/32035/Desktop/NUECSDC_FPGA_National_Competition_Verilog_Skills_Test_V1-main/NUECSDC_FPGA_National_Competition_Verilog_Skills_Test_V1-main/Verilog离线资料/牛客网Verilog>)
+- 题库 README（历史题库资料）
+- 2020 模块接口（历史题库资料）
+- 2020 test1.v（历史题库资料）
+- 2020 test2.v（历史题库资料）
+- 2020 test3.v（历史题库资料）
+- 2020 test4.v（历史题库资料）
+- 牛客 Verilog 离线练习目录（历史题库资料）
 
 上面的链接绑定当前电脑的绝对路径。如果移动题库、修改文件夹名或换电脑，链接需要跟着更新。
 
@@ -1178,7 +1180,7 @@ else
 
 可把下面教材当作查询字典，而不是从头到尾硬读：
 
-- [Verilog HDL 数字设计与综合](<C:/Users/32035/Desktop/NUECSDC_FPGA_National_Competition_Verilog_Skills_Test_V1-main/NUECSDC_FPGA_National_Competition_Verilog_Skills_Test_V1-main/Verilog离线资料/Verilog HDL数字设计与综合（第二版）.pdf>)
+- Verilog HDL 数字设计与综合（历史题库资料）
 
 优先查询：
 

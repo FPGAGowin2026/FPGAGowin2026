@@ -1,13 +1,15 @@
 # FPGA 机器人赛题 GitHub 参考项目清单
 
-检索：2026-09-24。面向 ACG720-60K、OV5640、四轮编码器、IMU660RC、2D 雷达、EKF 与 FPGA 实时反射层。以下项目用于阅读设计和建立对照实验；器件、传感器协议与时钟约束均须按本车重做。
+原检索：2026-09-24；2026-10-05 仅更新本地工程适用边界，未重新核查外部仓库状态或许可。当前主线为 BX72，工程现状见[项目状态](project_status_20261005.md)。
+
+历史参考范围：面向 ACG720-60K、OV5640、四轮编码器、IMU660RC、2D 雷达、EKF 与 FPGA 实时反射层。以下项目用于阅读设计和建立对照实验；器件、传感器协议与时钟约束均须按本车重做。
 
 ## 优先阅读
 
 | 项目 | 借鉴位置 | 与本车的关系和边界 |
 |---|---|---|
 | [lawrie/fpga_roomba](https://github.com/lawrie/fpga_roomba) | `read_lidar.py`、`map.py` 和 `blackice_mx.py`：雷达 UART 接入、角度查表、占据栅格与硬件近距停车 | 最贴近“实时反射层”；采用 LD19、Roomba 和 Amaranth HDL，未在 FPGA 中实现完整 SLAM/EKF。可借鉴雷达数据一分为二：本地保护与地图。 |
-| [alebal123bal/Gowin_FPGA_CV](https://github.com/alebal123bal/Gowin_FPGA_CV) | OV5640 DVP、RGB565 帧同步、DDR3 多帧缓存、显示和调试波形 | 同为 Gowin＋OV5640＋DDR3，适合对照帧缓存与时序；目标为 Tang Primer 20K，输出 HDMI/USB，不是本车 60K＋TFT 的现成工程。本地 `ch45_ov5640_ddr3_tft` 仍是 TFT 移植的直接基线。 |
+| [alebal123bal/Gowin_FPGA_CV](https://github.com/alebal123bal/Gowin_FPGA_CV) | OV5640 DVP、RGB565 帧同步、DDR3 多帧缓存、显示和调试波形 | 同为 Gowin＋OV5640＋DDR3，适合对照帧缓存与时序；目标为 Tang Primer 20K，输出 HDMI/USB，不是本车 60K＋TFT 的现成工程。历史 `ch45_ov5640_ddr3_tft` 已退出活动工作区，现行入口为两板各自视频源文件和板级文档。 |
 | [LittleDang/2DLIW-SLAM](https://github.com/LittleDang/2DLIW-SLAM) | 2D 雷达＋IMU＋轮速的融合前端、外参和回环案例 | 传感器组合最接近本车。ROS 1、Ceres 和 OpenCV 依赖较重；适合作算法/数据流参考，不适合整体放入软核或 RTL。仓库作者也指出外参误差影响地图。 |
 | [AndreaCensi/csm](https://github.com/AndreaCensi/csm) | `sm/` 中的 2D 扫描匹配实现与手册 | 用于离线验证扫描匹配能否从所选雷达数据产出可信的相对运动；C/GSL 依赖和迭代计算量需先测，再决定软核简化或硬件加速。相邻扫描匹配不等于全局定位。 |
 | [simondlevy/TinyEKF](https://github.com/simondlevy/TinyEKF) | 小型 C/C++ EKF 和 Python 原型 | 建立四状态或六状态软件黄金模型、记录回放与 RTL 数值对照；实现使用浮点，不能直接综合成 Gowin 定点 RTL。 |
