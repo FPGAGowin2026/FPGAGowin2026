@@ -11,11 +11,11 @@ if [[ "${ROS_DISTRO:-}" != "humble" ]]; then
 fi
 
 _project_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
-_dependency_root="${_project_root}/ros_ws/src/external/ros_humble_overlay"
+_dependency_root="${_project_root}/ugv_ws/src/external/ros_humble_overlay"
 _ros_prefix="${_dependency_root}/opt/ros/humble"
 
 if [[ ! -f "${_ros_prefix}/share/ament_index/resource_index/packages/nav2_bringup" ]]; then
-  echo "错误：本地 ROS 依赖未安装，请先运行 ./Scripts/install_ros_dependencies.sh" >&2
+  echo "错误：本地 ROS 依赖覆盖层不存在，请先准备 ugv_ws/src/external/ros_humble_overlay" >&2
   return 1
 fi
 

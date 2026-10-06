@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<manifest>
+  <remote name="origin" fetch="https://github.com/FPGAGowin2026" />
+  <default remote="origin" revision="refs/heads/main" sync-j="3" />
+  <project name="fpga_rtl" path="FPGA_ws" groups="fpga" />
+  <project name="ugv_ws" path="ugv_ws" groups="ugv" />
+  <project name="llm_ws" path="llm_ws" groups="llm" />
+</manifest>

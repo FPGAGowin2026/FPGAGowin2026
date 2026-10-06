@@ -6,11 +6,11 @@
 
 | 路径 | 职责 |
 |---|---|
-| [FPGA_ws](FPGA_ws/README.md) | 独立 `fpga_rtl` 仓库，统一维护 RTL、PicoRV32/总线/存储器、软核程序与仿真 |
-| [ros_ws](ros_ws/README.md) | Jetson ROS 2 通信、导航、视觉和任务包 |
+| [FPGA_ws](https://github.com/FPGAGowin2026/fpga_rtl#readme) | 独立 `fpga_rtl` 仓库，统一维护 RTL、PicoRV32/总线/存储器、软核程序与仿真 |
+| [ugv_ws](https://github.com/FPGAGowin2026/ugv_ws#readme) | Jetson ROS 2 通信、导航、视觉和任务包 |
 | [docs](docs/README.md) | 总体方案、交接与通信/控制说明 |
 | `GoWin/` | 本机 Gowin EDA 与许可证；60K 工程位于 `FPGA_ws/` |
-| [llm_ws](llm_ws/README.md) | 独立语音实验，不是主线依赖 |
+| [llm_ws](https://github.com/FPGAGowin2026/llm_ws#readme) | 独立语音实验，不是主线依赖 |
 
 当前交接基线、候选交付缺口和待验收项见 [handoff](docs/handoff.md)。
 
@@ -34,6 +34,16 @@ FPGA_ws/
 └── Scripts/      # 构建和检查入口
 ```
 
-板级工程、活动约束与验证入口见 [FPGA_ws](FPGA_ws/README.md)。本地生成位流是否齐备以 [handoff](docs/handoff.md#证据与交付缺口) 为准。
+板级工程、活动约束与验证入口见 [FPGA_ws](https://github.com/FPGAGowin2026/fpga_rtl#readme)。本地生成位流是否齐备以 [handoff](docs/handoff.md#证据与交付缺口) 为准。
 
 ROS 运行节点与工具已迁为 C++17；BX72 遥控使用 PC UDP，传感器 ROS 入口只读，`/cmd_vel` 适配仍待完成。部署与验证边界见 [Jetson 接入](docs/Jetson通信与接入.md)。
+
+## repo 多仓库管理
+
+本目录直接作为 repo 顶层，清单管理 `FPGA_ws`、`ugv_ws`、`llm_ws`，复用现有 Git 目录。初始化与版本锁定说明见 [manifest README](manifests/README.md)。
+
+```bash
+cd /home/aa/FPGA_GOWIN
+git pull --ff-only  # 主仓库
+repo sync          # 三个子仓库
+```
