@@ -29,4 +29,4 @@ if __name__ == '__main__':
     elif len(args) == 2 and args[0] == '--url' and args[1] in repos:
         print(repos[args[1]][1])
     else:
-        sys.exit('用法：repository.py {--list|工作区|--url 工作区}；范围：main、FPGA_ws、ugv_ws、llm_ws')
+        sys.exit('用法：repository.py {--list|工作区|--url 工作区}；范围：' + '、'.join(repos))

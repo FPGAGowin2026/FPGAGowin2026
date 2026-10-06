@@ -1,11 +1,13 @@
 # repo 工作区管理
 
-`/home/aa/FPGA_GOWIN` 是主 Git 仓库和 repo 客户端顶层。主仓库独立管理文档、脚本、清单及参考输入；repo 只管理三个已有子仓库：
+`/home/aa/FPGAGowin2026` 是主 Git 仓库和 repo 客户端顶层。主仓库独立管理文档、脚本、清单及参考输入；repo 只管理五个独立工作区仓库：
 
 | 本地路径／脚本范围 | GitHub 仓库 | 分组 |
 | --- | --- | --- |
 | `FPGA_ws` | `FPGAGowin2026/fpga_rtl` | `fpga` |
 | `ugv_ws` | `FPGAGowin2026/ugv_ws` | `ugv` |
+| `uav_ws` | `FPGAGowin2026/uav_ws` | `uav` |
+| `swarm_ws` | `FPGAGowin2026/swarm_ws` | `swarm` |
 | `llm_ws` | `FPGAGowin2026/llm_ws` | `llm` |
 
 这里的 UGV 功能包仍由整个 `ugv_ws` 仓库管理，不自动采用 BoomBoomFly 的功能包拆分。
@@ -29,7 +31,7 @@ repo sync
 
 ```bash
 git pull --ff-only  # 顶层主仓库
-repo status        # 三个子仓库工作状态
+repo status        # 五个子仓库工作状态
 repo sync          # 按远端清单同步子仓库
 ```
 
@@ -42,7 +44,7 @@ repo sync          # 按远端清单同步子仓库
 
 ## 新机器与选择性获取
 
-先克隆主仓库到所需顶层，再执行上面的初始化命令。只获取 FPGA 时添加 `repo init` 参数 `-g fpga`；UGV 为 `-g ugv`；语音工作区为 `-g llm`。
+先克隆主仓库到所需顶层，再执行上面的初始化命令。只获取 FPGA 时添加 `repo init` 参数 `-g fpga`；UGV 为 `-g ugv`；UAV 为 `-g uav`；集群为 `-g swarm`；语音工作区为 `-g llm`。
 清单只负责获取源码，不自动准备 ROS、Gowin、模型或其他工具依赖。
 
 ## 保存版本组合
@@ -54,4 +56,6 @@ repo manifest -r -o manifests/validated.xml
 git rev-parse HEAD
 ```
 
-锁定清单记录三个子仓库提交，主仓库 SHA 另行保存。锁定文件本身不是仿真、时序、上板或车辆测试证据。
+锁定清单记录五个子仓库提交，主仓库 SHA 另行保存。锁定文件本身不是仿真、时序、上板或车辆测试证据。
+
+`uav_ws`、`swarm_ws` 当前只有工作区说明和 sim 目录说明，没有可构建的功能包或可运行的仿真入口。它们是 FPGAGowin2026 的独立仓库，不自动同步 BoomBoomFly 的源码。

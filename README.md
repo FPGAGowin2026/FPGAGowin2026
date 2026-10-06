@@ -8,6 +8,8 @@
 |---|---|
 | [FPGA_ws](https://github.com/FPGAGowin2026/fpga_rtl#readme) | 独立 `fpga_rtl` 仓库，统一维护 RTL、PicoRV32/总线/存储器、软核程序与仿真 |
 | [ugv_ws](https://github.com/FPGAGowin2026/ugv_ws#readme) | Jetson ROS 2 通信、导航、视觉和任务包 |
+| [uav_ws](https://github.com/FPGAGowin2026/uav_ws#readme) | 无人机工作区，目前仅初始化说明和仿真目录 |
+| [swarm_ws](https://github.com/FPGAGowin2026/swarm_ws#readme) | 集群工作区，目前仅初始化说明和仿真目录 |
 | [docs](docs/README.md) | 总体方案、交接与通信/控制说明 |
 | `GoWin/` | 本机 Gowin EDA 与许可证； |
 | [llm_ws](https://github.com/FPGAGowin2026/llm_ws#readme) | 独立语音实验，不是主线依赖 |
@@ -40,10 +42,10 @@ ROS 运行节点与工具已迁为 C++17；BX72 遥控使用 PC UDP，传感器 
 
 ## repo 多仓库管理
 
-本目录直接作为 repo 顶层，清单管理 `FPGA_ws`、`ugv_ws`、`llm_ws`，复用现有 Git 目录。初始化与版本锁定说明见 [manifest README](manifests/README.md)。
+本目录直接作为 repo 顶层，清单管理 `FPGA_ws`、`ugv_ws`、`uav_ws`、`swarm_ws`、`llm_ws`，复用现有 Git 目录。初始化与版本锁定说明见 [manifest README](manifests/README.md)。
 
 ```bash
-cd /home/aa/FPGA_GOWIN
+cd /home/aa/FPGAGowin2026
 git pull --ff-only  # 主仓库
-repo sync          # 三个子仓库
+repo sync          # 五个子仓库
 ```

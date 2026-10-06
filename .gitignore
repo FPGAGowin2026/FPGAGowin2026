@@ -1,6 +1,8 @@
-# repo 客户端元数据与当前独立 UGV 工作区
+# repo 客户端元数据与独立机器人工作区
 /.repo/
 /ugv_ws/
+/uav_ws/
+/swarm_ws/
 
 /FPGA_ws/
 GoWin/Gowin_V1.9.12.03/

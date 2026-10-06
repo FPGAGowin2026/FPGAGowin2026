@@ -5,6 +5,7 @@ import os
 import shutil
 import subprocess
 import tempfile
+import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -40,7 +41,7 @@ def main():
         shutil.copytree(ROOT / 'manifests', root / 'manifests')
         shutil.copyfile(ROOT / '.gitignore', root / '.gitignore')
         (root / 'README.md').write_text('root\n')
-        scopes = {'FPGA_ws': 'fpga_rtl', 'ugv_ws': 'ugv_ws', 'llm_ws': 'llm_ws'}
+        scopes = {p.attrib['path']: p.attrib['name'] for p in ET.parse(ROOT / 'manifests/default.xml').getroot().findall('project')}
         push = root / 'Scripts/push_git.sh'
         for scope, name in scopes.items():
             repo = root / scope

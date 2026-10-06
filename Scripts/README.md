@@ -1,10 +1,10 @@
 # 工作区脚本
 
-仓库地址和路径统一读取 [repo 清单](../manifests/default.xml)。现有项目根目录 `/home/aa/FPGA_GOWIN` 直接作为客户端顶层；用法见 [manifest README](../manifests/README.md)。
+仓库地址和路径统一读取 [repo 清单](../manifests/default.xml)。现有项目根目录 `/home/aa/FPGAGowin2026` 直接作为客户端顶层；用法见 [manifest README](../manifests/README.md)。
 
 | 脚本 | 用途 |
 | --- | --- |
-| `sync_workspaces.sh [范围…]` | 默认同步 FPGA_ws、ugv_ws、llm_ws，可指定部分范围 |
+| `sync_workspaces.sh [范围…]` | 默认同步清单中的五个工作区，可指定部分范围 |
 | `sync_fpga_workspace.sh` | 同步 FPGA_ws，兼容原入口 |
 | `sync_ros_packages.sh` | 同步当前 ugv_ws，兼容原入口 |
 | `sync_llm_workspace.sh` | 同步 llm_ws，兼容原入口 |
@@ -19,6 +19,7 @@
 ```bash
 ./Scripts/sync_workspaces.sh
 ./Scripts/sync_workspaces.sh FPGA_ws ugv_ws
+./Scripts/sync_workspaces.sh uav_ws swarm_ws
 ```
 
 首次克隆，已有独立仓库沿当前分支 upstream 执行 `git pull --ff-only`；非 Git 目录保留并报错。
@@ -32,6 +33,8 @@ repo 客户端可直接执行 `repo sync`，两个同步入口不要同时运行
 ./Scripts/push_git.sh FPGA_ws "更新 RTL 与软核程序"
 ./Scripts/push_git.sh ugv_ws "更新 ROS 功能包"
 ./Scripts/push_git.sh llm_ws "更新语音实验"
+./Scripts/push_git.sh uav_ws "更新无人机工作区"
+./Scripts/push_git.sh swarm_ws "更新集群工作区"
 ```
 
 脚本暂存所选仓库全部未忽略改动，包括已有暂存内容，再提交并推送到 origin 同名分支。

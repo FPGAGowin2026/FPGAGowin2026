@@ -4,7 +4,7 @@ set -euo pipefail
 project_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 
 if [[ $# != 2 || -z "${2//[[:space:]]/}" ]]; then
-  echo "用法：$0 {main|ugv_ws|FPGA_ws|llm_ws} \"提交说明\"" >&2
+  echo "用法：$0 {main|ugv_ws|uav_ws|swarm_ws|FPGA_ws|llm_ws} \"提交说明\"" >&2
   exit 1
 fi
 
@@ -30,7 +30,9 @@ branch="$(git -C "${target}" symbolic-ref --quiet --short HEAD)" || {
 git -C "${target}" remote get-url origin >/dev/null
 if [[ "$1" == main ]]; then
   paths=(.)
-  for path in FPGA_ws ugv_ws llm_ws ros_ws gowingame .repo; do
+  workspace_list="$(python3 "${project_root}/Scripts/repository.py" --list)"
+  mapfile -t workspaces <<< "${workspace_list}"
+  for path in "${workspaces[@]}" ros_ws gowingame .repo; do
     if ! git -C "${target}" diff --cached --quiet -- "${path}"; then
       echo "错误：主仓库暂存区包含独立仓库或元数据 ${path}，请自行处理；暂存内容保留。" >&2
       exit 1
