@@ -58,4 +58,4 @@ git rev-parse HEAD
 
 锁定清单记录五个子仓库提交，主仓库 SHA 另行保存。锁定文件本身不是仿真、时序、上板或车辆测试证据。
 
-`uav_ws`、`swarm_ws` 当前只有工作区说明和 sim 目录说明，没有可构建的功能包或可运行的仿真入口。它们是 FPGAGowin2026 的独立仓库，不自动同步 BoomBoomFly 的源码。
+`uav_ws`、`swarm_ws` 复用 BoomBoomFly 的源码快照，由各自工作区仓库统一跟踪，不建立功能包独立仓库。UAV 包及 SITL 启动文件已导入；集群来源目前仅有三个目录的空 README 占位，没有可运行实现。后续 BoomBoomFly 的修改不会自动同步，repo 只同步这里的工作区仓库。

@@ -8,8 +8,8 @@
 |---|---|
 | [FPGA_ws](https://github.com/FPGAGowin2026/fpga_rtl#readme) | 独立 `fpga_rtl` 仓库，统一维护 RTL、PicoRV32/总线/存储器、软核程序与仿真 |
 | [ugv_ws](https://github.com/FPGAGowin2026/ugv_ws#readme) | Jetson ROS 2 通信、导航、视觉和任务包 |
-| [uav_ws](https://github.com/FPGAGowin2026/uav_ws#readme) | 无人机工作区，目前仅初始化说明和仿真目录 |
-| [swarm_ws](https://github.com/FPGAGowin2026/swarm_ws#readme) | 集群工作区，目前仅初始化说明和仿真目录 |
+| [uav_ws](https://github.com/FPGAGowin2026/uav_ws#readme) | 无人机工作区，复用 BoomBoomFly 功能包源码，由工作区统一管理 |
+| [swarm_ws](https://github.com/FPGAGowin2026/swarm_ws#readme) | 集群工作区，复用 BoomBoomFly 的功能包目录占位，由工作区统一管理 |
 | [docs](docs/README.md) | 总体方案、交接与通信/控制说明 |
 | `GoWin/` | 本机 Gowin EDA 与许可证； |
 | [llm_ws](https://github.com/FPGAGowin2026/llm_ws#readme) | 独立语音实验，不是主线依赖 |
