@@ -9,7 +9,7 @@
 | [FPGA_ws](https://github.com/FPGAGowin2026/fpga_rtl#readme) | 独立 `fpga_rtl` 仓库，统一维护 RTL、PicoRV32/总线/存储器、软核程序与仿真 |
 | [ugv_ws](https://github.com/FPGAGowin2026/ugv_ws#readme) | Jetson ROS 2 通信、导航、视觉和任务包 |
 | [docs](docs/README.md) | 总体方案、交接与通信/控制说明 |
-| `GoWin/` | 本机 Gowin EDA 与许可证；60K 工程位于 `FPGA_ws/` |
+| `GoWin/` | 本机 Gowin EDA 与许可证； |
 | [llm_ws](https://github.com/FPGAGowin2026/llm_ws#readme) | 独立语音实验，不是主线依赖 |
 
 当前交接基线、候选交付缺口和待验收项见 [handoff](docs/handoff.md)。

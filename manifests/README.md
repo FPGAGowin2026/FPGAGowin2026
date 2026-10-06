@@ -16,7 +16,7 @@ repo 不管理本地 Gowin EDA、许可证、构建产物、ROS overlay 或硬�
 使用支持 `--use-local-gitdirs` 的官方 repo 工具，并准备 GitHub 仓库访问权限：
 
 ```bash
-cd /home/aa/FPGA_GOWIN
+cd /home/aa/FPGAGowin2026
 repo init -u https://github.com/FPGAGowin2026/FPGAGowin2026.git -b main \
   -m manifests/default.xml --use-local-gitdirs
 repo sync
