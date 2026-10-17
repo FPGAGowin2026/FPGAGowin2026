@@ -4,7 +4,7 @@
 
 | 本地路径／脚本范围 | GitHub 仓库 | 分组 |
 | --- | --- | --- |
-| `FPGA_ws` | `FPGAGowin2026/fpga_rtl` | `fpga` |
+| `FPGA_ws` | `FPGAGowin2026/fpga_ws` | `fpga` |
 | `ugv_ws` | `FPGAGowin2026/ugv_ws` | `ugv` |
 | `uav_ws` | `FPGAGowin2026/uav_ws` | `uav` |
 | `swarm_ws` | `FPGAGowin2026/swarm_ws` | `swarm` |
@@ -36,7 +36,7 @@ repo sync          # 按远端清单同步子仓库
 ```
 
 清单跟随各仓库 main。repo sync 不更新顶层主仓库的文档和脚本，不编译、不下载位流、不启动 ROS 节点或电机，也不提交和推送代码。
-新获取项目可能处于 detached HEAD，开发前用 `repo start feature-name fpga_rtl` 创建分支；已有分支继续保留。
+新获取项目可能处于 detached HEAD，开发前用 `repo start feature-name fpga_ws` 创建分支；已有分支继续保留。
 使用 `Scripts/push_git.sh FPGA_ws`、`ugv_ws`、`llm_ws` 或 `main` 发布对应仓库，脚本推送到当前同名分支。
 
 原同步脚本保留为统一 `sync_workspaces.sh` 的入口，仓库地址及路径从同一 manifest 读取。

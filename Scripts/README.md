@@ -30,7 +30,7 @@ repo 客户端可直接执行 `repo sync`，两个同步入口不要同时运行
 
 ```bash
 ./Scripts/push_git.sh main "更新项目文档"
-./Scripts/push_git.sh FPGA_ws "更新 RTL 与软核程序"
+./Scripts/push_git.sh FPGA_ws "更新 FPGA 工程"
 ./Scripts/push_git.sh ugv_ws "更新 ROS 功能包"
 ./Scripts/push_git.sh llm_ws "更新语音实验"
 ./Scripts/push_git.sh uav_ws "更新无人机工作区"

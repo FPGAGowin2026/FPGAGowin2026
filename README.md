@@ -1,51 +1,24 @@
 # FPGAGowin2026
 
-当前设计：**Jetson Orin Nano＋四轮麦轮＋FPGA 实时反射层**。电机驱动采用 AT8236，主要 IMU 选 IMU660RC，摄像头使用 OV5640，N10 全部实验保留。当前优先功能正确、可调试与开发速度，停车与恢复需单独验证；规划不等于已实现。
+Jetson Orin Nano＋四轮麦轮＋FPGA 实时控制。主板为 BX72 / GW5AT-138C，连接 AT8236、编码器、IMU660RC 和 N10；UDP 版本另带 OV5640 与 DDR3 视频。
 
-## 工作区
+| 工作区 | 内容 |
+| --- | --- |
+| [FPGA_ws](https://github.com/FPGAGowin2026/fpga_ws#readme) | 板级 RTL、约束、构建与仿真；BX72 分蓝牙版和 UDP 版 |
+| [ugv_ws](https://github.com/FPGAGowin2026/ugv_ws#readme) | 小车 ROS 2、FPGA 网关、导航与任务 |
+| [uav_ws](https://github.com/FPGAGowin2026/uav_ws#readme) | 无人机工作区 |
+| [swarm_ws](https://github.com/FPGAGowin2026/swarm_ws#readme) | 集群接口与协调，目前含占位模块 |
+| [llm_ws](https://github.com/FPGAGowin2026/llm_ws#readme) | 独立语音实验 |
+| [docs](docs/README.md) | 当前状态、控制定位、Jetson 接入及集群方案 |
 
-| 路径 | 职责 |
-|---|---|
-| [FPGA_ws](https://github.com/FPGAGowin2026/fpga_rtl#readme) | 独立 `fpga_rtl` 仓库，统一维护 RTL、PicoRV32/总线/存储器、软核程序与仿真 |
-| [ugv_ws](https://github.com/FPGAGowin2026/ugv_ws#readme) | Jetson ROS 2 通信、导航、视觉和任务包 |
-| [uav_ws](https://github.com/FPGAGowin2026/uav_ws#readme) | 无人机工作区，复用 BoomBoomFly 功能包源码，由工作区统一管理 |
-| [swarm_ws](https://github.com/FPGAGowin2026/swarm_ws#readme) | 集群工作区，复用 BoomBoomFly 的功能包目录占位，由工作区统一管理 |
-| [docs](docs/README.md) | 总体方案、交接与通信/控制说明 |
-| `GoWin/` | 本机 Gowin EDA 与许可证； |
-| [llm_ws](https://github.com/FPGAGowin2026/llm_ws#readme) | 独立语音实验，不是主线依赖 |
+FPGA 各分支已合入 `fpga_ws/main`，工程源码基线为 `bbc5c95`，开发分支已清理。BX72 两版都保留雷达定位、打滑融合与独立避障；GoRV32/APB 和板载调试串口已移除。两版内部时序通过，当前版本尚未上板验收。详情见 [项目状态](docs/handoff.md) 与 [BX72 工程](FPGA_ws/boards/BX72_138K_robot/README.md)。
 
-当前交接基线、候选交付缺口和待验收项见 [handoff](docs/handoff.md)。
+## 同步与开发
 
-## 同步入口
-
-```bash
-./Scripts/sync_fpga_workspace.sh
-./Scripts/sync_ros_packages.sh
-./Scripts/sync_llm_workspace.sh
-```
-
-同步脚本仅负责克隆或快进更新独立仓库，不生成模型、固件或依赖。旧 `sync_gowingame.sh` 只返回停用提示，不再克隆旧仓库。发布脚本使用方法及 add-all 范围见 [Scripts](Scripts/README.md)。
-
-## FPGA 当前目录
-
-```text
-FPGA_ws/
-├── boards/       # BX72 与 ACG720 独立板级工程、约束及固件
-├── rtl/          # 活动工程共享 FIFO、UDP 接收及电机回归
-├── sim/          # 仿真与离线工具
-└── Scripts/      # 构建和检查入口
-```
-
-板级工程、活动约束与验证入口见 [FPGA_ws](https://github.com/FPGAGowin2026/fpga_rtl#readme)。本地生成位流是否齐备以 [handoff](docs/handoff.md#证据与交付缺口) 为准。
-
-ROS 运行节点与工具已迁为 C++17；BX72 遥控使用 PC UDP，传感器 ROS 入口只读，`/cmd_vel` 适配仍待完成。部署与验证边界见 [Jetson 接入](docs/Jetson通信与接入.md)。
-
-## repo 多仓库管理
-
-本目录直接作为 repo 顶层，清单管理 `FPGA_ws`、`ugv_ws`、`uav_ws`、`swarm_ws`、`llm_ws`，复用现有 Git 目录。初始化与版本锁定说明见 [manifest README](manifests/README.md)。
+本目录和五个工作区独立版本管理。`GoWin/` 为本机工具，不由 repo 同步。
 
 ```bash
-cd /home/aa/FPGAGowin2026
-git pull --ff-only  # 主仓库
-repo sync          # 五个子仓库
+./Scripts/sync_workspaces.sh FPGA_ws ugv_ws
 ```
+
+已有 repo 客户端也可运行 `git pull --ff-only` 更新顶层，再运行 `repo sync` 更新工作区；两种同步入口不要同时运行。初始化、选择性获取及版本锁定见 [清单说明](manifests/README.md)，提交/推送范围见 [脚本说明](Scripts/README.md)。同步前检查各仓库未提交改动。
