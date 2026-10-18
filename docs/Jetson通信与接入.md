@@ -9,9 +9,9 @@ Jetson/Linux、ROS 2 Humble、C++17；网关依赖 OpenCV 和 nlohmann_json。�
 ```bash
 cd ugv_ws
 source /opt/ros/humble/setup.bash
-colcon build --packages-up-to car_bringup
+colcon build --packages-up-to robot_bringup
 source install/setup.bash
-ros2 launch car_bringup bx72_teleop.launch.py bind_fpga:=192.168.0.4 fpga_ip:=192.168.0.2
+ros2 launch robot_bringup mission.launch.py mode:=teleop bind_ip:=192.168.0.4 fpga_ip:=192.168.0.2
 ```
 
 网关 `jetson_teleop_bridge` 接收 PC 控制，转发三轴速度、ACK 和视频；它不订阅 `/cmd_vel`。Windows PC 在 FPGA_ws 根目录运行 `python Scripts/pc_teleop.py --jetson <Jetson无线IP>`。操作、网络邻居配置和停止规则见 [遥控手册](../FPGA_ws/boards/BX72_138K_robot/docs/pc_wasd_teleop.md)。
@@ -46,9 +46,9 @@ ss -lunp | grep -E ':6102|:6103|:6104|:6200'
 加载工作区环境后，选择只读记录器或 ROS 节点之一：
 
 ```bash
-ros2 launch car_bringup bx72_recording.launch.py bind:=192.168.0.4 output:=/tmp/bx72-data duration:=30
+ros2 launch robot_bringup mission.launch.py mode:=recording bind_ip:=192.168.0.4 output:=/tmp/bx72-data duration:=30
 # 或使用 ROS 传感器节点；不要与上面的记录器同时运行
-ros2 launch car_bringup bx72_sensors.launch.py bind_ip:=192.168.0.4
+ros2 launch robot_bringup mission.launch.py mode:=sensors bind_ip:=192.168.0.4
 ```
 
 ROS 入口为 `bx72_round5_node`。线格式、序号和丢包规则见 [五类遥测](../FPGA_ws/boards/BX72_138K_robot/docs/jetson_udp_telemetry.md)，视频组帧见 [视频说明](../FPGA_ws/boards/BX72_138K_robot/docs/video_jetson.md)。
@@ -58,7 +58,7 @@ ROS 入口为 `bx72_round5_node`。线格式、序号和丢包规则见 [五类�
 ACG720 使用 BXT1，不接收 BX72 运动协议；`bx72_sensor_node` 的历史命名不改变其 BXT1 协议用途：
 
 ```bash
-ros2 launch car_bringup acg720_sensors.launch.py bind_ip:=192.168.0.4
+ros2 launch robot_bringup mission.launch.py mode:=sensors board:=acg720 bind_ip:=192.168.0.4
 ```
 
 本板资源和 DDR 时序尚未通过，不能继承 BX72 验收。协议见 [ACG720 遥测](../FPGA_ws/boards/ACG720_60K_robot/docs/sensor_telemetry.md)。部分 FPGA 验证脚本仍引用旧 ros_ws 路径；ugv_ws 接入、C++ 构建与实板发布订阅的验证边界见 [项目状态](handoff.md)。
