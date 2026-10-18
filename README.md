@@ -11,7 +11,7 @@ Jetson Orin Nano＋四轮麦轮＋FPGA 实时控制。主板为 BX72 / GW5AT-138
 | [llm_ws](https://github.com/FPGAGowin2026/llm_ws#readme) | 独立语音实验 |
 | [docs](docs/README.md) | 当前状态、控制定位、Jetson 接入及集群方案 |
 
-FPGA 各分支已合入 `fpga_ws/main`，工程源码基线为 `bbc5c95`，开发分支已清理。BX72 两版都保留雷达定位、打滑融合与独立避障；GoRV32/APB 和板载调试串口已移除。两版内部时序通过，当前版本尚未上板验收。详情见 [项目状态](docs/handoff.md) 与 [BX72 工程](FPGA_ws/boards/BX72_138K_robot/README.md)。
+本地 `fpga_ws/main` 已合入 `codex/bx72-ddr-mapping@911a158` 并通过 `dec08a5` 完成双版本雷达 SLAM，保留网络网页及在途改版。蓝牙独立使用 DDR3 地图，UDP 的视频双缓冲和地图共用一套 DDR3 控制器；两版共用雷达定位、打滑融合与独立避障。GoRV32/APB 和板载调试串口已移除。本轮软件回归及两版综合通过，PNR、厂商 DDR 颗粒仿真及硬件验收仍待完成，详见 [融合记录](docs/DDR建图融合记录.md)、[项目状态](docs/handoff.md) 与 [BX72 工程](FPGA_ws/boards/BX72_138K_robot/README.md)。远端 `main` 本轮未推送。
 
 ## 同步与开发
 

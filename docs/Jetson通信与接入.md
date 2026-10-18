@@ -2,6 +2,8 @@
 
 当前 ROS 源码位于 `ugv_ws/src/fpga_gateway`，唯一启动文件为 `ugv_ws/src/car/car_bringup/launch/mission.launch.py`，包名与目录名均为 `car_bringup`。当前工作区仅保留 BX72 UDP 接入；BX72 蓝牙版使用 [网页控制器与串口协议](../FPGA_ws/boards/BX72_138K_robot/docs/bluetooth_ekf_telemetry.md)。
 
+`codex/bx72-ddr-mapping@911a158` 先提供蓝牙 DDR3 雷达 SLAM，本轮融合继续将同款建图扩展到 UDP FPGA 工程，与相机视频共享 DDR3。两版尚未定义地图上行协议，也未接入本 UDP 网关、ROS `OccupancyGrid` 或 TF 发布；FPGA 内部支持建图不能证明 Jetson 已能读取地图或执行基于该图的导航。
+
 ## ROS 工作区与遥控
 
 Jetson/Linux、ROS 2 Humble、C++17；网关依赖 OpenCV 和 nlohmann_json。先按 ugv_ws 的依赖说明准备环境：
