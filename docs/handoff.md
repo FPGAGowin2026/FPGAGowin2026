@@ -1,6 +1,6 @@
 # 项目状态与交接
 
-更新：2026-10-19。当前 FPGA 分支为 `codex/merge-ov5647-20261019`，融合提交 `e0f188a`，精简提交 `3314eba`。网页迁出到独立仓库 [FPGAGowin2026/website](https://github.com/FPGAGowin2026/website)，本地目录为 [website](../website/README.md)。
+更新：2026-10-19。当前 FPGA 分支为 `main`（已快进合入融合分支至 `453f8dd`，融合分支随后删除），融合提交 `e0f188a`，精简提交 `3314eba`。网页迁出到独立仓库 [FPGAGowin2026/website](https://github.com/FPGAGowin2026/website)，本地目录为 [website](../website/README.md)。
 
 | 范围 | 当前状态 |
 | --- | --- |

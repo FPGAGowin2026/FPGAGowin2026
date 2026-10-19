@@ -50,4 +50,4 @@ python3 Scripts/test_scripts.py
 
 仅使用临时仓库与本地 bare 远程，验证范围、提交推送、克隆和快进同步。不连接实际项目远端，也不验证 RTL、ROS 或硬件功能。
 
-website 为独立仓库 `FPGAGowin2026/website`，支持 `./Scripts/sync_workspaces.sh website` 和 `./Scripts/push_git.sh website "更新网页"`。FPGA 清单暂跟随 `codex/merge-ov5647-20261019` 融合分支，其余项目默认跟随 main。
+website 为独立仓库 `FPGAGowin2026/website`，支持 `./Scripts/sync_workspaces.sh website` 和 `./Scripts/push_git.sh website "更新网页"`。FPGA 融合分支已合入 main，清单中所有项目默认跟随 main。

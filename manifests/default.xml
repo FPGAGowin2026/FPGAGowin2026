@@ -2,7 +2,7 @@
 <manifest>
   <remote name="origin" fetch="https://github.com/FPGAGowin2026" />
   <default remote="origin" revision="refs/heads/main" sync-j="3" />
-  <project name="fpga_ws" path="FPGA_ws" groups="fpga" revision="refs/heads/codex/merge-ov5647-20261019" />
+  <project name="fpga_ws" path="FPGA_ws" groups="fpga" />
   <project name="ugv_ws" path="ugv_ws" groups="ugv" />
   <project name="llm_ws" path="llm_ws" groups="llm" />
   <project name="uav_ws" path="uav_ws" groups="uav" />

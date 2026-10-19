@@ -36,7 +36,7 @@ repo status        # 六个子仓库工作状态
 repo sync          # 按远端清单同步子仓库
 ```
 
-清单中 FPGA 跟随当前融合分支，其余仓库跟随 main。repo sync 不更新顶层主仓库的文档和脚本，不编译、不下载位流、不启动 ROS 节点或电机，也不提交和推送代码。
+清单中所有仓库均跟随 main。repo sync 不更新顶层主仓库的文档和脚本，不编译、不下载位流、不启动 ROS 节点或电机，也不提交和推送代码。
 新获取项目可能处于 detached HEAD，开发前用 `repo start feature-name fpga_ws` 创建分支；已有分支继续保留。
 使用 `Scripts/push_git.sh FPGA_ws`、`ugv_ws`、`llm_ws` 或 `main` 发布对应仓库，脚本推送到当前同名分支。
 
@@ -61,4 +61,4 @@ git rev-parse HEAD
 
 `uav_ws`、`swarm_ws` 复用 BoomBoomFly 的源码快照，由各自工作区仓库统一跟踪，不建立功能包独立仓库。UAV 包及 SITL 启动文件已导入；集群来源目前仅有三个目录的空 README 占位，没有可运行实现。后续 BoomBoomFly 的修改不会自动同步，repo 只同步这里的工作区仓库。
 
-website 为独立仓库 `FPGAGowin2026/website`，支持 `./Scripts/sync_workspaces.sh website` 和 `./Scripts/push_git.sh website "更新网页"`。FPGA 清单暂跟随 `codex/merge-ov5647-20261019` 融合分支，其余项目默认跟随 main。
+website 为独立仓库 `FPGAGowin2026/website`，支持 `./Scripts/sync_workspaces.sh website` 和 `./Scripts/push_git.sh website "更新网页"`。FPGA 融合分支已合入 main，清单中所有项目默认跟随 main。
