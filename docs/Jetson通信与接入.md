@@ -16,7 +16,7 @@ source install/setup.bash
 ros2 launch car_bringup mission.launch.py
 ```
 
-入口固定启动 `jetson_teleop_bridge`，默认监听 `0.0.0.0` 并连接 FPGA `192.168.0.2`，不再提供 launch 模式。未接网线也能启动，实板收发仍需配置下文的有线地址与静态邻居。网关等待网页经 PC 服务下发控制和自动模式请求，转发三轴速度、ACK、五类遥测和视频；它不订阅 `/cmd_vel`。Windows PC 按 [网络网页手册](../FPGA_ws/boards/BX72_138K_robot/docs/network_dashboard.md) 启动本机服务并连接 Jetson 无线 IP。Python/Tk 客户端仍可独立使用，见 [遥控手册](../FPGA_ws/boards/BX72_138K_robot/docs/pc_wasd_teleop.md)。
+入口固定启动 `jetson_teleop_bridge`，默认监听 `0.0.0.0` 并连接 FPGA `192.168.0.2`，不再提供 launch 模式。未接网线也能启动，实板收发仍需配置下文的有线地址与静态邻居。网关等待网页经 PC 服务下发控制和自动模式请求，转发三轴速度、ACK、五类遥测和视频；它不订阅 `/cmd_vel`。Windows PC 按 [website 说明](../website/README.md) 启动本机服务并连接 Jetson 无线 IP。Python/Tk 客户端仍可独立使用，见 [遥控手册](../FPGA_ws/boards/BX72_138K_robot/docs/pc_wasd_teleop.md)。
 
 ## 数据契约
 

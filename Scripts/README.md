@@ -4,7 +4,7 @@
 
 | 脚本 | 用途 |
 | --- | --- |
-| `sync_workspaces.sh [范围…]` | 默认同步清单中的五个工作区，可指定部分范围 |
+| `sync_workspaces.sh [范围…]` | 默认同步清单中的六个工作区，可指定部分范围 |
 | `sync_fpga_workspace.sh` | 同步 FPGA_ws，兼容原入口 |
 | `sync_ros_packages.sh` | 同步当前 ugv_ws，兼容原入口 |
 | `sync_llm_workspace.sh` | 同步 llm_ws，兼容原入口 |
@@ -49,3 +49,5 @@ python3 Scripts/test_scripts.py
 ```
 
 仅使用临时仓库与本地 bare 远程，验证范围、提交推送、克隆和快进同步。不连接实际项目远端，也不验证 RTL、ROS 或硬件功能。
+
+website 为独立仓库 `FPGAGowin2026/website`，支持 `./Scripts/sync_workspaces.sh website` 和 `./Scripts/push_git.sh website "更新网页"`。FPGA 清单暂跟随 `codex/merge-ov5647-20261019` 融合分支，其余项目默认跟随 main。

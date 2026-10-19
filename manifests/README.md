@@ -1,6 +1,6 @@
 # repo 工作区管理
 
-`/home/aa/FPGAGowin2026` 是主 Git 仓库和 repo 客户端顶层。主仓库独立管理文档、脚本、清单及参考输入；repo 只管理五个独立工作区仓库：
+`/home/aa/FPGAGowin2026` 是主 Git 仓库和 repo 客户端顶层。主仓库独立管理文档、脚本、清单及参考输入；repo 只管理六个独立工作区仓库：
 
 | 本地路径／脚本范围 | GitHub 仓库 | 分组 |
 | --- | --- | --- |
@@ -9,6 +9,7 @@
 | `uav_ws` | `FPGAGowin2026/uav_ws` | `uav` |
 | `swarm_ws` | `FPGAGowin2026/swarm_ws` | `swarm` |
 | `llm_ws` | `FPGAGowin2026/llm_ws` | `llm` |
+| `website` | `FPGAGowin2026/website` | `website` |
 
 这里的 UGV 功能包仍由整个 `ugv_ws` 仓库管理，不自动采用 BoomBoomFly 的功能包拆分。
 repo 不管理本地 Gowin EDA、许可证、构建产物、ROS overlay 或硬件运行状态。
@@ -31,11 +32,11 @@ repo sync
 
 ```bash
 git pull --ff-only  # 顶层主仓库
-repo status        # 五个子仓库工作状态
+repo status        # 六个子仓库工作状态
 repo sync          # 按远端清单同步子仓库
 ```
 
-清单跟随各仓库 main。repo sync 不更新顶层主仓库的文档和脚本，不编译、不下载位流、不启动 ROS 节点或电机，也不提交和推送代码。
+清单中 FPGA 跟随当前融合分支，其余仓库跟随 main。repo sync 不更新顶层主仓库的文档和脚本，不编译、不下载位流、不启动 ROS 节点或电机，也不提交和推送代码。
 新获取项目可能处于 detached HEAD，开发前用 `repo start feature-name fpga_ws` 创建分支；已有分支继续保留。
 使用 `Scripts/push_git.sh FPGA_ws`、`ugv_ws`、`llm_ws` 或 `main` 发布对应仓库，脚本推送到当前同名分支。
 
@@ -56,6 +57,8 @@ repo manifest -r -o manifests/validated.xml
 git rev-parse HEAD
 ```
 
-锁定清单记录五个子仓库提交，主仓库 SHA 另行保存。锁定文件本身不是仿真、时序、上板或车辆测试证据。
+锁定清单记录六个子仓库提交，主仓库 SHA 另行保存。锁定文件本身不是仿真、时序、上板或车辆测试证据。
 
 `uav_ws`、`swarm_ws` 复用 BoomBoomFly 的源码快照，由各自工作区仓库统一跟踪，不建立功能包独立仓库。UAV 包及 SITL 启动文件已导入；集群来源目前仅有三个目录的空 README 占位，没有可运行实现。后续 BoomBoomFly 的修改不会自动同步，repo 只同步这里的工作区仓库。
+
+website 为独立仓库 `FPGAGowin2026/website`，支持 `./Scripts/sync_workspaces.sh website` 和 `./Scripts/push_git.sh website "更新网页"`。FPGA 清单暂跟随 `codex/merge-ov5647-20261019` 融合分支，其余项目默认跟随 main。
