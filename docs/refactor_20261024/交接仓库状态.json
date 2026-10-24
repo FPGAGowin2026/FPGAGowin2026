@@ -2437,5 +2437,37 @@
         }
       ]
     }
-  ]
+  ],
+  "snapshot_note": "files与head_before_handoff_commit为推送前存档；不是测试冻结，也不是最终提交的自引用哈希",
+  "main_delivery_verified_at": "2026-10-24T22:17:21.3650363+08:00",
+  "main_deliveries": [
+    {
+      "repository": "fpga",
+      "path": "E:\\project\\FPGA_workspace\\bx72-gowin-isp",
+      "branch": "main",
+      "head": "2560943f845e7b4ada7fef63394dace16ce30d5b",
+      "remote_main": "2560943f845e7b4ada7fef63394dace16ce30d5b",
+      "integration_branch_deleted": true,
+      "status": null
+    },
+    {
+      "repository": "ugv",
+      "path": "E:\\project\\FPGA_workspace\\FPGAGowin2026\\ugv_ws",
+      "branch": "main",
+      "head": "b0f4cad3bc190c0ac57271aaa8213445b85925d1",
+      "remote_main": "b0f4cad3bc190c0ac57271aaa8213445b85925d1",
+      "integration_branch_deleted": true,
+      "status": null
+    },
+    {
+      "repository": "website",
+      "path": "E:\\project\\FPGA_workspace\\FPGAGowin2026\\website",
+      "branch": "main",
+      "head": "3dc2d210b8a62b1efa45ba50116b3013ca10df7b",
+      "remote_main": "3dc2d210b8a62b1efa45ba50116b3013ca10df7b",
+      "integration_branch_deleted": true,
+      "status": null
+    }
+  ],
+  "workspace_final_revision": "main中包含交接报告的最终提交，使用git rev-parse HEAD读取"
 }
