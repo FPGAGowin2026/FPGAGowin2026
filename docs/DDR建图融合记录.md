@@ -1,3 +1,5 @@
+> 2026-10-20 状态更新：BX72 已收敛为纯 RTL 单 UDP、视频独占 DDR3；全局地图与蓝牙移除，CSM 局部定位子图保留。本文其余旧版本描述和构建数字均为历史记录，本轮结果见 [实施记录](../FPGA_ws/boards/BX72_138K_robot/docs/udp_only_implementation_20261020.md)。
+
 # BX72 DDR 建图与网页融合记录
 
 日期：2026-10-18。主窗口负责规划、接口审查和文档；所有 Git 融合、代码实施及软件测试交给 `gpt-6-luna`，推理强度 `max`，独立上下文 `fork_turns="none"`。本轮不修改全局模型设置。
@@ -50,14 +52,14 @@
 ## 功能边界
 
 - 蓝牙版新增 EKF 位姿投影、关键帧回环约束、map→odom 修正和 DDR3 栅格地图重建；保留原蓝牙控制及 v4 遥测。
-- UDP 版新增同款建图/回环/地图重建，同时保留摄像头、DDR3 视频、UDP 控制与遥测；地图不参与独立 N10 避障，也没有路径点导航。视频字节地址 `[0,0x177000)`，地图 `[0x200000,0x2C0000)`，完整布局见 [设计](../FPGA_ws/boards/BX72_138K_robot/docs/radar_slam_mapping.md)。
+- UDP 版新增同款建图/回环/地图重建，同时保留摄像头、DDR3 视频、UDP 控制与遥测；地图不参与独立 N10 避障，也没有路径点导航。视频字节地址 `[0,0x177000)`，地图 `[0x200000,0x2C0000)`，完整布局见 [设计（历史文档已整理）](../FPGA_ws/boards/BX72_138K_robot/docs/udp_only_implementation_20261020.md)。
 - 地图为 1024×1024 格、64 mm/格、6 bit/格，unknown=32，容量 768 KiB；关键帧最多 32 帧，每帧 64 扇区。
 - 顶层单格地图读取接口当前绑空闲；本轮没有地图下载、网页栅格可视化或 ROS 地图协议。网页雷达点、规划扇区和位姿轨迹各自保留原含义。
 - 蓝牙 `led[1]` 改为 DDR 校准且初始地图清理完成，`led[0]` 为主 PLL 锁定，不能继续把 `led[1]` 当自动模式指示。
 
 ## 构建证据的归属
 
-分支随附 [SLAM 构建记录](../FPGA_ws/boards/BX72_138K_robot/docs/radar_slam_build_results_20261018.json)：蓝牙 `bx72_bluetooth_slam_pipeline_v6`，综合 326.252 秒、PNR 1796.238 秒、总耗时 2123.14 秒，setup/hold 为 +0.004/+0.133 ns，Logic/Register/BSRAM/DSP 为 68367/34898/69/212，Latch 0。记录包含输入指纹和位流哈希。
+分支随附 [SLAM 构建记录](../FPGA_ws/boards/BX72_138K_robot/docs/history_evidence.md)：蓝牙 `bx72_bluetooth_slam_pipeline_v6`，综合 326.252 秒、PNR 1796.238 秒、总耗时 2123.14 秒，setup/hold 为 +0.004/+0.133 ns，Logic/Register/BSRAM/DSP 为 68367/34898/69/212，Latch 0。记录包含输入指纹和位流哈希。
 
 这些是源分支已有构建记录，本轮未据此认定本地融合及后续修复已重新完成 PNR。原始网表、报告、位流不随 Git 提供；源码或构建配置改变后须重新构建并核对指纹。2026-10-17 的蓝牙 +0.065 ns 数据仅代表加入 SLAM 前的版本。
 
@@ -67,7 +69,7 @@ Micron 官方颗粒模型仿真在源分支记录为未运行。快速事务级 
 
 以下均为实施代理在本轮实际运行；日志路径相对于 `FPGA_ws`，测试输出由 Git 忽略，不随远端仓库交付。
 
-网页部分已于 2026-10-19 提取到父工作区 [website](../website/README.md)；下表两条网页/服务测试命令是迁移前记录，现等效命令见 website 的 [README](../website/README.md) 与 [验收记录](../website/docs/verification.md)。
+网页部分已于 2026-10-19 提取到父工作区 [website](../website/README.md)；下表两条网页/服务测试命令是迁移前记录，现行启动与测试命令见 website 的 [README](../website/README.md)。
 
 | 命令或检查 | 本轮结果 | 证据与范围 |
 | --- | --- | --- |
