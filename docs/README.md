@@ -1,15 +1,14 @@
-# 新架构文档入口
+# 文档入口
 
-当前是未完成代码的开发交接，尚未测试冻结；没有本轮测试、仿真或构建结果。只保留当前架构与待办，旧方案和旧验证结论不再作为本文档输入。
+当前实现为极坐标基础导航，不再把旧EKF、距离场CSM、栅格和A*当作活动架构。
 
-- [handoff：实际状态、缺项、已知问题和多线程接手顺序](handoff.md)
-- [新架构开发说明](小车软硬件协同规划架构.md)
-- [lunamax多线程继续开发提示词](多线程实施提示词_lunamax.md)
-- [公共接口与唯一文件归属](refactor_20261024/接口与文件归属.md)
-- [本次交接报告](refactor_20261024/交接报告.md)
-- [仓库交接快照](refactor_20261024/交接仓库状态.json)
-- [控制与定位](控制与定位.md)
-- [Jetson与UDP入口](Jetson通信与接入.md)
-- [网页说明](../website/README.md)
+- [当前架构与取舍](小车软硬件协同规划架构.md)：板内职责、算法、单位、任务协议、安装补偿及验收边界。
+- [板级工程与下载](https://github.com/FPGAGowin2026/fpga_ws/blob/main/boards/BX72_138K_robot/README.md)：构建、SRAM入口、资源时序、真实板测和保留产物。
+- [可随源码获取的当前验证摘要](https://github.com/FPGAGowin2026/fpga_ws/blob/main/boards/BX72_138K_robot/docs/validation_current.json)：明确区分通过、失败、未运行；原始输出仍在本机build目录。
+- [Jetson软件与协议](https://github.com/FPGAGowin2026/ugv_ws/blob/main/README.md)、[网页说明](https://github.com/FPGAGowin2026/website/blob/main/README.md)。
+- [红蓝白色卡](红蓝白.docx)：打印参考；不是精确色度标定。
+- [室内异构集群方案](室内异构集群方案.md)、[学习与参考](学习与参考.md)：独立拓展/阅读资料，不表示本车已实现对应算法。
 
-当前小车只保留UDP，不实现全局地图。FPGA唯一实施路径`E:/project/FPGA_workspace/bx72-gowin-isp`；旧`FPGA_ws`检出不能并行产生另一套实现。实际推送与分支清理结果以本次交接报告为准。
+`candidate_05`已有可追溯位流、真实软核执行、姿态、彩色视频、零丢样稳定观察与任务链路。任务负载下31.227 ms控制间隔超过30 ms，整体导航未通过。`candidate_06`的调度改动没有PNR或板测通过结果。10 cm只是后续外部测量目标；当前不启用ARM、不写Flash、不进行真实电机动作。
+
+板卡倒装默认IMU Rx(pi)，原始IMU遥测保留传感器轴；车头X、偏航外参、轮速尺度、保护包络和颜色质量仍须标定。
