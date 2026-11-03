@@ -1,0 +1,15 @@
+# ROS 2 / colcon 构建产物（仅当前工作区根目录）
+/build/
+/install/
+/log/
+
+# Python 缓存与测试缓存
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# 本地运行记录
+*.bag
+*.db3
+*.mcap
+*.ulg

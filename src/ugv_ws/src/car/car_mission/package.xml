@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>car_mission</name>
+  <version>0.1.0</version>
+  <description>检测消息筛选、目标身份锁定和任务状态管理。</description>
+  <maintainer email="aa@example.com">aa</maintainer>
+  <license>Apache-2.0</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <depend>geometry_msgs</depend>
+  <depend>diagnostic_msgs</depend>
+  <depend>cv_bridge</depend>
+  <depend>eigen</depend>
+  <depend>libopencv-dev</depend>
+  <depend>rclcpp</depend>
+  <depend>sensor_msgs</depend>
+  <depend>std_msgs</depend>
+  <depend>std_srvs</depend>
+  <depend>vision_msgs</depend>
+  <depend>ugv_bridge</depend>
+
+  <test_depend>ament_cmake_gtest</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

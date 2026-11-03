@@ -1,0 +1,8 @@
+build/
+install/
+log/
+**/__pycache__/
+*.py[cod]
+
+# 本地依赖覆盖层及其辅助文件不提交。
+src/external/

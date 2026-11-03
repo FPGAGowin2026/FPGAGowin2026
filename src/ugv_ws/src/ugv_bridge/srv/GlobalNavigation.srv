@@ -1,0 +1,6 @@
+string request_json
+---
+bool success
+bool unknown
+string message
+string state_json

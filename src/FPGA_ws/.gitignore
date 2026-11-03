@@ -1,0 +1,30 @@
+# Gowin 工程生成目录与本机状态
+impl/
+*.gprj.user
+
+# 综合、下载与仿真产物
+*.fs
+*.bin
+*.vvp
+*.vcd
+
+# 官网原始资料仅保存在本机，避免误提交数百 MiB 的压缩包
+official/
+
+# 由 prepare_vendor_ip.ps1 从本机已安装的高云 IDE 复制，不重复纳入仓库。
+vendor_ip/
+
+# 本地固件生成与 Python 缓存
+__pycache__/
+templates/**/common/firmware/build/
+
+# 统一工作区的固件、仿真和实现生成物
+/build/
+
+# 本机探针、解压参考和相机 IP 生成缓存；交付源逐项纳入工程。
+/tmp/
+/boards/BX72_138K_robot/src/video/camera/ip/**/temp/
+/boards/BX72_138K_robot/src/video/camera/ip/**/*_tmp.v
+
+# 板级验证与封存为本地生成证据，源码仓库不跟踪缓存。
+/boards/*/build/

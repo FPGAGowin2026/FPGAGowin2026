@@ -1,0 +1,16 @@
+[General]
+ipc_version=4
+file=cfa_interpolation
+module=Color_Filter_Array_Interpolation_Top
+target_device=gw5at138c-007
+type=color_filter_array_interpolation
+version=1.0
+
+[Config]
+Bayer_Phase=GBRG
+Input_Data_Width=10
+LANG=0
+Maximum_Number_of_Columns=1920
+Maximum_Number_of_Rows=1080
+Output_Data_Width=10
+Synthesis_tool=GowinSynthesis

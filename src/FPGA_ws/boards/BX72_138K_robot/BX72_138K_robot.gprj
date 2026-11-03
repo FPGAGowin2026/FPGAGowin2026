@@ -1,0 +1,49 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Project>
+    <Template>FPGA</Template>
+    <Version>5</Version>
+    <Device name="GW5AT-138C" pn="GW5AT-LV138PG484AC1/I0">gw5at138c-007</Device>
+    <FileList>
+        <File path="src/common/bx72_support.sv" type="file.verilog" enable="1" />
+        <File path="src/fusion/EKF/fusion_math.sv" type="file.verilog" enable="1" />
+        <File path="src/softcore/bx72_nav_boot_pkg.sv" type="file.verilog" enable="1" />
+        <File path="src/motor/mecanum_motor_control.sv" type="file.verilog" enable="1" />
+        <File path="src/softcore/vendor/gorv32_fp/riscv_fp_core.v" type="file.verilog" enable="1" />
+        <File path="src/softcore/bx72_nav_platform.sv" type="file.verilog" enable="1" />
+        <File path="src/ethernet/dma/bx72_telemetry_mux.sv" type="file.verilog" enable="1" />
+        <File path="src/ethernet/dma/bx72_telemetry_packet_cdc.sv" type="file.verilog" enable="1" />
+        <File path="src/ethernet/eth_udp_gmii/eth_udp_gmii.v" type="file.verilog" enable="1" />
+        <File path="src/ethernet/dma/eth_udp_transport.sv" type="file.verilog" enable="1" />
+        <File path="src/ethernet/phy/ethernet_phy.v" type="file.verilog" enable="1" />
+        <File path="src/ethernet/ip/rx_pll/bx72_rx_pll.v" type="file.verilog" enable="1" />
+        <File path="src/ethernet/ip/rx_pll/rx_pll_phase_scan.v" type="file.verilog" enable="1" />
+        <File path="src/ethernet/ip/rx_pll/bx72_rx_pll_mod.v" type="file.verilog" enable="1" />
+        <File path="src/video/camera_udp_framebuffer.v" type="file.verilog" enable="1" />
+        <File path="src/common/ddr3/udp_camera_ddr.v" type="file.verilog" enable="1" />
+        <File path="src/sensor/radar/n10_uart_packet_parser.v" type="file.verilog" enable="1" />
+        <File path="src/sensor/imu/imu660rc_spi_reader.v" type="file.verilog" enable="1" />
+        <File path="src/video/camera/init/camera_init.v" type="file.verilog" enable="1" />
+        <File path="src/common/ddr3/ip/ddr3_memory_interface/ddr3_memory_interface.v" type="file.verilog" enable="1" />
+        <File path="src/common/ddr3/ip/ddr3_pll/ddr3_pll.v" type="file.verilog" enable="1" />
+        <File path="src/common/ddr3/ip/ddr3_pll/ddr3_pll_mod.v" type="file.verilog" enable="1" />
+        <File path="src/ethernet/ip/gowin_pll/gowin_pll.v" type="file.verilog" enable="1" />
+        <File path="src/ethernet/ip/gowin_pll/gowin_pll_mod.v" type="file.verilog" enable="1" />
+        <File path="src/common/clock/pll_init.v" type="file.verilog" enable="1" />
+        <File path="src/common/ddr3/ip/rd_data_fifo/rd_data_fifo.v" type="file.verilog" enable="1" />
+        <File path="src/common/ddr3/ip/wr_data_fifo/wr_data_fifo.v" type="file.verilog" enable="1" />
+        <File path="src/constraint/BX72_138K_robot.cst" type="file.cst" enable="1" />
+        <File path="src/constraint/BX72_138K_robot.sdc" type="file.sdc" enable="1" />
+        <File path="src/navigation/bx72_lite_guard.sv" type="file.verilog" enable="1" />
+        <File path="src/navigation/bx72_polar_reduce.sv" type="file.verilog" enable="1" />
+        <File path="src/top/bx72_lite_robot_core.sv" type="file.verilog" enable="1" />
+        <File path="src/video/camera/init/ov5647_init_table_raw10.v" type="file.verilog" enable="1" />
+        <File path="src/video/camera/ip/byte_to_pixel/byte_to_pixel.v" type="file.verilog" enable="1" />
+        <File path="src/video/camera/ip/camera_dphy_rx/camera_dphy_rx.v" type="file.verilog" enable="1" />
+        <File path="src/video/camera/ip/camera_pixel_pll/camera_pixel_pll.v" type="file.verilog" enable="1" />
+        <File path="src/video/camera/ip/camera_pixel_pll/camera_pixel_pll_mod.v" type="file.verilog" enable="1" />
+        <File path="src/video/camera/ip/csi2_rx/dsi_csi2_rx.v" type="file.verilog" enable="1" />
+        <File path="src/video/camera/ov5647_csi2_capture.v" type="file.verilog" enable="1" />
+        <File path="src/video/camera/gowin_isp/bx72_gowin_isp_pipeline.v" type="file.verilog" enable="1" />
+        <File path="src/top/robot_top.v" type="file.verilog" enable="1" />
+    </FileList>
+</Project>

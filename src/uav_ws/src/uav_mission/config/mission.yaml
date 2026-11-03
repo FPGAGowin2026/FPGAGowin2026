@@ -1,0 +1,12 @@
+uav_mission:
+  ros__parameters:
+    takeoff_height_m: 1.0
+    horizontal_tolerance_m: 0.2
+    vertical_tolerance_m: 0.15
+    stable_duration_s: 2.0
+    hover_duration_s: 10.0
+    ready_timeout_s: 30.0
+    command_timeout_s: 5.0
+    takeoff_timeout_s: 30.0
+    landing_timeout_s: 45.0
+    state_timeout_s: 1.0

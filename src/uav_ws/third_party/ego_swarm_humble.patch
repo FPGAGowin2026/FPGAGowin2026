@@ -1,0 +1,428 @@
+diff --git a/src/planner/plan_env/src/grid_map.cpp b/src/planner/plan_env/src/grid_map.cpp
+index 0714c57..8b7dcd1 100755
+--- a/src/planner/plan_env/src/grid_map.cpp
++++ b/src/planner/plan_env/src/grid_map.cpp
+@@ -1,4 +1,5 @@
+ #include "plan_env/grid_map.h"
++#include <stdexcept>
+ 
+ // #define current_img_ md_.depth_image_[image_cnt_ & 1]
+ // #define last_img_ md_.depth_image_[!(image_cnt_ & 1)]
+@@ -83,6 +84,9 @@ void GridMap::initMap(rclcpp::Node::SharedPtr node)
+   node_->get_parameter("grid_map/ground_height", mp_.ground_height_);
+   node_->get_parameter("grid_map/odom_depth_timeout", mp_.odom_depth_timeout_);
+ 
++  if (mp_.skip_pixel_ <= 0)
++    throw std::invalid_argument("grid_map/skip_pixel must be positive");
++
+   if (mp_.virtual_ceil_height_ - mp_.ground_height_ > z_size)
+   {
+     mp_.virtual_ceil_height_ = mp_.ground_height_ + z_size;
+@@ -125,7 +129,8 @@ void GridMap::initMap(rclcpp::Node::SharedPtr node)
+ 
+   md_.raycast_num_ = 0;
+ 
+-  md_.proj_points_.resize(640 * 480 / mp_.skip_pixel_ / mp_.skip_pixel_);
++  // Reserve against the actual incoming image in projectDepthImage().
++  md_.proj_points_.clear();
+   md_.proj_points_cnt = 0;
+ 
+   md_.cam2body_ << 0.0, 0.0, 1.0, 0.0,
+@@ -268,6 +273,13 @@ void GridMap::projectDepthImage()
+   int rows = md_.depth_image_.rows;
+   int skip_pix = mp_.skip_pixel_;
+ 
++  // Cover ceil(width / skip) * ceil(height / skip), including odd dimensions.
++  const size_t max_points =
++      static_cast<size_t>((cols + skip_pix - 1) / skip_pix) *
++      static_cast<size_t>((rows + skip_pix - 1) / skip_pix);
++  if (md_.proj_points_.size() < max_points)
++    md_.proj_points_.resize(max_points);
++
+   double depth;
+ 
+   Eigen::Matrix3d camera_r = md_.camera_r_m_;
+@@ -282,7 +294,7 @@ void GridMap::projectDepthImage()
+       {
+ 
+         Eigen::Vector3d proj_pt;
+-        depth = (*row_ptr++) / mp_.k_depth_scaling_factor_;
++        depth = row_ptr[u] / mp_.k_depth_scaling_factor_;
+         proj_pt(0) = (u - mp_.cx_) * depth / mp_.fx_;
+         proj_pt(1) = (v - mp_.cy_) * depth / mp_.fy_;
+         proj_pt(2) = depth;
+@@ -317,14 +329,15 @@ void GridMap::projectDepthImage()
+              u += mp_.skip_pixel_)
+         {
+ 
+-          depth = (*row_ptr) * inv_factor;
++          const uint16_t raw_depth = *row_ptr;
++          depth = raw_depth * inv_factor;
+           row_ptr = row_ptr + mp_.skip_pixel_;
+ 
+           // filter depth
+           // depth += rand_noise_(eng_);
+           // if (depth > 0.01) depth += rand_noise2_(eng_);
+ 
+-          if (*row_ptr == 0)
++          if (raw_depth == 0)
+           {
+             depth = mp_.max_ray_length_ + 0.1;
+           }
+@@ -753,6 +766,8 @@ void GridMap::updateOccupancyCallback()
+ 
+   md_.occ_need_update_ = false;
+   md_.local_updated_ = false;
++  // A successfully fused, time-aligned depth observation restores the map.
++  md_.flag_depth_odom_timeout_ = false;
+ }
+ 
+ void GridMap::depthPoseCallback(const sensor_msgs::msg::Image::ConstPtr &img,
+@@ -1075,4 +1090,4 @@ void GridMap::depthOdomCallback(const sensor_msgs::msg::Image::ConstPtr &img,
+ 
+   md_.occ_need_update_ = true;
+   md_.flag_use_depth_fusion = true;
+-}
+\ No newline at end of file
++}
+diff --git a/src/planner/plan_manage/CMakeLists.txt b/src/planner/plan_manage/CMakeLists.txt
+index f90cbfd..9529152 100755
+--- a/src/planner/plan_manage/CMakeLists.txt
++++ b/src/planner/plan_manage/CMakeLists.txt
+@@ -14,6 +14,7 @@ endif()
+ # find dependencies
+ find_package(ament_cmake REQUIRED)
+ find_package(rclcpp REQUIRED)
++find_package(std_msgs REQUIRED)
+ find_package(geometry_msgs REQUIRED)
+ find_package(quadrotor_msgs REQUIRED)
+ find_package(visualization_msgs REQUIRED)
+@@ -58,7 +59,7 @@ add_executable(ego_planner_node
+ # )
+ 
+ ament_target_dependencies(ego_planner_node 
+-                          rclcpp nav_msgs visualization_msgs 
++                          rclcpp std_msgs nav_msgs visualization_msgs 
+                           geometry_msgs quadrotor_msgs 
+                           plan_env path_searching 
+                           bspline_opt traj_utils 
+diff --git a/src/planner/plan_manage/include/ego_planner/ego_replan_fsm.h b/src/planner/plan_manage/include/ego_planner/ego_replan_fsm.h
+index ed91462..3140160 100755
+--- a/src/planner/plan_manage/include/ego_planner/ego_replan_fsm.h
++++ b/src/planner/plan_manage/include/ego_planner/ego_replan_fsm.h
+@@ -9,6 +9,8 @@
+ #include "sensor_msgs/msg/imu.hpp"
+ #include "rclcpp/rclcpp.hpp"
+ #include "std_msgs/msg/empty.hpp"
++#include "std_msgs/msg/u_int64_multi_array.hpp"
++#include <cstdint>
+ #include <vector>
+ #include "visualization_msgs/msg/marker.hpp"
+ 
+@@ -96,6 +98,10 @@ namespace ego_planner
+     rclcpp::Publisher<traj_utils::msg::DataDisp>::SharedPtr data_disp_pub_;
+     rclcpp::Publisher<traj_utils::msg::MultiBsplines>::SharedPtr swarm_trajs_pub_;
+     rclcpp::Publisher<traj_utils::msg::Bspline>::SharedPtr broadcast_bspline_pub_;
++    rclcpp::Publisher<std_msgs::msg::UInt64MultiArray>::SharedPtr trajectory_goal_pub_;
++    uint64_t active_goal_stamp_ns_{0};
++    uint64_t last_associated_traj_id_{0};
++    std::string planning_frame_;
+ 
+     /* helper functions */
+     bool callReboundReplan(bool flag_use_poly_init, bool flag_randomPolyTraj); // front-end and back-end method
+@@ -109,7 +115,8 @@ namespace ego_planner
+     void printFSMExecState();
+ 
+     void readGivenWps();
+-    void planNextWaypoint(const Eigen::Vector3d next_wp);
++    bool planNextWaypoint(const Eigen::Vector3d next_wp, uint64_t goal_stamp_ns = 0);
++    void publishTrajectoryGoal(const traj_utils::msg::Bspline &bspline);
+     void getLocalTarget();
+ 
+     /* ROS functions */
+@@ -139,4 +146,4 @@ namespace ego_planner
+ 
+ } // namespace ego_planner
+ 
+-#endif
+\ No newline at end of file
++#endif
+diff --git a/src/planner/plan_manage/package.xml b/src/planner/plan_manage/package.xml
+index c3a742f..70dfb14 100755
+--- a/src/planner/plan_manage/package.xml
++++ b/src/planner/plan_manage/package.xml
+@@ -10,6 +10,7 @@
+   <buildtool_depend>ament_cmake</buildtool_depend>
+ 
+   <depend>rclcpp</depend>
++  <depend>std_msgs</depend>
+   <depend>ament_cmake</depend>
+   <depend>geometry_msgs</depend>
+   <depend>quadrotor_msgs</depend>
+diff --git a/src/planner/plan_manage/src/ego_replan_fsm.cpp b/src/planner/plan_manage/src/ego_replan_fsm.cpp
+index 78d5eee..3cd1e2b 100755
+--- a/src/planner/plan_manage/src/ego_replan_fsm.cpp
++++ b/src/planner/plan_manage/src/ego_replan_fsm.cpp
+@@ -1,5 +1,6 @@
+ 
+ #include <ego_planner/ego_replan_fsm.h>
++#include <cmath>
+ 
+ namespace ego_planner
+ {
+@@ -22,6 +23,7 @@ namespace ego_planner
+     node_->declare_parameter("fsm/emergency_time", 1.0);
+     node_->declare_parameter("fsm/realworld_experiment", false);
+     node_->declare_parameter("fsm/fail_safe", true);
++    node_->declare_parameter("fsm/planning_frame", "world");
+ 
+     node_->get_parameter("fsm/flight_type", target_type_);
+     node_->get_parameter("fsm/thresh_replan_time", replan_thresh_);
+@@ -31,6 +33,7 @@ namespace ego_planner
+     node_->get_parameter("fsm/emergency_time", emergency_time_);
+     node_->get_parameter("fsm/realworld_experiment", flag_realworld_experiment_);
+     node_->get_parameter("fsm/fail_safe", enable_fail_safe_);
++    node_->get_parameter("fsm/planning_frame", planning_frame_);
+ 
+     have_trigger_ = !flag_realworld_experiment_;
+ 
+@@ -110,6 +113,7 @@ namespace ego_planner
+         });
+ 
+     bspline_pub_ = node_->create_publisher<traj_utils::msg::Bspline>("planning/bspline", 10);
++    trajectory_goal_pub_ = node_->create_publisher<std_msgs::msg::UInt64MultiArray>("planning/trajectory_goal", 10);
+     data_disp_pub_ = node_->create_publisher<traj_utils::msg::DataDisp>("planning/data_display", 100);
+ 
+     if (target_type_ == TARGET_TYPE::MANUAL_TARGET)
+@@ -183,7 +187,7 @@ namespace ego_planner
+     planNextWaypoint(wps_[wp_id_]);
+   }
+ 
+-  void EGOReplanFSM::planNextWaypoint(const Eigen::Vector3d next_wp)
++  bool EGOReplanFSM::planNextWaypoint(const Eigen::Vector3d next_wp, uint64_t goal_stamp_ns)
+   {
+     bool success = false;
+     success = planner_manager_->planGlobalTraj(odom_pos_, odom_vel_, Eigen::Vector3d::Zero(), next_wp, Eigen::Vector3d::Zero(), Eigen::Vector3d::Zero());
+@@ -201,27 +205,29 @@ namespace ego_planner
+       }
+ 
+       end_vel_.setZero();
++      // Switch the goal token only after global planning succeeded and before
++      // any callback can publish a local trajectory for this new goal.
++      active_goal_stamp_ns_ = goal_stamp_ns;
++      last_associated_traj_id_ = 0;
+       have_target_ = true;
+       have_new_target_ = true;
+ 
+       /*** FSM状态转换 ***/
+-      if (exec_state_ == WAIT_TARGET)
++      if (exec_state_ == WAIT_TARGET || exec_state_ == INIT ||
++          exec_state_ == GEN_NEW_TRAJ || exec_state_ == SEQUENTIAL_START)
+         changeFSMExecState(GEN_NEW_TRAJ, "TRIG");
+       else
+       {
+-        while (exec_state_ != EXEC_TRAJ)
+-        {
+-          rclcpp::spin_some(node_);
+-          std::this_thread::sleep_for(std::chrono::milliseconds(1));
+-        }
+         changeFSMExecState(REPLAN_TRAJ, "TRIG");
+       }
+ 
+       visualization_->displayGlobalPathList(gloabl_traj, 0.1, 0);
++      return true;
+     }
+     else
+     {
+       RCLCPP_ERROR(node_->get_logger(), "Unable to generate global trajectory!");
++      return false;
+     }
+   }
+ 
+@@ -234,16 +240,55 @@ namespace ego_planner
+ 
+   void EGOReplanFSM::waypointCallback(const std::shared_ptr<const geometry_msgs::msg::PoseStamped> &msg)
+   {
+-    if (msg->pose.position.z < -0.1)
++    if (!have_odom_ || exec_state_ == INIT ||
++        msg->header.frame_id != planning_frame_ || msg->header.stamp.sec < 0 ||
++        msg->header.stamp.nanosec >= 1000000000u ||
++        !std::isfinite(msg->pose.position.x) || !std::isfinite(msg->pose.position.y) ||
++        !std::isfinite(msg->pose.position.z) || msg->pose.position.z < -0.1)
++      return;
++
++    const uint64_t goal_stamp_ns = static_cast<uint64_t>(msg->header.stamp.sec) * 1000000000ull +
++                                   msg->header.stamp.nanosec;
++    if (goal_stamp_ns == 0)
++      return;
++
++    if (goal_stamp_ns < active_goal_stamp_ns_)
++      return;
++
++    if (goal_stamp_ns == active_goal_stamp_ns_)
++    {
++      // Retrying a goal must neither restart it nor acknowledge different coordinates.
++      const Eigen::Vector3d repeated(msg->pose.position.x, msg->pose.position.y, msg->pose.position.z);
++      if ((repeated - end_pt_).norm() <= 1e-9 && last_associated_traj_id_ != 0)
++      {
++        std_msgs::msg::UInt64MultiArray association;
++        association.data = {active_goal_stamp_ns_, last_associated_traj_id_};
++        trajectory_goal_pub_->publish(association);
++      }
++      return;
++    }
++
++    if (exec_state_ == EMERGENCY_STOP)
+       return;
+ 
+     cout << "Triggered!" << endl;
+ 
+     init_pt_ = odom_pos_;
+ 
+-    Eigen::Vector3d end_wp(msg->pose.position.x, msg->pose.position.y, 1.0);
++    Eigen::Vector3d end_wp(msg->pose.position.x, msg->pose.position.y, msg->pose.position.z);
+ 
+-    planNextWaypoint(end_wp);
++    planNextWaypoint(end_wp, goal_stamp_ns);
++  }
++
++  void EGOReplanFSM::publishTrajectoryGoal(const traj_utils::msg::Bspline &bspline)
++  {
++    if (active_goal_stamp_ns_ == 0 || bspline.traj_id <= 0 ||
++        static_cast<uint64_t>(bspline.traj_id) > UINT32_MAX)
++      return;
++    std_msgs::msg::UInt64MultiArray association;
++    association.data = {active_goal_stamp_ns_, static_cast<uint64_t>(bspline.traj_id)};
++    trajectory_goal_pub_->publish(association);
++    last_associated_traj_id_ = static_cast<uint64_t>(bspline.traj_id);
+   }
+ 
+   void EGOReplanFSM::odometryCallback(const std::shared_ptr<const nav_msgs::msg::Odometry> &msg)
+@@ -617,7 +662,8 @@ namespace ego_planner
+       }
+       else
+       {
+-        if (enable_fail_safe_ && odom_vel_.norm() < 0.1)
++        if (enable_fail_safe_ && !planner_manager_->grid_map_->getOdomDepthTimeout() &&
++            odom_vel_.norm() < 0.1)
+           changeFSMExecState(GEN_NEW_TRAJ, "FSM");
+       }
+ 
+@@ -708,10 +754,13 @@ namespace ego_planner
+     /* ---------- check lost of depth ---------- */
+     if (map->getOdomDepthTimeout())
+     {
+-      RCLCPP_ERROR(node_->get_logger(), "Depth Lost! EMERGENCY_STOP");
+-
+-      enable_fail_safe_ = false;
+-      changeFSMExecState(EMERGENCY_STOP, "SAFETY");
++      if (exec_state_ != EMERGENCY_STOP)
++      {
++        RCLCPP_ERROR(node_->get_logger(), "Depth Lost! EMERGENCY_STOP");
++        changeFSMExecState(EMERGENCY_STOP, "SAFETY");
++      }
++      // Do not replan using stale depth; recovery waits for a fused observation.
++      return;
+     }
+ 
+     /* ---------- check trajectory ---------- */
+@@ -821,6 +870,7 @@ namespace ego_planner
+       }
+ 
+       /* 1. publish traj to traj_server */
++      publishTrajectoryGoal(bspline);
+       bspline_pub_->publish(bspline);
+ 
+       /* 2. publish traj to the next drone of swarm */
+@@ -915,6 +965,7 @@ namespace ego_planner
+       bspline.knots.push_back(knots(i));
+     }
+ 
++    publishTrajectoryGoal(bspline);
+     bspline_pub_->publish(bspline);
+ 
+     return true;
+diff --git a/src/planner/plan_manage/src/planner_manager.cpp b/src/planner/plan_manage/src/planner_manager.cpp
+index 2e420d4..834d002 100755
+--- a/src/planner/plan_manage/src/planner_manager.cpp
++++ b/src/planner/plan_manage/src/planner_manager.cpp
+@@ -1,6 +1,7 @@
+ // #include <fstream>
+ #include <ego_planner/planner_manager.h>
+ #include <thread>
++#include <limits>
+ #include "visualization_msgs/msg/marker.hpp" // zx-todo
+ 
+ namespace ego_planner
+@@ -556,7 +557,10 @@ namespace ego_planner
+     local_data_.acceleration_traj_ = local_data_.velocity_traj_.getDerivative();
+     local_data_.start_pos_ = local_data_.position_traj_.evaluateDeBoorT(0.0);
+     local_data_.duration_ = local_data_.position_traj_.getTimeSum();
+-    local_data_.traj_id_ += 1;
++    // Keep the published trajectory ID positive and within PositionCommand's
++    // uint32 field without invoking signed-overflow undefined behavior.
++    local_data_.traj_id_ = local_data_.traj_id_ == std::numeric_limits<int>::max() ?
++        1 : local_data_.traj_id_ + 1;
+   }
+ 
+   void EGOPlannerManager::reparamBspline(UniformBspline &bspline, vector<Eigen::Vector3d> &start_end_derivative, double ratio,
+diff --git a/src/planner/plan_manage/src/traj_server.cpp b/src/planner/plan_manage/src/traj_server.cpp
+index a32026d..3fcae67 100755
+--- a/src/planner/plan_manage/src/traj_server.cpp
++++ b/src/planner/plan_manage/src/traj_server.cpp
+@@ -5,6 +5,7 @@
+ #include "std_msgs/msg/empty.hpp"
+ #include "visualization_msgs/msg/marker.hpp"
+ #include <rclcpp/rclcpp.hpp>
++#include <stdexcept>
+ 
+ rclcpp::Publisher<quadrotor_msgs::msg::PositionCommand>::SharedPtr pos_cmd_pub;
+ 
+@@ -23,6 +24,7 @@ int traj_id_;
+ // yaw control
+ double last_yaw_, last_yaw_dot_;
+ double time_forward_;
++std::string trajectory_frame_;
+ 
+ void bsplineCallback(traj_utils::msg::Bspline::ConstPtr msg)
+ {
+@@ -203,11 +205,12 @@ void cmdCallback()
+   else
+   {
+     cout << "[Traj server]: invalid time." << endl;
++    return;
+   }
+   time_last = time_now;
+ 
+   cmd.header.stamp = time_now;
+-  cmd.header.frame_id = "world";
++  cmd.header.frame_id = trajectory_frame_;
+   cmd.trajectory_flag = quadrotor_msgs::msg::PositionCommand::TRAJECTORY_STATUS_READY;
+   cmd.trajectory_id = traj_id_;
+ 
+@@ -235,6 +238,10 @@ int main(int argc, char **argv)
+ {
+   rclcpp::init(argc, argv);
+   auto node = rclcpp::Node::make_shared("traj_server");
++  node->declare_parameter("traj_server/frame_id", "world");
++  node->get_parameter("traj_server/frame_id", trajectory_frame_);
++  if (trajectory_frame_.empty())
++    throw std::invalid_argument("traj_server/frame_id must not be empty");
+ 
+   auto bspline_sub = node->create_subscription<traj_utils::msg::Bspline>(
+       "planning/bspline",
+@@ -269,7 +276,11 @@ int main(int argc, char **argv)
+   RCLCPP_WARN(node->get_logger(), "[Traj server]: ready.");
+ 
+   rclcpp::spin(node);
+-  rclcpp::shutdown();
++  cmd_timer.reset();
++  bspline_sub.reset();
++  pos_cmd_pub.reset();
++  node.reset();
++  if (rclcpp::ok()) rclcpp::shutdown();
+ 
+   return 0;
+-}
+\ No newline at end of file
++}

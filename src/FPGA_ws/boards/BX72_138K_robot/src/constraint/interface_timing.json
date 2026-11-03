@@ -1,0 +1,33 @@
+{
+  "description": "外部接口验收缺口；未确认数值不得用零延迟或猜测参数代替。",
+  "interfaces": {
+    "rgmii_rx": {
+      "verified": false,
+      "required": "BX72 RTL8211F RX 时钟内部延迟的实际 strap/寄存器状态、PHY tCO、PCB 偏斜和 IDDR 上升/下降沿输入时序；同频 HCLK 专用通路已消除 RX 普通布线告警，当前 PLL 配置为 0 度并由 PHY 链路状态控制重新初始化，外部时序仍未验收",
+      "min_delay_ns": null,
+      "max_delay_ns": null,
+      "evidence": ""
+    },
+    "camera_csi2": {
+      "verified": false,
+      "required": "OV5647 CSI-2 437.5 Mb/s/lane 的 HS clock/data 相位、CMOS2CSI 电阻网络与 PCB/排线偏斜、LVDS25 输入共模/差分裕量及 LVCMOS10UD33 的 LP 输入裕量；DHCE CEN 内部同步边界需供应商确认。串口计数和正确 payload CRC 不能替代信号完整性验收",
+      "min_delay_ns": null,
+      "max_delay_ns": null,
+      "evidence": ""
+    },
+    "rgmii_tx": {
+      "verified": false,
+      "required": "RTL8211F TX 时钟内部延迟的实际 strap/寄存器状态、PHY setup/hold、PCB 时钟/数据偏斜；上升和下降沿都需覆盖",
+      "min_delay_ns": null,
+      "max_delay_ns": null,
+      "evidence": ""
+    },
+    "imu_spi": {
+      "verified": false,
+      "required": "MISO tCO、连线延迟及 SPI Mode 3 条件采样相对于生成 SCK 的时序模型，不能只按系统时钟默认零延迟验收",
+      "min_delay_ns": null,
+      "max_delay_ns": null,
+      "evidence": ""
+    }
+  }
+}

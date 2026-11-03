@@ -1,0 +1,90 @@
+ugv_bridge_node:
+  ros__parameters:
+    bind_pc: '0.0.0.0'
+    pc_ip: ''
+    pc_port: 6200
+    bind_fpga: '0.0.0.0'
+    fpga_ip: '192.168.0.2'
+    fpga_port: 5000
+    ack_port: 6103
+    video_port: 6102
+    telemetry_port: 6104
+    video_fps: 10.0
+    jpeg_quality: 60
+    # codex/bx72-gowin-isp：PT97，BT.709 limited range，Y0 U Y1 V。
+    video_pixel_format: yuyv
+    # 网页任务启动成功后取得 ROS 控制来源；仅启动节点不产生运动。
+    ros_control_enabled: true
+    cmd_vel_timeout_s: 0.2
+    imu_frame_id: imu660rc_sensor
+    n10_frame_id: n10_sensor
+    camera_frame_id: camera
+    # odom -> base_link 为 FPGA 融合位姿；局部执行器由实际 FPGA 协议选择。
+    # FPGA车体长260 mm、宽250 mm；已知障碍按矩形扫掠并加10 mm，起点未知确认圆231 mm。
+    odom_frame_id: odom
+    base_frame_id: base_link
+    # IMU倒装安装的原始传感器坐标到车体坐标TF；位置零值尚未实测标定。
+    imu_x_m: 0.0
+    imu_y_m: 0.0
+    imu_z_m: 0.0
+    imu_roll_rad: 3.141592653589793
+    imu_pitch_rad: 0.0
+    imu_yaw_rad: 0.0
+    # 雷达相对车体中心前移约130mm；局部导航复用此处坐标系和外参。
+    lidar_x_m: 0.13
+    lidar_y_m: 0.0
+    lidar_yaw_rad: 0.0
+    scan_range_min_m: 0.01
+    scan_range_max_m: 65.534
+    navigation_default_speed_mm_s: 400
+    navigation_default_accel_mm_s2: 200
+    navigation_default_tolerance_mm: 100
+    navigation_default_yaw_tolerance_mrad: 100
+    navigation_default_duration_s: 120.0
+    # 仅在取得 FPGA 相机实测标定后填写以下参数，以启用 CameraInfo：
+    # camera_width: 640
+    # camera_height: 360
+    # camera_matrix: [ ... 9 个实测值 ... ]
+    # distortion_coefficients: [ ... 实测值 ... ]
+    # rectification_matrix: [ ... 9 个实测值 ... ]
+    # projection_matrix: [ ... 12 个实测值 ... ]
+    # distortion_model: <实测模型>
+    # 视频规划段仅由Jetson投影并画入网页JPEG；不改变ROS原始图像。
+    route_overlay_enabled: false
+    # 完成CameraInfo与相机外参实测后启用。行优先3x4：车体米坐标→相机光学坐标。
+    # route_overlay_camera_from_base: [r00, r01, r02, tx, r10, r11, r12, ty, r20, r21, r22, tz]
+
+vision_node:
+  ros__parameters:
+    engine_path: /home/aa/yolo/yolo26n_fp16.engine
+    image_topic: /camera/image_raw
+    class_id: -1
+    process_hz: 20.0
+    score_threshold: 0.1
+    image_timeout_s: 0.5
+    output_format: rows_xyxy_score_class
+    debug_image: false
+
+mission_control_node:
+  ros__parameters:
+    detections_topic: /vision/detections
+    selected_target_topic: /mission/selected_target
+    image_topic: /camera/image_raw
+    scan_topic: /scan
+    target_class_id: '0'
+    target_id: ''
+    min_confidence: 0.5
+    observation_timeout_s: 0.25
+    autostart: false
+    # 前方距离来自真实 LaserScan，检测框只用于转向对准。
+    motion_enabled: true
+    standoff_m: 0.15
+    linear_speed_m_s: 0.4
+    search_angular_speed: 0.8
+    scan_timeout_s: 0.5
+    image_width: 640
+    image_height: 360
+    angular_gain: 1.2
+    angular_deadband: 0.05
+    # 目标对准转向上限；搜索旋转速度由 search_angular_speed 单独控制。
+    max_angular_speed: 0.3

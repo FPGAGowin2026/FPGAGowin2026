@@ -1,0 +1,7 @@
+# 网桥及配置与实机验证的SHA-256按原始字节对应。
+/src/ugv_bridge/** -text whitespace=cr-at-eol
+/src/thirdparty/bytetrack/** -text whitespace=cr-at-eol
+/src/car/car_bringup/config/bringup.yaml -text
+Scripts/*.sh text eol=lf
+/src/car/car_navigation/scripts/global_map_node.py text eol=lf
+/src/car/car_navigation/scripts/jetson_global_navigation_node.py text eol=lf

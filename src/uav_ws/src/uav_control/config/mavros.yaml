@@ -1,0 +1,8 @@
+uav_control:
+  ros__parameters:
+    publish_rate_hz: 20.0
+    state_timeout_s: 2.5
+    position_timeout_s: 0.5
+    target_timeout_s: 1.0
+    land_handover_timeout_s: 3.0
+    command_queue_timeout_s: 3.0

@@ -1,0 +1,24 @@
+uint8 action
+uint8 mode
+uint8 flags
+uint32 task_id
+uint32 boot_id
+uint32 odom_domain
+float64 goal_x_m
+float64 goal_y_m
+float64 hold_yaw_rad
+float64 final_yaw_rad
+uint16 max_speed_mm_s
+uint16 max_accel_mm_s2
+uint16 tolerance_mm
+uint16 yaw_tolerance_mrad
+float64 duration_s
+string bridge_id
+uint64 authorization_epoch
+# Actual send time on the same Jetson steady clock; orders start and cancel.
+uint64 issued_steady_ns
+# Absolute steady-clock deadline on the same Jetson; required for action 1.
+uint64 start_deadline_steady_ns
+---
+bool success
+string message

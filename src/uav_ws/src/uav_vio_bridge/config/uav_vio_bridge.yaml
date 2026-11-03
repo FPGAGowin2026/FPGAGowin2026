@@ -1,0 +1,26 @@
+uav_vio_bridge:
+  ros__parameters:
+    # Keep disabled until the deployed OpenVINS timebase and physical transform are verified.
+    enabled: false
+    input_topic: /ov_msckf/odomimu
+    visual_health_topic: /ov_msckf/visual_health
+    output_topic: /mavros/odometry/out
+    input_frame_id: global
+    input_child_frame_id: imu
+    # Arbitrary-heading, gravity-aligned world; this is not a true-north ENU claim.
+    output_frame_id: vio_odom
+    output_child_frame_id: vio_body
+    world_yaw_rad: 0.0
+    # Keep the calibrated imu0 axes/origin from config/openvins/d435i_px4.
+    # kalibr_imu_chain.yaml T_i_b=I relates imu0 to the reference IMU0,
+    # not to the aircraft base_link/CoG. Confirm imu0 axes are body FLU at deployment.
+    rotation_body_imu_xyzw: [0.0, 0.0, 0.0, 1.0]
+    # Output point B is the VIO imu0 origin; camera extrinsics stay inside OpenVINS.
+    position_body_in_imu_m: [0.0, 0.0, 0.0]
+    publish_rate_hz: 40.0
+    max_sample_age_s: 0.15
+    max_future_s: 0.01
+    visual_timeout_s: 0.3
+    input_timeout_s: 0.2
+    max_position_step_m: 1.0
+    max_attitude_step_rad: 0.75

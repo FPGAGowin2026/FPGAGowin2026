@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>car_navigation</name>
+  <version>0.2.0</version>
+  <description>Jetson 二维全局 SLAM、雷达适配和网页地图接口。</description>
+  <maintainer email="aa@example.com">aa</maintainer>
+  <license>Apache-2.0</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <depend>rclcpp</depend>
+  <depend>geometry_msgs</depend>
+  <depend>diagnostic_msgs</depend>
+  <depend>ugv_bridge</depend>
+  <depend>nlohmann_json</depend>
+  <exec_depend>rclpy</exec_depend>
+  <exec_depend>nodejs</exec_depend>
+  <exec_depend>rcl_interfaces</exec_depend>
+  <depend>nav_msgs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>std_msgs</depend>
+  <exec_depend>tf2_ros</exec_depend>
+  <exec_depend>slam_toolbox</exec_depend>
+
+  <test_depend>ament_cmake_pytest</test_depend>
+  <test_depend>launch_testing</test_depend>
+  <test_depend>launch_testing_ament_cmake</test_depend>
+  <test_depend>launch_ros</test_depend>
+  <test_depend>python3-pytest</test_depend>
+
+  <export><build_type>ament_cmake</build_type></export>
+</package>

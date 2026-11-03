@@ -1,0 +1,21 @@
+uav_control:
+  ros__parameters:
+    # PX4 v1.17.0 / px4_msgs v1.17.0, UXRCE_DDS_SYNCT=1, system clock (no /clock).
+    # *_vN suffixes follow px4_msgs MESSAGE_VERSION; override paths with ROS remappings.
+    read_only: true
+    fmu_prefix: /fmu
+    publish_rate_hz: 20.0
+    state_timeout_s: 1.0
+    # PX4 client normally updates DDS time synchronization about once per second.
+    timesync_timeout_s: 3.0
+    position_timeout_s: 0.5
+    target_timeout_s: 1.0
+    command_timeout_s: 3.0
+    prestream_s: 1.1
+    land_handover_timeout_s: 3.0
+    target_system: 1
+    target_component: 1
+    source_system: 1
+    # After ACK timeout, its opcode stays blocked even after /uav_control/reset.
+    # Restart on ground with a new source_component to isolate delayed ACKs.
+    source_component: 191

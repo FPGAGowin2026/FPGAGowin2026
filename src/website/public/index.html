@@ -1,0 +1,424 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="description" content="BX72 机器人工作台：运行监控、局部任务、手动遥控与 FPGA 遥测诊断">
+  <title>BX72 机器人控制台</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='10' fill='%230d9488'/%3E%3Cpath d='M11 12h10a5 5 0 0 1 0 10H11m0-5h13a5 5 0 0 1 0 10H11z' fill='none' stroke='white' stroke-width='3'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/workspace.css">
+</head>
+<body>
+  <a class="skip-link" href="#workspaceContent">跳转到主内容</a>
+  <header class="console-header">
+    <div class="header-identity"><a class="workspace-brand" href="#overview" data-nav="overview"><span class="brand-mark">B<span>✦</span></span><span><strong>BX72<span class="brand-version"> / LAB</span></strong><small>机器人控制工作台</small></span></a><div class="workspace-breadcrumb"><span id="pageBreadcrumb">运行总览</span></div></div>
+    <div class="header-actions"><span id="wbSimulation" class="env-badge" data-state="unknown">仿真：未知</span><a class="header-config" href="#connectionSettings" data-nav="connectionSettings" aria-label="打开连接设置"><svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10M14 4v6M6 14v6"/></svg></a>
+    <button id="wbStop" class="btn-danger stop-btn" type="button" aria-label="请求小车停车并解除控制"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><rect x="2" y="2" width="10" height="10" rx="2" fill="currentColor"/></svg><span>小车停车 / 解除控制</span></button></div>
+  </header>
+  <div class="console-body">
+    <nav class="console-nav" aria-label="工作台导航">
+      <a class="nav-item is-active" href="#overview" data-nav="overview" aria-current="page"><svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span>运行总览</span><span class="nav-index">01</span></a>
+<a class="nav-item" href="#tasks" data-nav="tasks"><svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 3h6v4H9zM9 12h6M9 16h4"/></svg><span>任务中心</span><span class="nav-index">02</span></a>
+<a class="nav-item" href="#remote" data-nav="remote"><svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v18M3 12h18M9 6l3-3 3 3M9 18l3 3 3-3M6 9l-3 3 3 3M18 9l3 3-3 3"/></svg><span>手动遥控</span><span class="nav-index">03</span></a>
+<a class="nav-item" href="#sensors" data-nav="sensors"><svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg><span>传感器</span><span class="nav-index">04</span></a>
+<a class="nav-item" href="#diagnostics" data-nav="diagnostics"><svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3M7 12h3l2-4 2 8 2-4h2"/></svg><span>诊断与连接</span><span class="nav-index">05</span></a>
+      <div class="nav-bottom"><div class="nav-device"><span class="device-symbol">芯</span><div><strong>GOWIN FPGA</strong><span>BX72 · 工程验证</span></div></div><a class="nav-item" href="#connectionSettings" data-nav="connectionSettings" aria-haspopup="dialog" aria-controls="wbConnectionDialog"><svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3v4M16 3v4M6 7h12v4a6 6 0 0 1-6 6v4M8 21h8"/></svg>连接设置<span class="nav-index">↗</span></a></div>
+    </nav>
+    <main id="workspaceContent" class="console-main" tabindex="-1">
+      <div class="page-heading"><div><p class="page-eyebrow" id="pageEyebrow">OPERATIONS / 01</p><h1 id="pageTitle" tabindex="-1">机器人运行控制台</h1></div><a class="btn-primary action-link" id="pageAction" href="#tasks" data-nav="tasks">配置局部任务 <span aria-hidden="true">↓</span></a></div>
+      <div class="workspace-status" aria-label="当前运行状态" aria-live="polite"><span class="status-strip-label">链路状态</span><div class="status-pill"><span class="status-label">接入</span><span id="wbTransport" class="status-value">接入方式：—</span></div><div class="status-pill"><span class="status-dot" aria-hidden="true"></span><span id="wbConnection" class="status-value">连接状态：未连接</span></div><div class="status-pill"><span id="wbActualMode" class="status-value">实际模式：不可用</span></div></div>
+      <section id="overview" class="view-section" aria-label="运行总览">
+        <div class="metric-grid">
+              <article class="metric-card">
+                <div class="metric-label"><span class="metric-tag" data-tone="x" aria-hidden="true"></span>x</div>
+                <span class="metric-spark">
+                  <svg class="sparkline" width="72" height="24" viewBox="0 0 72 24" fill="none" aria-hidden="true"><polyline id="sparkX" points=""></polyline></svg>
+                </span>
+                <div class="metric-readout"><span id="metricValueX" class="metric-value">—</span><span class="metric-unit">m</span></div>
+                <div id="metricSigmaX" class="metric-sigma">σ —</div>
+              </article>
+              <article class="metric-card">
+                <div class="metric-label"><span class="metric-tag" data-tone="y" aria-hidden="true"></span>y</div>
+                <span class="metric-spark">
+                  <svg class="sparkline" width="72" height="24" viewBox="0 0 72 24" fill="none" aria-hidden="true"><polyline id="sparkY" points=""></polyline></svg>
+                </span>
+                <div class="metric-readout"><span id="metricValueY" class="metric-value">—</span><span class="metric-unit">m</span></div>
+                <div id="metricSigmaY" class="metric-sigma">σ —</div>
+              </article>
+              <article class="metric-card">
+                <div class="metric-label"><span class="metric-tag" data-tone="yaw" aria-hidden="true"></span>航向 yaw</div>
+                <span class="metric-spark">
+                  <svg class="sparkline" width="72" height="24" viewBox="0 0 72 24" fill="none" aria-hidden="true"><polyline id="sparkYaw" points=""></polyline></svg>
+                </span>
+                <div class="metric-readout"><span id="metricValueYaw" class="metric-value">—</span><span class="metric-unit">°</span></div>
+                <div id="metricSigmaYaw" class="metric-sigma">σ —</div>
+              </article>
+              <article class="metric-card">
+                <div class="metric-label"><span class="metric-tag" data-tone="vx" aria-hidden="true"></span>前后速度 vx</div>
+                <span class="metric-spark">
+                  <svg class="sparkline" width="72" height="24" viewBox="0 0 72 24" fill="none" aria-hidden="true"><polyline id="sparkVx" points=""></polyline></svg>
+                </span>
+                <div class="metric-readout"><span id="metricValueVx" class="metric-value">—</span><span class="metric-unit">m/s</span></div>
+                <div id="metricSigmaVx" class="metric-sigma">σ —</div>
+              </article>
+            </div>
+        <div class="section-caption"><h2>现场感知</h2></div>
+        <div class="viewer-row"><div class="viewer-column"><section class="card video-card" aria-label="摄像头视频">
+                <div class="card-head">
+                  <div class="card-heading">
+                    <h2 class="card-title">摄像头</h2>
+                  </div>
+                  <div class="card-actions">
+                    <button id="videoRouteToggle" class="btn-ghost" type="button" aria-pressed="true" aria-controls="videoRoutePreview">隐藏局部规划</button>
+                    <button id="videoConnect" class="btn-ghost" type="button">连接视频</button>
+                    <button id="videoDisconnect" class="btn-ghost" type="button" disabled>断开视频</button>
+                  </div>
+                </div>
+                <div class="video-viewer">
+                  <img id="networkVideo" alt="Jetson 最新视频帧" hidden>
+                  <canvas id="visionOverlay" aria-label="点击视觉检测框选择目标" role="img"></canvas>
+                  <div id="videoRoutePreview" class="video-route-preview" aria-label="设备局部规划俯视图，非摄像头投影">
+                    <span class="video-route-title">局部规划俯视图（非画面投影）· 前 ↑</span>
+                    <canvas id="videoRouteCanvas" aria-label="车体坐标系下的设备规划段" role="img"></canvas>
+                    <span id="videoRouteStatus" class="video-route-status">暂无新鲜设备规划</span>
+                  </div>
+                  <span class="video-live live"><span class="live-dot" aria-hidden="true"></span>视频链路</span>
+                  <div id="videoPlaceholder" class="video-placeholder">
+                    <span class="placeholder-title">等待摄像头画面</span>
+                  </div>
+                  <div class="video-hud">
+                    <span id="videoMetrics" class="video-metrics">视频未连接</span>
+                    <div class="video-fresh">
+                      <span class="hud-stream"><span class="hud-dot" aria-hidden="true"></span><span id="streamImu" class="hud-name">IMU：不可用</span></span>
+                      <span class="hud-stream"><span class="hud-dot" aria-hidden="true"></span><span id="streamLidar" class="hud-name">雷达：不可用</span></span>
+                      <span class="hud-stream"><span class="hud-dot" aria-hidden="true"></span><span id="streamFusion" class="hud-name">融合：不可用</span></span>
+                      <span class="hud-stream"><span class="hud-dot" aria-hidden="true"></span><span id="videoStatus" class="hud-name">视频：未连接</span></span>
+                    </div>
+                  </div>
+                </div>
+                <div class="video-stream-row" aria-label="其余数据流新鲜度">
+                  <span class="hud-stream"><span class="hud-dot" aria-hidden="true"></span><span id="streamMotor" class="hud-name">电机：不可用</span></span>
+                  <span class="hud-stream"><span class="hud-dot" aria-hidden="true"></span><span id="streamHealth" class="hud-name">健康：不可用</span></span>
+                </div>
+
+              </section><section class="card vision-task-card"><div class="card-head"><div class="card-heading"><h2 class="card-title">视觉转向任务</h2></div></div><div class="vision-controls" aria-label="视觉转向任务">
+                  <p id="visionDraft" class="vision-draft" role="status">尚未选择目标</p>
+                  <label class="field">检测目标<select id="visionDraftSelect" disabled><option value="">选择检测目标</option></select></label>
+                  <label class="field">行为<select id="visionBehavior"><option value="follow">跟随</option><option value="approach">接近</option><option value="search">搜索</option><option value="search_only">仅搜索（找到即停）</option></select></label>
+                  <label class="field">搜索类别<select id="visionClass"><option value="0">人</option><option value="39">瓶子</option><option value="41">杯子</option><option value="56">椅子</option><option value="15">猫</option><option value="16">狗</option></select></label>
+                  <label class="field">颜色<select id="visionColor"><option value="">不限</option><option value="red">红色</option></select></label>
+                  <p id="visionStatus" class="card-note" role="status">视觉任务接口未连接</p>
+                  <p id="visionTarget" class="card-note">检测叠加（非逐帧同步）· 无有效目标</p>
+                  <div class="card-actions">
+                    <button id="visionEnable" class="btn-primary" type="button" disabled>授权 ROS 转向</button>
+                    <button id="visionDisable" class="btn-ghost" type="button" disabled>撤销 ROS 授权</button>
+                    <button id="visionStart" class="btn-primary" type="button" disabled>开始视觉任务</button>
+                    <button id="visionStop" class="btn-ghost" type="button" disabled>停止视觉任务</button>
+                    <button id="visionEstop" class="btn-danger" type="button" disabled>请求软件急停</button>
+                    <button id="visionRelease" class="btn-ghost" type="button" disabled>解除软件急停</button>
+                  </div>
+                  <p id="visionResult" class="event-line" role="status" aria-live="polite"></p>
+                </div></section></div><section id="tasks" class="viewer-column" aria-label="任务中心"><section class="card radar-card" aria-label="地图与局部导航">
+                <div class="card-head">
+                  <div class="card-heading">
+                    <h2 id="radarTitle" class="card-title">全局地图与局部导航</h2>
+                  </div>
+                </div>
+                <canvas id="radarCloud" aria-label="SLAM 全局地图与蓝框内局部栅格：深色障碍、白色空闲、灰色未知；点击地图添加到同一航点队列，拖动平移"></canvas>
+                <div class="map-toolbar" role="group" aria-label="地图视图操作">
+                  <span id="mapStatus" class="map-status" role="status">等待地图</span>
+                  <span id="globalMapStatus" class="map-status" role="status">等待 Jetson 全局地图</span>
+                  <button id="mapZoomIn" class="btn-ghost" type="button" aria-label="放大地图">＋</button>
+                  <button id="mapZoomOut" class="btn-ghost" type="button" aria-label="缩小地图">−</button>
+                  <button id="mapFit" class="btn-ghost" type="button">适应地图</button>
+                  <button id="mapLayerToggle" class="btn-ghost" type="button" aria-pressed="false" disabled>仅看全局</button>
+                  <a class="btn-ghost" href="/global-map.json" download="bx72-global-map.json">保存全局地图</a>
+                  <a class="btn-ghost" href="/map.json" download="bx72-map.json">保存局部地图</a>
+                </div>
+
+                <p id="mapGoalHint" class="map-goal-hint" role="status"></p>
+                <p id="mapRouteStatus" class="map-route-status" role="status"></p>
+                <div class="radar-meta">
+                  <span id="radarLegend" class="radar-legend map-legend"><i class="map-swatch local-boundary"></i>局部范围 <i class="map-swatch occupied"></i>障碍 <i class="map-swatch free"></i>空闲 <i class="map-swatch unknown"></i>未知 <i class="map-swatch path"></i>实际轨迹（融合估计） <i class="map-swatch route-history"></i>规划历史短段 <i class="map-swatch route"></i>当前两点预览 <i class="map-swatch current-goal"></i>设备目标 · 紫色：航点与路线</span>
+                  <span id="globalMapLegend" class="radar-legend map-legend" hidden><i class="map-swatch occupied"></i>障碍 <i class="map-swatch free"></i>空闲 <i class="map-swatch unknown"></i>未知 · 紫色：航点与路线</span>
+                  <span id="radarStats" class="radar-stats">等待地图</span>
+                  <span id="globalMapStats" class="radar-stats">等待全局地图</span>
+                </div>
+                <details class="map-details"><summary>地图和规划状态</summary><div class="planner-readouts">
+                  <div id="plannerStateCard" class="planner-readout" data-state="waiting">
+                    <span class="planner-label">规划器状态</span>
+                    <strong id="plannerState" class="planner-value">等待 v4 遥测</strong>
+                  </div>
+                  <div class="planner-readout">
+                    <span class="planner-label">规划速度命令</span>
+                    <strong id="plannerCommand" class="planner-value">vx — mm/s · wz — mrad/s</strong>
+                  </div>
+                </div>
+                <div class="map-pose">
+                  <span>当前位置 <strong id="mapPose">等待有效位姿</strong></span>
+                  <span id="trackCount">等待地图轨迹</span>
+                  <span>车体姿态 <strong id="poseHeading">—°</strong></span>
+                </div>
+                <div id="mapDiagnostics" class="card-note">5 cm/格 · 等待雷达与位姿时间对齐</div>
+              </details></section><section id="localTaskPanel" class="local-task-panel" aria-label="航点导航任务">
+              <div class="card-head">
+                <div class="card-heading">
+                  <h3 class="card-title">航点导航</h3>
+                </div>
+                <span id="localTaskFreshness" class="status-row" data-state="stale">等待导航状态</span>
+              </div>
+              <p class="card-note">点击地图依次添加航点，再次点击同一点可删除；蓝框表示局部地图范围。目标提交后由 Jetson 协调，关闭网页不会自动取消任务。</p>
+              <ol id="waypointList" class="card-note" aria-label="航点列表" hidden></ol>
+              <details class="local-task-settings"><summary>任务参数</summary><div class="local-task-form">
+                <label class="field">最大速度 (mm/s，1–400)<input id="localMaxSpeed" type="number" min="1" max="400" step="1" value="400"></label>
+                <label class="field">最大加速度 (mm/s²)<input id="localMaxAccel" type="number" min="1" max="1000" step="1" value="200"></label>
+                <label class="field">位置容差 (mm)<input id="localTolerance" type="number" min="1" max="500" step="1" value="100"></label>
+                <label class="field">航向容差 (mrad)<input id="localYawTolerance" type="number" min="1" max="1000" step="1" value="100"></label>
+                <label class="field">任务期限（含转向观测，s）<input id="localDuration" type="number" min="0.1" max="120" step="0.1" value="120"></label>
+              </div>
+              </details>
+              <p class="local-start-note">首次任务前确认周围 231 mm 安全；许可圆固定，仅豁免未知栅格。地图重建会清除旧任务和许可圆，确认新起点安全后重新选点启动。</p>
+              <div class="control-actions local-task-actions">
+                <button id="localTaskStart" class="btn-primary" type="button" disabled>开始航点任务</button>
+                <button id="localTaskStop" class="btn-ghost" type="button" disabled>停止任务</button>
+                <button id="localTaskCancel" class="btn-danger" type="button" disabled>取消任务</button>
+              </div>
+              <p id="localTaskState" class="status-row" role="status" aria-live="polite">等待 FPGA 导航状态</p>
+              <p id="localTaskPose" class="card-note"></p>
+              <p id="localTaskResult" class="event-line" role="status" aria-live="polite"></p>
+            </section><section id="uavRelayPanel" class="local-task-panel" aria-label="无人机中继任务">
+              <div class="card-head">
+                <div class="card-heading"><h3 class="card-title">无人机中继任务</h3></div>
+                <span class="uav-relay-badge">数据待接入</span>
+              </div>
+              <p class="card-note">无人机为地面集群提供空中通信中继，使用深度相机进行局部环境感知。</p>
+              <div class="uav-relay-readouts">
+                <div class="uav-relay-readout"><span>任务状态</span><strong>—</strong><small>等待无人机数据</small></div>
+                <div class="uav-relay-readout"><span>当前位置</span><strong>—</strong><small>坐标系及高度待接入</small></div>
+                <div class="uav-relay-readout"><span>中继位置</span><strong>—</strong><small>目标位置待接入</small></div>
+                <div class="uav-relay-readout"><span>飞行与规划</span><strong>PX4 / MAVROS</strong><small>VIO · 深度相机 · EGO-Swarm</small></div>
+              </div>
+              <p class="card-note">此处为展示区域，实时状态尚未接入网页。</p>
+            </section></section></div>
+        <div class="mission-summary"><span class="mission-summary-icon" aria-hidden="true">⌁</span><div><strong>航点任务状态</strong><p id="overviewTaskState">等待导航状态</p></div><a href="#tasks" data-nav="tasks">查看任务 <span aria-hidden="true">→</span></a></div>
+        <div class="section-caption"><h2>运动遥测</h2></div>
+        <div class="chart-row"><section class="card trend-card" aria-label="轮速趋势">
+            <div class="card-head">
+              <div class="card-heading">
+                <h2 class="card-title">轮速趋势</h2>
+                <span class="card-note">轮位待标定</span>
+              </div>
+              <div class="card-actions">
+                <div class="range-group" id="trendRanges" role="group" aria-label="趋势时间范围">
+                  <button class="range-btn is-active" type="button" data-range="30" aria-pressed="true">30 秒</button>
+                  <button class="range-btn" type="button" data-range="120" aria-pressed="false">2 分钟</button>
+                  <button class="range-btn" type="button" data-range="600" aria-pressed="false">10 分钟</button>
+                </div>
+              </div>
+            </div>
+            <canvas id="telemetryTrend" class="trend-canvas" aria-label="最近 30 秒四个逻辑轮的实测速度趋势，单位 mm/s"></canvas>
+            <span id="telemetryTrendStatus" class="trend-status">等待新鲜轮速</span>
+            <div class="wheel-grid" id="wheelSpeedCards">
+              <div class="wheel-card">
+                <span class="wheel-swatch wheel-swatch-a" aria-hidden="true"><svg width="26" height="8" viewBox="0 0 26 8"><line x1="0" y1="4" x2="26" y2="4"></line></svg></span>
+                <div class="wheel-info"><span class="wheel-name" id="wheelLabel0">逻辑轮 A · 左上</span></div>
+                <span class="wheel-speed"><span id="wheelSpeed0">—</span><span class="wheel-unit">mm/s</span></span>
+              </div>
+              <div class="wheel-card">
+                <span class="wheel-swatch wheel-swatch-b" aria-hidden="true"><svg width="26" height="8" viewBox="0 0 26 8"><line x1="0" y1="4" x2="26" y2="4"></line></svg></span>
+                <div class="wheel-info"><span class="wheel-name" id="wheelLabel1">逻辑轮 B · 右上</span></div>
+                <span class="wheel-speed"><span id="wheelSpeed1">—</span><span class="wheel-unit">mm/s</span></span>
+              </div>
+              <div class="wheel-card">
+                <span class="wheel-swatch wheel-swatch-c" aria-hidden="true"><svg width="26" height="8" viewBox="0 0 26 8"><line x1="0" y1="4" x2="26" y2="4"></line></svg></span>
+                <div class="wheel-info"><span class="wheel-name" id="wheelLabel2">逻辑轮 C · 左下</span></div>
+                <span class="wheel-speed"><span id="wheelSpeed2">—</span><span class="wheel-unit">mm/s</span></span>
+              </div>
+              <div class="wheel-card">
+                <span class="wheel-swatch wheel-swatch-d" aria-hidden="true"><svg width="26" height="8" viewBox="0 0 26 8"><line x1="0" y1="4" x2="26" y2="4"></line></svg></span>
+                <div class="wheel-info"><span class="wheel-name" id="wheelLabel3">逻辑轮 D · 右下</span></div>
+                <span class="wheel-speed"><span id="wheelSpeed3">—</span><span class="wheel-unit">mm/s</span></span>
+              </div>
+            </div>
+          </section></div>
+      </section>
+      <section id="remotePage" class="view-section" aria-label="手动遥控"><div class="section-heading"><div><p class="page-eyebrow">MANUAL CONTROL / 03</p><h2>手动遥控</h2></div></div><div class="remote-grid"><aside id="remote" class="card control-card" aria-label="遥控与授权">
+            <div class="card-head">
+              <div class="card-heading">
+                <h2 class="card-title">遥控与授权</h2>
+              </div>
+              <span id="networkDriveStatus" class="drive-status">网络仅监控 · 未允许控制</span>
+            </div>
+
+            <div class="control-toolbar">
+              <button id="wbConfigure" class="btn-ghost" type="button" aria-haspopup="dialog" aria-controls="wbConnectionDialog">配置</button>
+            </div>
+
+            <p id="wbControlHint" class="card-note">松开方向键即发送零速。</p>
+
+            <div id="wbNetworkControls" class="control-panel">
+              <div class="status-rows" aria-live="polite">
+                <span id="networkOwner" class="status-row">控制者：未知</span>
+                <span id="networkReady" class="status-row">FPGA 零速握手：未知</span>
+                <span id="networkActualMode" class="status-row">融合状态位：不可用</span>
+                <span id="wbModeRequest" class="status-row">无目标type5自动模式：已停用</span>
+                <span id="wbModeAck" class="status-row">局部导航状态：等待FPGA遥测</span>
+              </div>
+
+              <div class="control-sliders">
+                <label class="speed-control" for="networkSpeed">
+                  <span class="speed-control-head"><span class="speed-control-label">平移上限</span><span id="networkSpeedValue" class="speed-value">100 mm/s</span></span>
+                  <input id="networkSpeed" type="range" min="20" max="400" step="10" value="100">
+                </label>
+                <label class="speed-control" for="networkTurn">
+                  <span class="speed-control-head"><span class="speed-control-label">旋转上限</span><span id="networkTurnValue" class="speed-value">300 mrad/s</span></span>
+                  <input id="networkTurn" type="range" min="50" max="800" step="25" value="300">
+                </label>
+              </div>
+
+              <div class="keypad">
+                <div class="key-grid" aria-label="网络方向控制">
+                  <button class="network-key" data-network-key="q" type="button"><span class="key-letter">Q</span><span class="key-hint">左转</span></button>
+                  <button class="network-key" data-network-key="w" type="button"><span class="key-letter">W</span><span class="key-hint">前进</span></button>
+                  <button class="network-key" data-network-key="e" type="button"><span class="key-letter">E</span><span class="key-hint">右转</span></button>
+                  <button class="network-key" data-network-key="a" type="button"><span class="key-letter">A</span><span class="key-hint">左移</span></button>
+                  <button class="network-key" data-network-key="s" type="button"><span class="key-letter">S</span><span class="key-hint">后退</span></button>
+                  <button class="network-key" data-network-key="d" type="button"><span class="key-letter">D</span><span class="key-hint">右移</span></button>
+                </div>
+                <span class="keypad-locked" aria-hidden="true">未授权控制</span>
+              </div>
+
+              <div class="control-actions">
+                <button id="networkArm" class="btn-primary" type="button" disabled>允许网络控制</button>
+                <button id="networkStop" class="btn-danger" type="button">停车 / 解除控制</button>
+              </div>
+
+              <p id="networkEvent" class="event-line" role="status" aria-live="polite">等待本机网络服务。</p>
+
+              <details id="wbStopEvidence" class="control-details">
+                <summary class="details-summary">
+                  停车反馈 · 请求 / 入队回执 / 轮速
+                  <svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg>
+                </summary>
+                <div class="details-body status-rows" aria-live="polite">
+                  <span id="networkStopRequest" class="status-row">停车请求：不可用</span>
+                  <span id="networkStopAck" class="status-row">FPGA 零速回执：不可用</span>
+                  <span id="networkWheelsLow" class="status-row">轮速低于阈值：不可用</span>
+                </div>
+              </details>
+            </div>
+
+
+          </aside><div class="workspace-callout"><span class="callout-symbol">!</span><p>网络停车是请求；请结合轮速和现场确认停车，并保持物理急停可用。</p></div></div></section>
+      <section id="sensors" class="view-section" aria-label="传感器与融合"><div class="section-heading"><div><p class="page-eyebrow">SENSOR TELEMETRY / 04</p><h2>传感器与融合</h2></div></div>
+        <div class="card sensor-card">
+          <div class="card-head">
+            <div class="card-heading">
+              <h2 class="card-title">传感器与融合</h2>
+              <span class="card-note">最新接收 · <span id="lastSeen" class="stats">等待数据</span></span>
+            </div>
+          </div>
+
+          <div id="stateCards" class="metric-grid state-grid"></div>
+
+          <div class="sensor-grid">
+            <div class="sensor-block">
+              <h3 class="card-title">融合状态标志</h3>
+              <div id="flags" class="flags"><span id="udpRawFlags" class="flag">UDP fusion.flags 不可用</span></div>
+            </div>
+            <div class="sensor-block">
+              <h3 class="card-title">UDP IMU 原始值与标志</h3>
+              <div id="imuRaw" class="raw-block">等待 UDP IMU</div>
+            </div>
+            <div class="sensor-block">
+              <h3 class="card-title">UDP 逻辑轮映射与配置</h3>
+              <div id="networkWheelMapping" class="raw-block">等待 UDP 电机遥测。</div>
+              <div id="mappingNote" class="card-note">物理轮位、方向与尺度待标定</div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section id="diagnosticsPage" class="view-section diagnostics-section" aria-label="诊断"><div class="section-heading"><div><p class="page-eyebrow">SYSTEM DIAGNOSTICS / 05</p><h2>诊断与连接</h2></div></div>
+        <div class="card diagnostics-card">
+          <div class="card-head">
+            <div class="card-heading">
+              <h2 class="card-title">诊断</h2>
+            </div>
+            <div class="card-actions">
+              <button id="export" class="btn-ghost" type="button" disabled>导出 CSV</button>
+                <button id="clear" class="btn-ghost" type="button">清空遥测历史</button>
+            </div>
+          </div>
+
+          <div class="statusbar">
+            <span id="rxStats" class="stats">等待遥测</span>
+          </div>
+
+          <details id="diagnosticsDetails" class="control-details" open>
+            <summary class="details-summary">
+              详细诊断计数与链路状态
+              <svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg>
+            </summary>
+            <div class="details-body diagnostics-grid">
+              <div class="diagnostics-block">
+                <h3 class="card-title">融合与链路计数</h3>
+                <div id="diagnostics" class="diag"></div>
+              </div>
+            </div>
+          </details>
+        </div>
+
+    <section class="card connection-overview">
+      <div class="card-head"><div class="card-heading"><h2 class="card-title">连接管理</h2></div><a class="btn-ghost action-link" href="#connectionSettings" data-nav="connectionSettings">打开连接设置 ↗</a></div>
+      <p class="card-note">更改连接前请确认任务状态。</p>
+    </section>
+  </section>
+      <footer class="workspace-footer"><span><span class="footer-dot"></span> BX72 机器人工作台</span><span>GOWIN FPGA <span class="footer-separator">/</span> JETSON <span class="footer-separator">/</span> UDP</span></footer>
+      <dialog id="wbConnectionDialog" class="connection-dialog" aria-labelledby="wbConnectionDialogTitle">
+        <section id="connectionSettings" class="connection-settings" aria-label="连接设置">
+          <div class="dialog-head">
+            <div class="card-heading">
+              <h2 id="wbConnectionDialogTitle" class="card-title">连接设置</h2>
+            </div>
+            <button id="wbConnectionClose" class="btn-ghost" type="button" aria-label="关闭连接设置">关闭</button>
+          </div>
+
+          <div class="dialog-grid">
+            <div id="wbNetworkConfig" class="connection-panel">
+              <section class="card connection-card">
+                <div class="card-head">
+                  <div class="card-heading">
+                    <h3 class="card-title">本机网络监控</h3>
+                  </div>
+                </div>
+                <div class="status-rows">
+                  <span id="networkConnection" class="status-row" data-state="unknown">网络服务未连接</span>
+                  <span id="networkTarget" class="status-row">Jetson：—</span>
+                  <span id="networkSimulation" class="status-row">仿真：未知</span>
+                </div>
+                <div class="dialog-form">
+                  <label class="field">Jetson 地址<input id="jetsonHost" type="text" placeholder="由本机服务提供" autocomplete="off"></label>
+                  <label class="field">UDP 端口<input id="jetsonPort" type="number" min="1" max="65535" placeholder="由本机服务提供"></label>
+                </div>
+                <div class="dialog-actions">
+                  <button id="networkConnect" class="btn-primary" type="button">连接本机监控</button>
+                  <button id="networkApplyTarget" class="btn-ghost" type="button" disabled>应用目标</button>
+                  <button id="networkDisconnect" class="btn-ghost" type="button" disabled>断开网络</button>
+                </div>
+              </section>
+            </div>
+          </div>
+        </section>
+      </dialog>
+    </main>
+  </div>
+  <script src="js/dashboard_network.js"></script>
+  <script src="js/grid_codec.js"></script>
+  <script src="js/occupancy_map.js"></script>
+  <script src="js/global_map.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

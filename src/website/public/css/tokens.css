@@ -1,0 +1,94 @@
+/* ==========================================================================
+   BX72 控制台 · 设计令牌（DESIGN.md 第 2 节）
+   本文件是唯一的颜色 / 圆角 / 阴影 / 字体来源；其余样式文件只允许 var() 引用。
+   参考稿取色补充同样集中在此处，避免硬编码色值散落到组件样式。
+   ========================================================================== */
+:root{
+  /* —— 背景与表面 —— */
+  --bg:#f4f6f8;
+  --surface:#ffffff;
+  --surface-2:#fafafa;
+  --surface-3:#f0f0f2;
+
+  /* —— 描边 —— */
+  --border:#e5e5e8;
+  --border-2:#e2e2e4;
+  --border-3:#eeeef0;
+
+  /* —— 文字 —— */
+  --text:#1b2b3d;
+  --text-2:#647487;
+  --text-3:#7d8998;
+
+  /* —— 主色 —— */
+  --accent:#0c8077;
+  --accent-2:#096b63;
+  --accent-soft:#e9f5f2;
+
+  /* —— 语义色：正常绿 / 警告橙 / 危险红 / 信息蓝（--accent） —— */
+  --ok:#2fbf6c;
+  --warn:#d9730d;
+  --warn-ink:#a85200;
+  --danger:#d93a40;
+  --danger-2:#c42f35;
+
+  /* —— 深色取景器（视频 / 雷达 / 轨迹深色画布） —— */
+  --viewer-bg:#1b283c;
+  --viewer-text:#b7c3d6;
+  --viewer-dim:#9fb0c8;
+  --cyan:#26d5f4;
+  --violet:#9f82ff;
+  --orange:#fa932c;
+
+  /* —— 阴影 / 圆角 —— */
+  --shadow-card:0 2px 5px rgba(29,47,67,.025);
+  --radius-card:12px;
+  --radius-btn:8px;
+  --radius-pill:999px;
+
+  /* —— 字体：离线优先回退，字体缺失时不改变布局 —— */
+  --font-sans:"Noto Sans SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-mono:"JetBrains Mono","Cascadia Mono",Consolas,monospace;
+
+  /* —— 间距 —— */
+  --pad:20px;
+
+  /* —— 字号 / 行高（DESIGN.md 第 3 节） —— */
+  --fs-base:13px;
+  --fs-note:12px;
+  --fs-card-title:14px;
+  --fs-brand:16px;
+  --fs-heading:20px;
+  --fs-viewer:22px;
+  --lh-base:1.5;
+
+  /* —— 斜纹告警底：警告 = 橙（过期 / 未授权 / 规划器无效） —— */
+  --hatch-warn:repeating-linear-gradient(135deg, rgba(250,147,44,.22) 0 6px, rgba(250,147,44,.08) 6px 12px);
+  --hatch-warn-border:rgba(217,115,13,.5);
+  --hatch-warn-soft:repeating-linear-gradient(135deg, rgba(250,147,44,.2) 0 5px, rgba(250,147,44,.07) 5px 10px);
+  --hatch-warn-soft-border:rgba(217,115,13,.45);
+
+  /* —— 参考稿取色补充（仍集中在 tokens，组件只 var() 引用） —— */
+  --ok-bright:#46dd80;              /* 取景器内新鲜度点 / 实时呼吸点 */
+  --viewer-hud:rgba(15,22,36,.82);  /* 视频底部 HUD 条 */
+  --viewer-hud-soft:rgba(15,22,36,.7); /* 实时胶囊底 */
+  --viewer-cyan-text:rgba(38,213,244,.9);
+  --viewer-cyan-corner:rgba(38,213,244,.8);
+  --wheel-a:#295fe7;
+  --wheel-b:#0aa5c9;
+  --wheel-c:#1d1d1f;
+  --wheel-d:#8b6cf0;
+  --key-edge:#dcdce0;               /* 键盘按键 1px 描边 */
+  --key-edge-bottom:#c4c4c8;        /* 键盘按键底部 2px 深边 */
+  --unauth-bg:#6c6c6c;              /* 未授权覆盖胶囊底 */
+  --unauth-ink:#f4f5f0;
+  --scrollbar-thumb:#d2d2d7;
+  --nav-bg:#142639;
+  --nav-text:#a8b8c9;
+  --nav-bright:#f4f8fc;
+  --nav-active:#234444;
+  --nav-accent:#78d5be;
+  --nav-line:#2c3b4c;
+  --nav-mark:#20b89e;
+  --nav-mark-ink:#e7fff7;
+}

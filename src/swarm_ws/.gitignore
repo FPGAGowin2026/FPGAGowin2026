@@ -1,0 +1,14 @@
+# 本地构建产物、第三方源码和运行记录
+/build/
+/install/
+/log/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+/upstream/
+/src/thirdparty/
+/src/external/
+*.bag
+*.db3
+*.mcap
+*.ulg

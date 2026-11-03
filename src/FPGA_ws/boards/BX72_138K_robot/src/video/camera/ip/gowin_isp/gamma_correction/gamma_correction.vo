@@ -1,0 +1,660 @@
+//Copyright (C)2014-2026 Gowin Semiconductor Corporation.
+//All rights reserved.
+//File Title: Post-PnR Verilog Simulation Model file
+//Tool Version: V1.9.12.04 (64-bit)
+//Created Time: Thu Oct 22 08:26:43 2026
+
+`timescale 100 ps/100 ps
+module Gamma_Correction_Top(
+	clk,
+	rstn,
+	frame_sync,
+	line_sync,
+	inpvalid,
+	wr,
+	waddr,
+	wdata,
+	R_din,
+	G_din,
+	B_din,
+	frame_sync_o,
+	line_sync_o,
+	outvalid,
+	R_dout,
+	G_dout,
+	B_dout
+);
+input clk;
+input rstn;
+input frame_sync;
+input line_sync;
+input inpvalid;
+input wr;
+input [15:0] waddr;
+input [31:0] wdata;
+input [9:0] R_din;
+input [9:0] G_din;
+input [9:0] B_din;
+output frame_sync_o;
+output line_sync_o;
+output outvalid;
+output [9:0] R_dout;
+output [9:0] G_dout;
+output [9:0] B_dout;
+wire [9:0] B_din;
+wire [9:0] B_dout;
+wire GND;
+wire [9:0] G_din;
+wire [9:0] G_dout;
+wire [9:0] R_din;
+wire [9:0] R_dout;
+wire VCC;
+wire clk;
+wire frame_sync;
+wire frame_sync_o;
+wire inpvalid;
+wire line_sync;
+wire line_sync_o;
+wire outvalid;
+wire rstn;
+wire [15:0] waddr;
+wire [31:0] wdata;
+wire wr;
+wire \gamma_top/correction/R_mem_5 ;
+wire \gamma_top/correction/G_mem_5 ;
+wire \gamma_top/correction/B_mem_5 ;
+wire \gamma_top/correction/R_mem_6 ;
+wire \gamma_top/correction/n48_7 ;
+wire [0:0] \gamma_top/correction/valid_r ;
+wire [0:0] \gamma_top/correction/line_r ;
+wire [0:0] \gamma_top/correction/frame_r ;
+wire [9:0] \gamma_top/correction/R_dout_r ;
+wire [9:0] \gamma_top/correction/G_dout_r ;
+wire [9:0] \gamma_top/correction/B_dout_r ;
+wire [31:10] \gamma_top/correction/DO ;
+wire [31:10] \gamma_top/correction/DO_0 ;
+wire [31:10] \gamma_top/correction/DO_1 ;
+VCC VCC_cZ (
+  .V(VCC)
+);
+GND GND_cZ (
+  .G(GND)
+);
+GSR GSR (
+	.GSRI(VCC)
+);
+LUT4 \gamma_top/correction/R_mem_s3  (
+	.I0(waddr[2]),
+	.I1(waddr[3]),
+	.I2(\gamma_top/correction/R_mem_6 ),
+	.I3(waddr[4]),
+	.F(\gamma_top/correction/R_mem_5 )
+);
+defparam \gamma_top/correction/R_mem_s3 .INIT=16'h1000;
+LUT4 \gamma_top/correction/G_mem_s3  (
+	.I0(waddr[3]),
+	.I1(waddr[2]),
+	.I2(\gamma_top/correction/R_mem_6 ),
+	.I3(waddr[4]),
+	.F(\gamma_top/correction/G_mem_5 )
+);
+defparam \gamma_top/correction/G_mem_s3 .INIT=16'h4000;
+LUT4 \gamma_top/correction/B_mem_s3  (
+	.I0(waddr[2]),
+	.I1(\gamma_top/correction/R_mem_6 ),
+	.I2(waddr[3]),
+	.I3(waddr[4]),
+	.F(\gamma_top/correction/B_mem_5 )
+);
+defparam \gamma_top/correction/B_mem_s3 .INIT=16'h4000;
+LUT2 \gamma_top/correction/R_mem_s4  (
+	.I0(waddr[5]),
+	.I1(wr),
+	.F(\gamma_top/correction/R_mem_6 )
+);
+defparam \gamma_top/correction/R_mem_s4 .INIT=4'h4;
+DFFCE \gamma_top/correction/valid_r_0_s0  (
+	.D(inpvalid),
+	.CLK(clk),
+	.CE(VCC),
+	.CLEAR(\gamma_top/correction/n48_7 ),
+	.Q(\gamma_top/correction/valid_r [0])
+);
+defparam \gamma_top/correction/valid_r_0_s0 .INIT=1'b0;
+DFFCE \gamma_top/correction/line_r_1_s0  (
+	.D(\gamma_top/correction/line_r [0]),
+	.CLK(clk),
+	.CE(VCC),
+	.CLEAR(\gamma_top/correction/n48_7 ),
+	.Q(line_sync_o)
+);
+defparam \gamma_top/correction/line_r_1_s0 .INIT=1'b0;
+DFFCE \gamma_top/correction/line_r_0_s0  (
+	.D(line_sync),
+	.CLK(clk),
+	.CE(VCC),
+	.CLEAR(\gamma_top/correction/n48_7 ),
+	.Q(\gamma_top/correction/line_r [0])
+);
+defparam \gamma_top/correction/line_r_0_s0 .INIT=1'b0;
+DFFCE \gamma_top/correction/frame_r_1_s0  (
+	.D(\gamma_top/correction/frame_r [0]),
+	.CLK(clk),
+	.CE(VCC),
+	.CLEAR(\gamma_top/correction/n48_7 ),
+	.Q(frame_sync_o)
+);
+defparam \gamma_top/correction/frame_r_1_s0 .INIT=1'b0;
+DFFCE \gamma_top/correction/frame_r_0_s0  (
+	.D(frame_sync),
+	.CLK(clk),
+	.CE(VCC),
+	.CLEAR(\gamma_top/correction/n48_7 ),
+	.Q(\gamma_top/correction/frame_r [0])
+);
+defparam \gamma_top/correction/frame_r_0_s0 .INIT=1'b0;
+DFFCE \gamma_top/correction/R_dout_9_s0  (
+	.D(\gamma_top/correction/R_dout_r [9]),
+	.CLK(clk),
+	.CE(\gamma_top/correction/valid_r [0]),
+	.CLEAR(\gamma_top/correction/n48_7 ),
+	.Q(R_dout[9])
+);
+defparam \gamma_top/correction/R_dout_9_s0 .INIT=1'b0;
+DFFCE \gamma_top/correction/R_dout_8_s0  (
+	.D(\gamma_top/correction/R_dout_r [8]),
+	.CLK(clk),
+	.CE(\gamma_top/correction/valid_r [0]),
+	.CLEAR(\gamma_top/correction/n48_7 ),
+	.Q(R_dout[8])
+);
+defparam \gamma_top/correction/R_dout_8_s0 .INIT=1'b0;
+DFFCE \gamma_top/correction/R_dout_7_s0  (
+	.D(\gamma_top/correction/R_dout_r [7]),
+	.CLK(clk),
+	.CE(\gamma_top/correction/valid_r [0]),
+	.CLEAR(\gamma_top/correction/n48_7 ),
+	.Q(R_dout[7])
+);
+defparam \gamma_top/correction/R_dout_7_s0 .INIT=1'b0;
+DFFCE \gamma_top/correction/R_dout_6_s0  (
+	.D(\gamma_top/correction/R_dout_r [6]),
+	.CLK(clk),
+	.CE(\gamma_top/correction/valid_r [0]),
+	.CLEAR(\gamma_top/correction/n48_7 ),
+	.Q(R_dout[6])
+);
+defparam \gamma_top/correction/R_dout_6_s0 .INIT=1'b0;
+DFFCE \gamma_top/correction/R_dout_5_s0  (
+	.D(\gamma_top/correction/R_dout_r [5]),
+	.CLK(clk),
+	.CE(\gamma_top/correction/valid_r [0]),
+	.CLEAR(\gamma_top/correction/n48_7 ),
+	.Q(R_dout[5])
+);
+defparam \gamma_top/correction/R_dout_5_s0 .INIT=1'b0;
+DFFCE \gamma_top/correction/R_dout_4_s0  (
+	.D(\gamma_top/correction/R_dout_r [4]),
+	.CLK(clk),
+	.CE(\gamma_top/correction/valid_r [0]),
+	.CLEAR(\gamma_top/correction/n48_7 ),
+	.Q(R_dout[4])
+);
+defparam \gamma_top/correction/R_dout_4_s0 .INIT=1'b0;
+DFFCE \gamma_top/correction/R_dout_3_s0  (
+	.D(\gamma_top/correction/R_dout_r [3]),
+	.CLK(clk),
+	.CE(\gamma_top/correction/valid_r [0]),
+	.CLEAR(\gamma_top/correction/n48_7 ),
+	.Q(R_dout[3])
+);
+defparam \gamma_top/correction/R_dout_3_s0 .INIT=1'b0;
+DFFCE \gamma_top/correction/R_dout_2_s0  (
+	.D(\gamma_top/correction/R_dout_r [2]),
+	.CLK(clk),
+	.CE(\gamma_top/correction/valid_r [0]),
+	.CLEAR(\gamma_top/correction/n48_7 ),
+	.Q(R_dout[2])
+);
+defparam \gamma_top/correction/R_dout_2_s0 .INIT=1'b0;
+DFFCE \gamma_top/correction/R_dout_1_s0  (
+	.D(\gamma_top/correction/R_dout_r [1]),
+	.CLK(clk),
+	.CE(\gamma_top/correction/valid_r [0]),
+	.CLEAR(\gamma_top/correction/n48_7 ),
+	.Q(R_dout[1])
+);
+defparam \gamma_top/correction/R_dout_1_s0 .INIT=1'b0;
+DFFCE \gamma_top/correction/R_dout_0_s0  (
+	.D(\gamma_top/correction/R_dout_r [0]),
+	.CLK(clk),
+	.CE(\gamma_top/correction/valid_r [0]),
+	.CLEAR(\gamma_top/correction/n48_7 ),
+	.Q(R_dout[0])
+);
+defparam \gamma_top/correction/R_dout_0_s0 .INIT=1'b0;
+DFFCE \gamma_top/correction/G_dout_9_s0  (
+	.D(\gamma_top/correction/G_dout_r [9]),
+	.CLK(clk),
+	.CE(\gamma_top/correction/valid_r [0]),
+	.CLEAR(\gamma_top/correction/n48_7 ),
+	.Q(G_dout[9])
+);
+defparam \gamma_top/correction/G_dout_9_s0 .INIT=1'b0;
+DFFCE \gamma_top/correction/G_dout_8_s0  (
+	.D(\gamma_top/correction/G_dout_r [8]),
+	.CLK(clk),
+	.CE(\gamma_top/correction/valid_r [0]),
+	.CLEAR(\gamma_top/correction/n48_7 ),
+	.Q(G_dout[8])
+);
+defparam \gamma_top/correction/G_dout_8_s0 .INIT=1'b0;
+DFFCE \gamma_top/correction/G_dout_7_s0  (
+	.D(\gamma_top/correction/G_dout_r [7]),
+	.CLK(clk),
+	.CE(\gamma_top/correction/valid_r [0]),
+	.CLEAR(\gamma_top/correction/n48_7 ),
+	.Q(G_dout[7])
+);
+defparam \gamma_top/correction/G_dout_7_s0 .INIT=1'b0;
+DFFCE \gamma_top/correction/G_dout_6_s0  (
+	.D(\gamma_top/correction/G_dout_r [6]),
+	.CLK(clk),
+	.CE(\gamma_top/correction/valid_r [0]),
+	.CLEAR(\gamma_top/correction/n48_7 ),
+	.Q(G_dout[6])
+);
+defparam \gamma_top/correction/G_dout_6_s0 .INIT=1'b0;
+DFFCE \gamma_top/correction/G_dout_5_s0  (
+	.D(\gamma_top/correction/G_dout_r [5]),
+	.CLK(clk),
+	.CE(\gamma_top/correction/valid_r [0]),
+	.CLEAR(\gamma_top/correction/n48_7 ),
+	.Q(G_dout[5])
+);
+defparam \gamma_top/correction/G_dout_5_s0 .INIT=1'b0;
+DFFCE \gamma_top/correction/G_dout_4_s0  (
+	.D(\gamma_top/correction/G_dout_r [4]),
+	.CLK(clk),
+	.CE(\gamma_top/correction/valid_r [0]),
+	.CLEAR(\gamma_top/correction/n48_7 ),
+	.Q(G_dout[4])
+);
+defparam \gamma_top/correction/G_dout_4_s0 .INIT=1'b0;
+DFFCE \gamma_top/correction/G_dout_3_s0  (
+	.D(\gamma_top/correction/G_dout_r [3]),
+	.CLK(clk),
+	.CE(\gamma_top/correction/valid_r [0]),
+	.CLEAR(\gamma_top/correction/n48_7 ),
+	.Q(G_dout[3])
+);
+defparam \gamma_top/correction/G_dout_3_s0 .INIT=1'b0;
+DFFCE \gamma_top/correction/G_dout_2_s0  (
+	.D(\gamma_top/correction/G_dout_r [2]),
+	.CLK(clk),
+	.CE(\gamma_top/correction/valid_r [0]),
+	.CLEAR(\gamma_top/correction/n48_7 ),
+	.Q(G_dout[2])
+);
+defparam \gamma_top/correction/G_dout_2_s0 .INIT=1'b0;
+DFFCE \gamma_top/correction/G_dout_1_s0  (
+	.D(\gamma_top/correction/G_dout_r [1]),
+	.CLK(clk),
+	.CE(\gamma_top/correction/valid_r [0]),
+	.CLEAR(\gamma_top/correction/n48_7 ),
+	.Q(G_dout[1])
+);
+defparam \gamma_top/correction/G_dout_1_s0 .INIT=1'b0;
+DFFCE \gamma_top/correction/G_dout_0_s0  (
+	.D(\gamma_top/correction/G_dout_r [0]),
+	.CLK(clk),
+	.CE(\gamma_top/correction/valid_r [0]),
+	.CLEAR(\gamma_top/correction/n48_7 ),
+	.Q(G_dout[0])
+);
+defparam \gamma_top/correction/G_dout_0_s0 .INIT=1'b0;
+DFFCE \gamma_top/correction/B_dout_9_s0  (
+	.D(\gamma_top/correction/B_dout_r [9]),
+	.CLK(clk),
+	.CE(\gamma_top/correction/valid_r [0]),
+	.CLEAR(\gamma_top/correction/n48_7 ),
+	.Q(B_dout[9])
+);
+defparam \gamma_top/correction/B_dout_9_s0 .INIT=1'b0;
+DFFCE \gamma_top/correction/B_dout_8_s0  (
+	.D(\gamma_top/correction/B_dout_r [8]),
+	.CLK(clk),
+	.CE(\gamma_top/correction/valid_r [0]),
+	.CLEAR(\gamma_top/correction/n48_7 ),
+	.Q(B_dout[8])
+);
+defparam \gamma_top/correction/B_dout_8_s0 .INIT=1'b0;
+DFFCE \gamma_top/correction/B_dout_7_s0  (
+	.D(\gamma_top/correction/B_dout_r [7]),
+	.CLK(clk),
+	.CE(\gamma_top/correction/valid_r [0]),
+	.CLEAR(\gamma_top/correction/n48_7 ),
+	.Q(B_dout[7])
+);
+defparam \gamma_top/correction/B_dout_7_s0 .INIT=1'b0;
+DFFCE \gamma_top/correction/B_dout_6_s0  (
+	.D(\gamma_top/correction/B_dout_r [6]),
+	.CLK(clk),
+	.CE(\gamma_top/correction/valid_r [0]),
+	.CLEAR(\gamma_top/correction/n48_7 ),
+	.Q(B_dout[6])
+);
+defparam \gamma_top/correction/B_dout_6_s0 .INIT=1'b0;
+DFFCE \gamma_top/correction/B_dout_5_s0  (
+	.D(\gamma_top/correction/B_dout_r [5]),
+	.CLK(clk),
+	.CE(\gamma_top/correction/valid_r [0]),
+	.CLEAR(\gamma_top/correction/n48_7 ),
+	.Q(B_dout[5])
+);
+defparam \gamma_top/correction/B_dout_5_s0 .INIT=1'b0;
+DFFCE \gamma_top/correction/B_dout_4_s0  (
+	.D(\gamma_top/correction/B_dout_r [4]),
+	.CLK(clk),
+	.CE(\gamma_top/correction/valid_r [0]),
+	.CLEAR(\gamma_top/correction/n48_7 ),
+	.Q(B_dout[4])
+);
+defparam \gamma_top/correction/B_dout_4_s0 .INIT=1'b0;
+DFFCE \gamma_top/correction/B_dout_3_s0  (
+	.D(\gamma_top/correction/B_dout_r [3]),
+	.CLK(clk),
+	.CE(\gamma_top/correction/valid_r [0]),
+	.CLEAR(\gamma_top/correction/n48_7 ),
+	.Q(B_dout[3])
+);
+defparam \gamma_top/correction/B_dout_3_s0 .INIT=1'b0;
+DFFCE \gamma_top/correction/B_dout_2_s0  (
+	.D(\gamma_top/correction/B_dout_r [2]),
+	.CLK(clk),
+	.CE(\gamma_top/correction/valid_r [0]),
+	.CLEAR(\gamma_top/correction/n48_7 ),
+	.Q(B_dout[2])
+);
+defparam \gamma_top/correction/B_dout_2_s0 .INIT=1'b0;
+DFFCE \gamma_top/correction/B_dout_1_s0  (
+	.D(\gamma_top/correction/B_dout_r [1]),
+	.CLK(clk),
+	.CE(\gamma_top/correction/valid_r [0]),
+	.CLEAR(\gamma_top/correction/n48_7 ),
+	.Q(B_dout[1])
+);
+defparam \gamma_top/correction/B_dout_1_s0 .INIT=1'b0;
+DFFCE \gamma_top/correction/B_dout_0_s0  (
+	.D(\gamma_top/correction/B_dout_r [0]),
+	.CLK(clk),
+	.CE(\gamma_top/correction/valid_r [0]),
+	.CLEAR(\gamma_top/correction/n48_7 ),
+	.Q(B_dout[0])
+);
+defparam \gamma_top/correction/B_dout_0_s0 .INIT=1'b0;
+DFFCE \gamma_top/correction/valid_r_1_s0  (
+	.D(\gamma_top/correction/valid_r [0]),
+	.CLK(clk),
+	.CE(VCC),
+	.CLEAR(\gamma_top/correction/n48_7 ),
+	.Q(outvalid)
+);
+defparam \gamma_top/correction/valid_r_1_s0 .INIT=1'b0;
+SDPB \gamma_top/correction/R_mem_R_mem_0_0_s  (
+	.CLKA(clk),
+	.CEA(\gamma_top/correction/R_mem_5 ),
+	.CLKB(clk),
+	.CEB(inpvalid),
+	.OCE(GND),
+	.RESET(\gamma_top/correction/n48_7 ),
+	.BLKSELA({GND, GND, GND}),
+	.BLKSELB({GND, GND, GND}),
+	.DI({GND, GND, GND, GND, GND, GND, GND, GND, GND, GND, GND, GND, GND, GND, GND, GND, GND, GND, GND, GND, GND, GND, wdata[9:0]}),
+	.ADA({wdata[25:16], GND, GND, VCC, VCC}),
+	.ADB({R_din[9:0], GND, GND, GND, GND}),
+	.DO({\gamma_top/correction/DO [31:10], \gamma_top/correction/R_dout_r [9:0]})
+);
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .INIT_RAM_00=256'h00960091008D00880082007D00770071006A0063005B00520048003C002C0000;
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .INIT_RAM_01=256'h00D100CE00CB00C700C400C100BD00BA00B600B300AF00AB00A700A3009F009B;
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .INIT_RAM_02=256'h00FC00FA00F700F500F200F000ED00EA00E800E500E200DF00DD00DA00D700D4;
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .INIT_RAM_03=256'h0120011E011C011A0118011601130111010F010D010A010801060103010100FF;
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .INIT_RAM_04=256'h013F013E013C013A01380136013401320130012E012C012A0128012601240122;
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .INIT_RAM_05=256'h015B015A01580156015501530151014F014E014C014A01480147014501430141;
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .INIT_RAM_06=256'h0175017301720170016F016D016C016A016801670165016401620160015F015D;
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .INIT_RAM_07=256'h018C018B0189018801870185018401820181017F017E017C017B017901780176;
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .INIT_RAM_08=256'h01A201A101A0019E019D019C019A0199019701960195019301920191018F018E;
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .INIT_RAM_09=256'h01B701B601B401B301B201B101AF01AE01AD01AB01AA01A901A801A601A501A4;
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .INIT_RAM_0A=256'h01CB01C901C801C701C601C501C301C201C101C001BE01BD01BC01BB01B901B8;
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .INIT_RAM_0B=256'h01DD01DC01DB01DA01D901D701D601D501D401D301D201D001CF01CE01CD01CC;
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .INIT_RAM_0C=256'h01EF01EE01ED01EC01EB01E901E801E701E601E501E401E301E201E001DF01DE;
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .INIT_RAM_0D=256'h020001FF01FE01FD01FC01FB01FA01F901F701F601F501F401F301F201F101F0;
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .INIT_RAM_0E=256'h0210020F020E020D020C020B020A020902080207020602050204020302020201;
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .INIT_RAM_0F=256'h0220021F021E021D021C021B021A021902180217021602150214021302120211;
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .INIT_RAM_10=256'h022F022E022D022D022C022B022A022902280227022602250224022302220221;
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .INIT_RAM_11=256'h023E023D023C023B023A023A0239023802370236023502340233023202310230;
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .INIT_RAM_12=256'h024C024C024B024A02490248024702460245024402440243024202410240023F;
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .INIT_RAM_13=256'h025A025A02590258025702560255025402530253025202510250024F024E024D;
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .INIT_RAM_14=256'h0268026702660265026502640263026202610260025F025F025E025D025C025B;
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .INIT_RAM_15=256'h0275027402730273027202710270026F026F026E026D026C026B026A026A0269;
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .INIT_RAM_16=256'h0282028102800280027F027E027D027C027C027B027A02790278027802770276;
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .INIT_RAM_17=256'h028F028E028D028C028B028B028A028902880288028702860285028402840283;
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .INIT_RAM_18=256'h029B029A0299029902980297029602960295029402930292029202910290028F;
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .INIT_RAM_19=256'h02A702A602A502A502A402A302A202A202A102A0029F029F029E029D029C029C;
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .INIT_RAM_1A=256'h02B302B202B102B002B002AF02AE02AE02AD02AC02AB02AB02AA02A902A802A8;
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .INIT_RAM_1B=256'h02BE02BD02BD02BC02BB02BB02BA02B902B802B802B702B602B602B502B402B3;
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .INIT_RAM_1C=256'h02C902C902C802C702C702C602C502C502C402C302C202C202C102C002C002BF;
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .INIT_RAM_1D=256'h02D502D402D302D302D202D102D002D002CF02CE02CE02CD02CC02CC02CB02CA;
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .INIT_RAM_1E=256'h02E002DF02DE02DD02DD02DC02DB02DB02DA02D902D902D802D702D702D602D5;
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .INIT_RAM_1F=256'h02EA02EA02E902E802E802E702E602E602E502E402E402E302E202E202E102E0;
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .INIT_RAM_20=256'h02F502F402F302F302F202F102F102F002F002EF02EE02EE02ED02EC02EC02EB;
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .INIT_RAM_21=256'h02FF02FE02FE02FD02FD02FC02FB02FB02FA02F902F902F802F702F702F602F5;
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .INIT_RAM_22=256'h0309030903080307030703060305030503040304030303020302030103000300;
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .INIT_RAM_23=256'h0313031303120311031103100310030F030E030E030D030C030C030B030B030A;
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .INIT_RAM_24=256'h031D031D031C031B031B031A031A031903180318031703160316031503150314;
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .INIT_RAM_25=256'h0327032603260325032503240323032303220321032103200320031F031E031E;
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .INIT_RAM_26=256'h03310330032F032F032E032E032D032C032C032B032B032A0329032903280328;
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .INIT_RAM_27=256'h033A033903390338033803370336033603350335033403340333033203320331;
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .INIT_RAM_28=256'h0343034303420342034103400340033F033F033E033E033D033C033C033B033B;
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .INIT_RAM_29=256'h034D034C034B034B034A034A0349034903480347034703460346034503450344;
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .INIT_RAM_2A=256'h03560355035503540353035303520352035103510350034F034F034E034E034D;
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .INIT_RAM_2B=256'h035F035E035E035D035C035C035B035B035A035A035903580358035703570356;
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .INIT_RAM_2C=256'h036803670366036603650365036403640363036303620361036103600360035F;
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .INIT_RAM_2D=256'h03700370036F036F036E036E036D036C036C036B036B036A036A036903690368;
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .INIT_RAM_2E=256'h0379037803780377037703760376037503750374037403730372037203710371;
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .INIT_RAM_2F=256'h0381038103800380037F037F037E037E037D037D037C037C037B037B037A0379;
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .INIT_RAM_30=256'h038A038903890388038803870387038603860385038503840384038303830382;
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .INIT_RAM_31=256'h039203920391039103900390038F038F038E038E038D038D038C038C038B038A;
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .INIT_RAM_32=256'h039B039A039A0399039903980397039703960396039503950394039403930393;
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .INIT_RAM_33=256'h03A303A203A203A103A103A003A0039F039F039E039E039D039D039C039C039B;
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .INIT_RAM_34=256'h03AB03AA03AA03A903A903A803A803A703A703A603A603A503A503A403A403A3;
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .INIT_RAM_35=256'h03B303B203B203B103B103B003B003AF03AF03AE03AE03AD03AD03AC03AC03AB;
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .INIT_RAM_36=256'h03BB03BA03BA03B903B903B803B803B703B703B603B603B503B503B403B403B3;
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .INIT_RAM_37=256'h03C303C203C203C103C103C003C003BF03BF03BE03BE03BD03BD03BC03BC03BB;
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .INIT_RAM_38=256'h03CA03CA03CA03C903C903C803C803C703C703C603C603C503C503C403C403C3;
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .INIT_RAM_39=256'h03D203D203D103D103D003D003CF03CF03CE03CE03CD03CD03CC03CC03CB03CB;
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .INIT_RAM_3A=256'h03DA03D903D903D803D803D703D703D603D603D603D503D503D403D403D303D3;
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .INIT_RAM_3B=256'h03E103E103E003E003E003DF03DF03DE03DE03DD03DD03DC03DC03DB03DB03DA;
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .INIT_RAM_3C=256'h03E903E803E803E703E703E703E603E603E503E503E403E403E303E303E203E2;
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .INIT_RAM_3D=256'h03F003F003EF03EF03EE03EE03EE03ED03ED03EC03EC03EB03EB03EA03EA03E9;
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .INIT_RAM_3E=256'h03F803F703F703F603F603F503F503F403F403F403F303F303F203F203F103F1;
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .INIT_RAM_3F=256'h03FF03FF03FE03FE03FD03FD03FC03FC03FB03FB03FA03FA03FA03F903F903F8;
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .READ_MODE=1'b0;
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .BIT_WIDTH_0=16;
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .BIT_WIDTH_1=16;
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .RESET_MODE="SYNC";
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .BLK_SEL_0=3'b000;
+defparam \gamma_top/correction/R_mem_R_mem_0_0_s .BLK_SEL_1=3'b000;
+SDPB \gamma_top/correction/G_mem_G_mem_0_0_s  (
+	.CLKA(clk),
+	.CEA(\gamma_top/correction/G_mem_5 ),
+	.CLKB(clk),
+	.CEB(inpvalid),
+	.OCE(GND),
+	.RESET(\gamma_top/correction/n48_7 ),
+	.BLKSELA({GND, GND, GND}),
+	.BLKSELB({GND, GND, GND}),
+	.DI({GND, GND, GND, GND, GND, GND, GND, GND, GND, GND, GND, GND, GND, GND, GND, GND, GND, GND, GND, GND, GND, GND, wdata[9:0]}),
+	.ADA({wdata[25:16], GND, GND, VCC, VCC}),
+	.ADB({G_din[9:0], GND, GND, GND, GND}),
+	.DO({\gamma_top/correction/DO_0 [31:10], \gamma_top/correction/G_dout_r [9:0]})
+);
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .INIT_RAM_00=256'h00960091008D00880082007D00770071006A0063005B00520048003C002C0000;
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .INIT_RAM_01=256'h00D100CE00CB00C700C400C100BD00BA00B600B300AF00AB00A700A3009F009B;
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .INIT_RAM_02=256'h00FC00FA00F700F500F200F000ED00EA00E800E500E200DF00DD00DA00D700D4;
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .INIT_RAM_03=256'h0120011E011C011A0118011601130111010F010D010A010801060103010100FF;
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .INIT_RAM_04=256'h013F013E013C013A01380136013401320130012E012C012A0128012601240122;
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .INIT_RAM_05=256'h015B015A01580156015501530151014F014E014C014A01480147014501430141;
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .INIT_RAM_06=256'h0175017301720170016F016D016C016A016801670165016401620160015F015D;
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .INIT_RAM_07=256'h018C018B0189018801870185018401820181017F017E017C017B017901780176;
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .INIT_RAM_08=256'h01A201A101A0019E019D019C019A0199019701960195019301920191018F018E;
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .INIT_RAM_09=256'h01B701B601B401B301B201B101AF01AE01AD01AB01AA01A901A801A601A501A4;
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .INIT_RAM_0A=256'h01CB01C901C801C701C601C501C301C201C101C001BE01BD01BC01BB01B901B8;
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .INIT_RAM_0B=256'h01DD01DC01DB01DA01D901D701D601D501D401D301D201D001CF01CE01CD01CC;
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .INIT_RAM_0C=256'h01EF01EE01ED01EC01EB01E901E801E701E601E501E401E301E201E001DF01DE;
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .INIT_RAM_0D=256'h020001FF01FE01FD01FC01FB01FA01F901F701F601F501F401F301F201F101F0;
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .INIT_RAM_0E=256'h0210020F020E020D020C020B020A020902080207020602050204020302020201;
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .INIT_RAM_0F=256'h0220021F021E021D021C021B021A021902180217021602150214021302120211;
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .INIT_RAM_10=256'h022F022E022D022D022C022B022A022902280227022602250224022302220221;
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .INIT_RAM_11=256'h023E023D023C023B023A023A0239023802370236023502340233023202310230;
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .INIT_RAM_12=256'h024C024C024B024A02490248024702460245024402440243024202410240023F;
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .INIT_RAM_13=256'h025A025A02590258025702560255025402530253025202510250024F024E024D;
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .INIT_RAM_14=256'h0268026702660265026502640263026202610260025F025F025E025D025C025B;
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .INIT_RAM_15=256'h0275027402730273027202710270026F026F026E026D026C026B026A026A0269;
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .INIT_RAM_16=256'h0282028102800280027F027E027D027C027C027B027A02790278027802770276;
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .INIT_RAM_17=256'h028F028E028D028C028B028B028A028902880288028702860285028402840283;
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .INIT_RAM_18=256'h029B029A0299029902980297029602960295029402930292029202910290028F;
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .INIT_RAM_19=256'h02A702A602A502A502A402A302A202A202A102A0029F029F029E029D029C029C;
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .INIT_RAM_1A=256'h02B302B202B102B002B002AF02AE02AE02AD02AC02AB02AB02AA02A902A802A8;
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .INIT_RAM_1B=256'h02BE02BD02BD02BC02BB02BB02BA02B902B802B802B702B602B602B502B402B3;
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .INIT_RAM_1C=256'h02C902C902C802C702C702C602C502C502C402C302C202C202C102C002C002BF;
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .INIT_RAM_1D=256'h02D502D402D302D302D202D102D002D002CF02CE02CE02CD02CC02CC02CB02CA;
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .INIT_RAM_1E=256'h02E002DF02DE02DD02DD02DC02DB02DB02DA02D902D902D802D702D702D602D5;
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .INIT_RAM_1F=256'h02EA02EA02E902E802E802E702E602E602E502E402E402E302E202E202E102E0;
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .INIT_RAM_20=256'h02F502F402F302F302F202F102F102F002F002EF02EE02EE02ED02EC02EC02EB;
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .INIT_RAM_21=256'h02FF02FE02FE02FD02FD02FC02FB02FB02FA02F902F902F802F702F702F602F5;
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .INIT_RAM_22=256'h0309030903080307030703060305030503040304030303020302030103000300;
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .INIT_RAM_23=256'h0313031303120311031103100310030F030E030E030D030C030C030B030B030A;
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .INIT_RAM_24=256'h031D031D031C031B031B031A031A031903180318031703160316031503150314;
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .INIT_RAM_25=256'h0327032603260325032503240323032303220321032103200320031F031E031E;
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .INIT_RAM_26=256'h03310330032F032F032E032E032D032C032C032B032B032A0329032903280328;
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .INIT_RAM_27=256'h033A033903390338033803370336033603350335033403340333033203320331;
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .INIT_RAM_28=256'h0343034303420342034103400340033F033F033E033E033D033C033C033B033B;
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .INIT_RAM_29=256'h034D034C034B034B034A034A0349034903480347034703460346034503450344;
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .INIT_RAM_2A=256'h03560355035503540353035303520352035103510350034F034F034E034E034D;
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .INIT_RAM_2B=256'h035F035E035E035D035C035C035B035B035A035A035903580358035703570356;
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .INIT_RAM_2C=256'h036803670366036603650365036403640363036303620361036103600360035F;
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .INIT_RAM_2D=256'h03700370036F036F036E036E036D036C036C036B036B036A036A036903690368;
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .INIT_RAM_2E=256'h0379037803780377037703760376037503750374037403730372037203710371;
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .INIT_RAM_2F=256'h0381038103800380037F037F037E037E037D037D037C037C037B037B037A0379;
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .INIT_RAM_30=256'h038A038903890388038803870387038603860385038503840384038303830382;
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .INIT_RAM_31=256'h039203920391039103900390038F038F038E038E038D038D038C038C038B038A;
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .INIT_RAM_32=256'h039B039A039A0399039903980397039703960396039503950394039403930393;
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .INIT_RAM_33=256'h03A303A203A203A103A103A003A0039F039F039E039E039D039D039C039C039B;
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .INIT_RAM_34=256'h03AB03AA03AA03A903A903A803A803A703A703A603A603A503A503A403A403A3;
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .INIT_RAM_35=256'h03B303B203B203B103B103B003B003AF03AF03AE03AE03AD03AD03AC03AC03AB;
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .INIT_RAM_36=256'h03BB03BA03BA03B903B903B803B803B703B703B603B603B503B503B403B403B3;
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .INIT_RAM_37=256'h03C303C203C203C103C103C003C003BF03BF03BE03BE03BD03BD03BC03BC03BB;
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .INIT_RAM_38=256'h03CA03CA03CA03C903C903C803C803C703C703C603C603C503C503C403C403C3;
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .INIT_RAM_39=256'h03D203D203D103D103D003D003CF03CF03CE03CE03CD03CD03CC03CC03CB03CB;
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .INIT_RAM_3A=256'h03DA03D903D903D803D803D703D703D603D603D603D503D503D403D403D303D3;
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .INIT_RAM_3B=256'h03E103E103E003E003E003DF03DF03DE03DE03DD03DD03DC03DC03DB03DB03DA;
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .INIT_RAM_3C=256'h03E903E803E803E703E703E703E603E603E503E503E403E403E303E303E203E2;
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .INIT_RAM_3D=256'h03F003F003EF03EF03EE03EE03EE03ED03ED03EC03EC03EB03EB03EA03EA03E9;
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .INIT_RAM_3E=256'h03F803F703F703F603F603F503F503F403F403F403F303F303F203F203F103F1;
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .INIT_RAM_3F=256'h03FF03FF03FE03FE03FD03FD03FC03FC03FB03FB03FA03FA03FA03F903F903F8;
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .READ_MODE=1'b0;
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .BIT_WIDTH_0=16;
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .BIT_WIDTH_1=16;
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .RESET_MODE="SYNC";
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .BLK_SEL_0=3'b000;
+defparam \gamma_top/correction/G_mem_G_mem_0_0_s .BLK_SEL_1=3'b000;
+SDPB \gamma_top/correction/B_mem_B_mem_0_0_s  (
+	.CLKA(clk),
+	.CEA(\gamma_top/correction/B_mem_5 ),
+	.CLKB(clk),
+	.CEB(inpvalid),
+	.OCE(GND),
+	.RESET(\gamma_top/correction/n48_7 ),
+	.BLKSELA({GND, GND, GND}),
+	.BLKSELB({GND, GND, GND}),
+	.DI({GND, GND, GND, GND, GND, GND, GND, GND, GND, GND, GND, GND, GND, GND, GND, GND, GND, GND, GND, GND, GND, GND, wdata[9:0]}),
+	.ADA({wdata[25:16], GND, GND, VCC, VCC}),
+	.ADB({B_din[9:0], GND, GND, GND, GND}),
+	.DO({\gamma_top/correction/DO_1 [31:10], \gamma_top/correction/B_dout_r [9:0]})
+);
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .INIT_RAM_00=256'h00960091008D00880082007D00770071006A0063005B00520048003C002C0000;
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .INIT_RAM_01=256'h00D100CE00CB00C700C400C100BD00BA00B600B300AF00AB00A700A3009F009B;
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .INIT_RAM_02=256'h00FC00FA00F700F500F200F000ED00EA00E800E500E200DF00DD00DA00D700D4;
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .INIT_RAM_03=256'h0120011E011C011A0118011601130111010F010D010A010801060103010100FF;
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .INIT_RAM_04=256'h013F013E013C013A01380136013401320130012E012C012A0128012601240122;
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .INIT_RAM_05=256'h015B015A01580156015501530151014F014E014C014A01480147014501430141;
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .INIT_RAM_06=256'h0175017301720170016F016D016C016A016801670165016401620160015F015D;
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .INIT_RAM_07=256'h018C018B0189018801870185018401820181017F017E017C017B017901780176;
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .INIT_RAM_08=256'h01A201A101A0019E019D019C019A0199019701960195019301920191018F018E;
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .INIT_RAM_09=256'h01B701B601B401B301B201B101AF01AE01AD01AB01AA01A901A801A601A501A4;
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .INIT_RAM_0A=256'h01CB01C901C801C701C601C501C301C201C101C001BE01BD01BC01BB01B901B8;
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .INIT_RAM_0B=256'h01DD01DC01DB01DA01D901D701D601D501D401D301D201D001CF01CE01CD01CC;
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .INIT_RAM_0C=256'h01EF01EE01ED01EC01EB01E901E801E701E601E501E401E301E201E001DF01DE;
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .INIT_RAM_0D=256'h020001FF01FE01FD01FC01FB01FA01F901F701F601F501F401F301F201F101F0;
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .INIT_RAM_0E=256'h0210020F020E020D020C020B020A020902080207020602050204020302020201;
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .INIT_RAM_0F=256'h0220021F021E021D021C021B021A021902180217021602150214021302120211;
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .INIT_RAM_10=256'h022F022E022D022D022C022B022A022902280227022602250224022302220221;
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .INIT_RAM_11=256'h023E023D023C023B023A023A0239023802370236023502340233023202310230;
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .INIT_RAM_12=256'h024C024C024B024A02490248024702460245024402440243024202410240023F;
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .INIT_RAM_13=256'h025A025A02590258025702560255025402530253025202510250024F024E024D;
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .INIT_RAM_14=256'h0268026702660265026502640263026202610260025F025F025E025D025C025B;
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .INIT_RAM_15=256'h0275027402730273027202710270026F026F026E026D026C026B026A026A0269;
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .INIT_RAM_16=256'h0282028102800280027F027E027D027C027C027B027A02790278027802770276;
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .INIT_RAM_17=256'h028F028E028D028C028B028B028A028902880288028702860285028402840283;
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .INIT_RAM_18=256'h029B029A0299029902980297029602960295029402930292029202910290028F;
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .INIT_RAM_19=256'h02A702A602A502A502A402A302A202A202A102A0029F029F029E029D029C029C;
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .INIT_RAM_1A=256'h02B302B202B102B002B002AF02AE02AE02AD02AC02AB02AB02AA02A902A802A8;
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .INIT_RAM_1B=256'h02BE02BD02BD02BC02BB02BB02BA02B902B802B802B702B602B602B502B402B3;
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .INIT_RAM_1C=256'h02C902C902C802C702C702C602C502C502C402C302C202C202C102C002C002BF;
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .INIT_RAM_1D=256'h02D502D402D302D302D202D102D002D002CF02CE02CE02CD02CC02CC02CB02CA;
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .INIT_RAM_1E=256'h02E002DF02DE02DD02DD02DC02DB02DB02DA02D902D902D802D702D702D602D5;
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .INIT_RAM_1F=256'h02EA02EA02E902E802E802E702E602E602E502E402E402E302E202E202E102E0;
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .INIT_RAM_20=256'h02F502F402F302F302F202F102F102F002F002EF02EE02EE02ED02EC02EC02EB;
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .INIT_RAM_21=256'h02FF02FE02FE02FD02FD02FC02FB02FB02FA02F902F902F802F702F702F602F5;
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .INIT_RAM_22=256'h0309030903080307030703060305030503040304030303020302030103000300;
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .INIT_RAM_23=256'h0313031303120311031103100310030F030E030E030D030C030C030B030B030A;
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .INIT_RAM_24=256'h031D031D031C031B031B031A031A031903180318031703160316031503150314;
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .INIT_RAM_25=256'h0327032603260325032503240323032303220321032103200320031F031E031E;
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .INIT_RAM_26=256'h03310330032F032F032E032E032D032C032C032B032B032A0329032903280328;
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .INIT_RAM_27=256'h033A033903390338033803370336033603350335033403340333033203320331;
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .INIT_RAM_28=256'h0343034303420342034103400340033F033F033E033E033D033C033C033B033B;
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .INIT_RAM_29=256'h034D034C034B034B034A034A0349034903480347034703460346034503450344;
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .INIT_RAM_2A=256'h03560355035503540353035303520352035103510350034F034F034E034E034D;
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .INIT_RAM_2B=256'h035F035E035E035D035C035C035B035B035A035A035903580358035703570356;
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .INIT_RAM_2C=256'h036803670366036603650365036403640363036303620361036103600360035F;
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .INIT_RAM_2D=256'h03700370036F036F036E036E036D036C036C036B036B036A036A036903690368;
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .INIT_RAM_2E=256'h0379037803780377037703760376037503750374037403730372037203710371;
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .INIT_RAM_2F=256'h0381038103800380037F037F037E037E037D037D037C037C037B037B037A0379;
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .INIT_RAM_30=256'h038A038903890388038803870387038603860385038503840384038303830382;
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .INIT_RAM_31=256'h039203920391039103900390038F038F038E038E038D038D038C038C038B038A;
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .INIT_RAM_32=256'h039B039A039A0399039903980397039703960396039503950394039403930393;
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .INIT_RAM_33=256'h03A303A203A203A103A103A003A0039F039F039E039E039D039D039C039C039B;
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .INIT_RAM_34=256'h03AB03AA03AA03A903A903A803A803A703A703A603A603A503A503A403A403A3;
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .INIT_RAM_35=256'h03B303B203B203B103B103B003B003AF03AF03AE03AE03AD03AD03AC03AC03AB;
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .INIT_RAM_36=256'h03BB03BA03BA03B903B903B803B803B703B703B603B603B503B503B403B403B3;
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .INIT_RAM_37=256'h03C303C203C203C103C103C003C003BF03BF03BE03BE03BD03BD03BC03BC03BB;
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .INIT_RAM_38=256'h03CA03CA03CA03C903C903C803C803C703C703C603C603C503C503C403C403C3;
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .INIT_RAM_39=256'h03D203D203D103D103D003D003CF03CF03CE03CE03CD03CD03CC03CC03CB03CB;
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .INIT_RAM_3A=256'h03DA03D903D903D803D803D703D703D603D603D603D503D503D403D403D303D3;
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .INIT_RAM_3B=256'h03E103E103E003E003E003DF03DF03DE03DE03DD03DD03DC03DC03DB03DB03DA;
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .INIT_RAM_3C=256'h03E903E803E803E703E703E703E603E603E503E503E403E403E303E303E203E2;
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .INIT_RAM_3D=256'h03F003F003EF03EF03EE03EE03EE03ED03ED03EC03EC03EB03EB03EA03EA03E9;
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .INIT_RAM_3E=256'h03F803F703F703F603F603F503F503F403F403F403F303F303F203F203F103F1;
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .INIT_RAM_3F=256'h03FF03FF03FE03FE03FD03FD03FC03FC03FB03FB03FA03FA03FA03F903F903F8;
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .READ_MODE=1'b0;
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .BIT_WIDTH_0=16;
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .BIT_WIDTH_1=16;
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .RESET_MODE="SYNC";
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .BLK_SEL_0=3'b000;
+defparam \gamma_top/correction/B_mem_B_mem_0_0_s .BLK_SEL_1=3'b000;
+INV \gamma_top/correction/n48_s2  (
+	.I(rstn),
+	.O(\gamma_top/correction/n48_7 )
+);
+endmodule
