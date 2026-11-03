@@ -6,8 +6,10 @@
 
 ```bash
 cd src/ugv_ws
-bash Scripts/bx72_build.sh
-bash Scripts/bx72_run.sh
+source /opt/ros/humble/setup.bash
+colcon build --base-paths src --packages-up-to car_bringup --symlink-install
+source install/local_setup.bash
+ros2 launch car_bringup car_bringup.launch.py
 ```
 
-设备地址、传感器外参和模型路径见 [bringup.yaml](src/car/car_bringup/config/bringup.yaml)；全局地图和坐标域说明见 [global_slam.md](docs/global_slam.md)。
+设备地址、传感器外参和模型路径见 [bringup.yaml](src/car/car_bringup/config/bringup.yaml)；全局地图和坐标关系见[项目说明](../../README.md)。
