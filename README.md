@@ -1,19 +1,19 @@
 # FPGAGowin2026
 
-BX72 / GW5AT-138C 四轮麦轮机器人研究原型。当前采用GoRV32 FP 40 MHz、RTL雷达聚合、互补里程计、点线ICP和极坐标局部绕障；OV5647输出640×360彩色YUYV422，经Jetson网桥到网页。外部AI负责视觉和高层任务，基础控制在FPGA内执行。
+BX72 / GW5AT-138C 四轮麦轮机器人研究原型。FPGA 负责传感器接入、轮速闭环、近障保护、位姿融合及局部栅格规划；Jetson 负责 UDP/ROS 网桥、视觉任务、slam_toolbox 全局建图、全局 A* 与航点调度。网页用于展示、选点和提交目标。速度型 FPGA 的局部规划由 Jetson 兼容执行。
 
-当前板上版本为2026-10-28的`candidate_05`，已按用户授权写入外部Flash并完成校验、从Flash重新加载及无动作观察。重配置后ACK需先通过诊断probe进行RX相位训练，再启动在线网桥，步骤见板工程README；自动启动握手恢复问题仍未修复。固件、综合、PNR、真实软核执行和彩色视频已有证据，**完整导航验收未通过**：任务联调累计最长控制间隔31.227 ms，超过30 ms门槛。后续调度尝试`candidate_06`仅综合通过、PNR超时，未下载；活动源码和ROM保持已上板版本。电机保持锁定，真实闭环行驶、动态绕障、物理断电冷启动和约10 cm实际到点精度未验证。
+2026-11-04，局部导航 candidate 08 已写入 FPGA Flash 并经工具校验，用户随后进行了航点实地测试，反馈效果可以。版本、测试范围和待确认事项见[航点导航部署与现场记录](FPGA_ws/boards/BX72_138K_robot/docs/field_waypoint_20261104.md)。[跨端功能链路审查](docs/跨端功能链路审查_20261102.md)保留迁移过程中的历史方案。
 
-| 本地目录 / 远端仓库 | 内容 |
+| 目录 | 内容 |
 | --- | --- |
-| `FPGA_ws` / [fpga_ws](https://github.com/FPGAGowin2026/fpga_ws) | 活动GPRJ、RTL、固件、构建/下载入口与当前验证摘要 |
-| `ugv_ws` / [ugv_ws](https://github.com/FPGAGowin2026/ugv_ws) | 唯一在线UDP网桥、ROS传感器/里程计/TF、视觉与任务接口 |
-| `website` / [website](https://github.com/FPGAGowin2026/website) | 本机Node服务、实时彩色视频、遥测与局部任务工作台 |
-| [docs](docs/README.md) | 当前架构、使用入口、标定与未完成项 |
-| [manifests](manifests/README.md) | 六个独立工作区的repo清单；子仓库不嵌入本仓库 |
+| `FPGA_ws` | 板级 RTL、软核固件、约束和构建入口 |
+| `ugv_ws` | Jetson 网桥、ROS 传感器、视觉、全局导航和局部兼容执行 |
+| `uav_ws` | 无人机 VIO、PX4/MAVROS 控制和本机协同导航 |
+| `swarm_ws` | 机器人间的协同消息、目标与中继任务入口 |
+| `website` | 网页服务、地图展示与目标提交 |
+| [docs](docs/README.md) | 审查和架构文档入口 |
+| [manifests](manifests/README.md) | 各独立仓库的 repo 清单 |
 
-从[当前方案](docs/小车软硬件协同规划架构.md)和[板级说明](https://github.com/FPGAGowin2026/fpga_ws/blob/main/boards/BX72_138K_robot/README.md)进入。源码仓库提供当前验证摘要；位流、完整原始报告和板测包保留在本机`FPGA_ws/boards/BX72_138K_robot/build/polar_navigation_20261028/`，不把生成缓存提交到Git。
+上述五个工作区分别是独立 Git 仓库。`FPGA_ws`、`ugv_ws` 和 `website` 从各自的提交创建；`uav_ws` 和 `swarm_ws` 在创建后复制了原工作区现有的未提交源码，以便继续协同开发，原文件仍保留在原位置。
 
-FPGA为192.168.0.2:5000，Jetson有线192.168.0.4/24、SSH `aa@192.168.1.103`。视频6102、ACK6103、遥测6104、PC网桥6200；`record`与在线网桥互斥占用接收端口。网页从`website`运行`node server.mjs --jetson 192.168.1.103 --port 6200`，访问`http://127.0.0.1:8765`，默认只读监看。
-
-仅在所有代码集成、写入者停止后统一验证；Gowin串行，综合与PNR共用截止预算。SRAM无动作自检与Flash、ARM、真实动作分开授权。其他板卡及uav_ws、swarm_ws、llm_ws按各自工程维护，不继承BX72结论。
+板上版本及验证范围见[部署记录](FPGA_ws/boards/BX72_138K_robot/docs/deployment_current.json)和[验证摘要](FPGA_ws/boards/BX72_138K_robot/docs/validation_current.json)。本轮尚未获得定量到点误差、动态绕障及冷启动的完整验收记录；历史版本的三航点结果不自动等同于本轮结果。
