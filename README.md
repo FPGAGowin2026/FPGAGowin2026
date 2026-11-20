@@ -4,7 +4,13 @@
 
 项目也包含无人机和集群协同接口的源码，用于探索 PX4/MAVROS、VIO、深度相机和 EGO-Swarm 的组合。
 
-## 系统组成
+## 现行部署
+
+小车导航和网页分别在 [ugv_ws](https://github.com/FPGAGowin2026/ugv_ws) 和 [website](https://github.com/FPGAGowin2026/website) 维护。在已构建的 Jetson 上，从 `/home/aa/FPGAGowin2026/ugv_ws` 执行 `bash Scripts/bx72_run.sh`，即可启动导航和网页。[启动模式](https://github.com/FPGAGowin2026/ugv_ws/blob/main/Scripts/README.md) · [航点与遇障恢复](https://github.com/FPGAGowin2026/ugv_ws/blob/main/src/car/car_navigation/README.md)
+
+以下技术说明与相对链接对应本仓库 `src/` 内的历史工程快照。
+
+## 快照的系统组成
 
 ```mermaid
 flowchart LR
@@ -78,7 +84,7 @@ Jetson 视觉节点使用 TensorRT 执行目标检测，并通过 ByteTrack 关�
 
 无人机工作区将 VIO 位姿和深度相机数据适配到 EGO-Swarm 所需接口，再将规划输出转换为 PX4/MAVROS 控制链路中的位置与航向命令。集群工作区定义目标、中继和状态消息，用于在不同机器人之间传递任务信息。EGO-Swarm 上游源码通过外部获取，项目中的适配与补丁见 [无人机规划接口](src/uav_ws/src/uav_ego_bridge/) 和 [来源说明](src/uav_ws/third_party/README.md)。
 
-## 开始使用
+## 运行历史工程快照
 
 地面机器人需要 FPGA 板卡、对应传感器、Jetson、ROS 2 Humble 和网络连接；完整视觉节点还需要 CUDA、TensorRT、OpenCV 及对应的推理引擎文件。设备 IP、雷达/相机外参和模型路径在 [bringup 配置](src/ugv_ws/src/car/car_bringup/config/bringup.yaml)中按现场设置。
 
