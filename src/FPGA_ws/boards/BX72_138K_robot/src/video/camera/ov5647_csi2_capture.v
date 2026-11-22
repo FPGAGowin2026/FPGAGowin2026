@@ -885,8 +885,10 @@ module ov5647_source_frame_accounting #(
     input wire [5:0] data_type,
     input wire video_packet,
     input wire [1:0] payload_valid,
+    input wire failure_enable,
     output reg complete_snapshot,
-    output reg eof_toggle
+    output reg eof_toggle,
+    output reg [5:0] failure_sticky
 );
     localparam integer LINE_W = (EXPECTED_LINES > 1) ? $clog2(EXPECTED_LINES + 1) : 1;
     localparam integer BYTE_W = (BYTES_PER_LINE > 1) ? $clog2(BYTES_PER_LINE + 1) : 1;
@@ -924,8 +926,9 @@ module ov5647_source_frame_accounting #(
             packet_open <= 1'b0;
         end else begin
             if (video_packet) begin
-                if (!active || packet_open || completed_packets >= EXPECTED_LINES)
+                if (!active || packet_open || completed_packets >= EXPECTED_LINES) begin
                     bad <= 1'b1;
+                end
                 packet_open <= 1'b1;
                 payload_bytes <= {BYTE_W{1'b0}};
             end
@@ -945,6 +948,21 @@ module ov5647_source_frame_accounting #(
                     payload_bytes <= bytes_next[BYTE_W-1:0];
                 end
             end
+        end
+    end
+    // 排除扫描和候选验证时预期出现的坏帧，只保留 ready 后的实际运行故障。
+    always @(posedge byte_clk or negedge reset_n) begin
+        if (!reset_n) failure_sticky <= 6'b0;
+        else if (!failure_enable) failure_sticky <= 6'b0;
+        else begin
+            if (fs && (active || video_packet || (|payload_valid))) failure_sticky[0] <= 1'b1;
+            if (fe && (!active || packet_open)) failure_sticky[1] <= 1'b1;
+            if (fe && completed_packets != EXPECTED_LINES) failure_sticky[2] <= 1'b1;
+            if (fe && (video_packet || (|payload_valid))) failure_sticky[3] <= 1'b1;
+            if (!fs && !fe && video_packet &&
+                (!active || packet_open || completed_packets >= EXPECTED_LINES)) failure_sticky[4] <= 1'b1;
+            if (!fs && !fe && (|payload_valid) &&
+                (!active || (!packet_open && !video_packet) || bytes_next > BYTES_PER_LINE)) failure_sticky[5] <= 1'b1;
         end
     end
 endmodule
@@ -1191,10 +1209,11 @@ endmodule
 
 // ==================== ov5647_lp_hs_control.v ====================
 // CSI-2 LP 请求限定的连续时钟接收控制器。
-// 可在确认 STOP 后的 LP-01 阶段提前启动 byte aligner。
+// 默认在进入 HS 后延迟使能 byte aligner，减少启动阶段的提前同步。
 module ov5647_lp_hs_control #(
     parameter integer TAIL_CYCLES = 32,
-    parameter integer EARLY_HS_ENABLE = 1
+    parameter integer EARLY_HS_ENABLE = 0,
+    parameter integer HS_START_DELAY_CYCLES = 5
 ) (
     input  wire       byte_clk,
     input  wire       reset_n,
@@ -1205,6 +1224,9 @@ module ov5647_lp_hs_control #(
     localparam integer TAIL_COUNTER_WIDTH =
         (TAIL_CYCLES > 1) ? $clog2(TAIL_CYCLES + 1) : 1;
     localparam [TAIL_COUNTER_WIDTH-1:0] TAIL_LOAD = TAIL_CYCLES;
+    localparam integer HS_DELAY_WIDTH =
+        (HS_START_DELAY_CYCLES > 1) ? $clog2(HS_START_DELAY_CYCLES + 1) : 1;
+    localparam [HS_DELAY_WIDTH-1:0] HS_DELAY_COUNT = HS_START_DELAY_CYCLES;
 
     localparam [2:0] ST_WAIT_LP11 = 3'd0;
     localparam [2:0] ST_WAIT_LP01 = 3'd1;
@@ -1222,6 +1244,7 @@ module ov5647_lp_hs_control #(
     reg       lp11_first_seen;
     reg       stop_lp11_first_seen;
     reg [TAIL_COUNTER_WIDTH-1:0] tail_count;
+    reg [HS_DELAY_WIDTH-1:0] hs_delay_count;
 
     // LP 输入经两级同步。复位值为 LP-00，不能伪造 LP-11 停止状态。
     always @(posedge byte_clk or negedge reset_n) begin
@@ -1232,6 +1255,7 @@ module ov5647_lp_hs_control #(
             lp11_first_seen <= 1'b0;
             stop_lp11_first_seen <= 1'b0;
             tail_count <= {TAIL_COUNTER_WIDTH{1'b0}};
+            hs_delay_count <= {HS_DELAY_WIDTH{1'b0}};
             data_hs_enable <= 1'b0;
         end else begin
             lp_lane0_meta <= lp_lane0;
@@ -1280,7 +1304,8 @@ module ov5647_lp_hs_control #(
                     case (lp_lane0_sync)
                         2'b00: begin
                             state <= ST_HS_ACTIVE;
-                            data_hs_enable <= 1'b1;
+                            hs_delay_count <= {HS_DELAY_WIDTH{1'b0}};
+                            data_hs_enable <= 1'b0;
                             lp11_first_seen <= 1'b0;
                         end
                         2'b01: begin
@@ -1303,7 +1328,12 @@ module ov5647_lp_hs_control #(
                 end
 
                 ST_HS_ACTIVE: begin
-                    data_hs_enable <= 1'b1;
+                    if (hs_delay_count < HS_DELAY_COUNT) begin
+                        hs_delay_count <= hs_delay_count + 1'b1;
+                        data_hs_enable <= 1'b0;
+                    end else begin
+                        data_hs_enable <= 1'b1;
+                    end
                     tail_count <= {TAIL_COUNTER_WIDTH{1'b0}};
                     if (lp_lane0_sync == 2'b11) begin
                         if (stop_lp11_first_seen) begin
@@ -1341,7 +1371,6 @@ module ov5647_lp_hs_control #(
                         end
                     end else begin
                         tail_count <= tail_count - 1'b1;
-                        data_hs_enable <= 1'b1;
                     end
                 end
 
@@ -1358,7 +1387,8 @@ module ov5647_lp_hs_control #(
                         end
                         2'b00: begin
                             state <= ST_HS_ACTIVE;
-                            data_hs_enable <= 1'b1;
+                            hs_delay_count <= {HS_DELAY_WIDTH{1'b0}};
+                            data_hs_enable <= 1'b0;
                         end
                         2'b11: begin
                             state <= ST_WAIT_LP11;
@@ -1730,13 +1760,16 @@ module ov5647_csi2_capture #(
 
     wire source_complete_byte;
     wire source_eof_toggle_byte;
+    wire [5:0] source_failure_sticky_byte;
     ov5647_source_frame_accounting #(
         .EXPECTED_LINES(1080), .BYTES_PER_LINE(2400)
     ) source_frame_accounting (
         .byte_clk(byte_clk), .reset_n(pipeline_reset_n),
         .short_packet(qualified_short_packet), .data_type(csi_data_type),
         .video_packet(qualified_video_packet), .payload_valid(qualified_payload_valid),
-        .complete_snapshot(source_complete_byte), .eof_toggle(source_eof_toggle_byte)
+        .failure_enable(autocal_ready),
+        .complete_snapshot(source_complete_byte), .eof_toggle(source_eof_toggle_byte),
+        .failure_sticky(source_failure_sticky_byte)
     );
 
     wire source_status_valid_pixel, source_complete_pixel;
@@ -1750,13 +1783,13 @@ module ov5647_csi2_capture #(
     );
 
     // 训练评分只接收合格 RAW10/FS/FE；原始 good/bad guard EOF 独立跨域。
-    // 每个tap采1024个真实RAW10 HS burst，约覆盖一帧1080行；保留完整32x32眼图。
-    // 旧4096样本使完整扫描需要约四帧/ tap，实板每次上电长时间没有任何可发布帧。
+    // 每个tap采128个真实RAW10 HS burst；保留完整32x32眼图。
+    // 缩短逐点扫描；选定候选后仍进行完整 burst 和帧验证。
     // 选中中心后仍保留原有2秒稳定时间、1024 burst验证及两帧good EOF门槛。
     wire [3:0] autocal_last_failure;
     wire [7:0] autocal_retry_count;
     ov5647_dphy_autocal #(
-        .POINT_BURSTS(1024),
+        .POINT_BURSTS(128),
         .VERIFY_BURSTS(1024)
     ) autocal (
         .byte_clk(byte_clk),
@@ -1885,8 +1918,8 @@ module ov5647_csi2_capture #(
     reg [31:0] autocal_control_q;
     always @(posedge byte_clk or negedge byte_por_reset_sync[1]) begin
         if (!byte_por_reset_sync[1]) autocal_control_q <= 0;
-        else autocal_control_q <= {4'hC, autocal_last_failure,
-            autocal_tap_lane0, autocal_tap_lane1, autocal_retry_count};
+        else autocal_control_q <= {4'hD, autocal_last_failure, source_failure_sticky_byte,
+            autocal_tap_lane0[7:3], autocal_tap_lane1[7:3], autocal_retry_count};
     end
     assign autocal_control_word = autocal_control_q;
     assign autocal_bad_burst_gray = autocal_bad_burst_count ^ (autocal_bad_burst_count >> 1);

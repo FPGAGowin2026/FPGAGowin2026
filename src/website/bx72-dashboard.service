@@ -1,0 +1,14 @@
+[Unit]
+Description=BX72 robot dashboard
+
+[Service]
+Type=simple
+WorkingDirectory=%h/FPGAGOWIN/src/website
+Environment=ROS_LOCALHOST_ONLY=0
+ExecStart=/bin/bash -c 'source /opt/ros/humble/setup.bash && source ../ugv_ws/install/setup.bash && exec /usr/bin/python3 -u dashboard_server.py --bind 0.0.0.0 --port 8765'
+Restart=always
+RestartSec=3
+TimeoutStopSec=5
+
+[Install]
+WantedBy=default.target

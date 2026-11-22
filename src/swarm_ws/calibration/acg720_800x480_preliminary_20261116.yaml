@@ -1,0 +1,56 @@
+image_width: 800
+image_height: 480
+camera_name: acg720_camera
+distortion_model: plumb_bob
+calibration_preliminary: true
+camera_matrix:
+  rows: 3
+  cols: 3
+  data:
+  - 1385.5619398269384
+  - 0.0
+  - 188.10226211575886
+  - 0.0
+  - 1386.4621346014005
+  - 412.3589310447336
+  - 0.0
+  - 0.0
+  - 1.0
+distortion_coefficients:
+  rows: 1
+  cols: 5
+  data:
+  - 0.3505004718665885
+  - -2.899871321606022
+  - 0.01108804719117023
+  - 0.018155889844898326
+  - 0.0
+rectification_matrix:
+  rows: 3
+  cols: 3
+  data:
+  - 1.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 1.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 1.0
+projection_matrix:
+  rows: 3
+  cols: 4
+  data:
+  - 1385.5619398269384
+  - 0.0
+  - 188.10226211575886
+  - 0.0
+  - 0.0
+  - 1386.4621346014005
+  - 412.3589310447336
+  - 0.0
+  - 0.0
+  - 0.0
+  - 1.0
+  - 0.0

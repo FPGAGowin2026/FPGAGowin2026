@@ -73,7 +73,6 @@ summary::marker{content:""}
 
 ::selection{background:var(--accent-soft);color:var(--text)}
 
-/* —— 键盘焦点：2px 蓝色 outline（DESIGN.md 第 1、9 节） —— */
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
 /* —— 轻量滚动条 —— */

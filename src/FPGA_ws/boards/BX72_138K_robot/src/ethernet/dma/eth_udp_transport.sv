@@ -137,9 +137,9 @@ endmodule
 // 32 字节诊断请求：完整 Ethernet/IPv4/UDP 和应用 CRC 通过后才提交。
 // RX 暂存不跨域；诊断与速度应答进入深度 4 FIFO，速度另经整帧 FIFO 到 50 MHz。
 module bx72_udp_request_rx #(
-    parameter [47:0] LOCAL_MAC = 48'h00_0A_35_01_FE_C0,
-    parameter [31:0] LOCAL_IP = 32'hC0_A8_00_02,
-    parameter [31:0] PEER_IP = 32'hC0_A8_00_04,
+    parameter [47:0] LOCAL_MAC = 48'h02_00_00_00_00_02,
+    parameter [31:0] LOCAL_IP = 32'hCB_00_71_02,
+    parameter [31:0] PEER_IP = 32'hCB_00_71_04,
     parameter [15:0] LOCAL_PORT = 16'd5000,
     parameter [15:0] PEER_PORT = 16'd6103,
     parameter SPLIT_IP_CHECKSUM_RESET = 1'b1,
@@ -227,8 +227,10 @@ module bx72_udp_request_rx #(
     // 新会话只能由合法type3零速包建立；全零任务/模式字段不能冒充启动握手。
     wire stop_request=motion_request && staging[95:48]==48'd0 && staging[159:96]!=0;
     wire signed [15:0] cmd_vx=staging[95:80],cmd_vy=staging[79:64],cmd_wz=staging[63:48];
-    wire motion_fields_ok=cmd_vx>=-400 && cmd_vx<=400 && cmd_vy>=-400 && cmd_vy<=400 &&
-        cmd_wz>=-1000 && cmd_wz<=1000 && staging[47:16]==0;
+    // Only forward waypoint streaming uses the extended range.
+    wire forward_stream_ok=cmd_vx<=500 && cmd_vy==0 && cmd_wz>=-800 && cmd_wz<=800;
+    wire motion_fields_ok=cmd_vx>=-400 && (cmd_vx<=400 || forward_stream_ok) &&
+        cmd_vy>=-400 && cmd_vy<=400 && cmd_wz>=-1000 && cmd_wz<=1000 && staging[47:16]==0;
     reg application_magic_q,application_length_q;
     wire application_header_ok = application_magic_q && application_length_q;
     wire application_fields_ok = staging[215:208]==8'd1 ||
@@ -1095,9 +1097,9 @@ module eth_udp_video_sender #(
     parameter integer MAX_PIXELS_PER_PACKET = 730,
     parameter integer FIFO_ADDR_WIDTH = 11,
     parameter [47:0] DST_MAC = 48'hFF_FF_FF_FF_FF_FF,
-    parameter [47:0] SRC_MAC = 48'h00_0A_35_01_FE_C0,
-    parameter [31:0] DST_IP = 32'hC0_A8_00_04,
-    parameter [31:0] SRC_IP = 32'hC0_A8_00_02,
+    parameter [47:0] SRC_MAC = 48'h02_00_00_00_00_02,
+    parameter [31:0] DST_IP = 32'hCB_00_71_04,
+    parameter [31:0] SRC_IP = 32'hCB_00_71_02,
     parameter [15:0] DST_PORT = 16'd6102,
     parameter [15:0] SRC_PORT = 16'd5000,
     parameter [31:0] RTP_TIMESTAMP_STEP = 32'd3000,

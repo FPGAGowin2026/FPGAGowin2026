@@ -1,7 +1,7 @@
 #include <chrono>
 
 #include "gtest/gtest.h"
-#include "../src/frame_processing_schedule.hpp"
+#include "../include/frame_processing_schedule.hpp"
 
 TEST(VisionScheduling, StartsOnArrivalAndProcessesOnlyTheLatestPendingFrame)
 {

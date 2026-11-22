@@ -1,3 +1,5 @@
-# 集群协同工作区
+# 协同工作区
 
-本工作区提供 `swarm_interfaces`、`swarm_manager` 和 `swarm_bringup`，用于协同目标、状态和中继消息。无人机适配见同级 [uav_ws](../uav_ws/)。这些接口尚需结合实际设备、坐标系和通信环境验证。
+[swarm_cooperation](src/swarm_cooperation/README.md) 负责 BX72 小车与 ACG720 六足的地图对齐、共享地图和目标调度。部署前填写[设备名册](config/robots.json)，核对各自相机的[标定参数](calibration/)。双机模式由 [Jetson 启动脚本](../ugv_ws/Scripts/README.md) 启动。
+
+[swarm_interfaces](src/swarm_interfaces/README.md)、[swarm_manager](src/swarm_manager/README.md) 和 [swarm_bringup](src/swarm_bringup/README.md) 提供历史目标、中继消息与启动入口，供[无人机工作区](../uav_ws/README.md)等接口实验使用。

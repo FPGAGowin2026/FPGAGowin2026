@@ -1,0 +1,20 @@
+parent_frame: acg720_lidar
+child_frame: acg720_camera_optical
+translation:
+  x: 0.05506152636144496
+  y: 0.01918927603501243
+  z: -0.02
+rotation_rpy:
+  roll: 1.5707963267948966
+  pitch: 0.0
+  yaw: 2.9365164559010903
+measurement_preliminary: true
+measurement_method: operator-measured mechanical offsets; horizontal camera facing
+  robot head; heading estimated from actual before/present/removed lidar reference
+  captures
+measurement_notes: user-described horizontal and negligible side roll are approximations;
+  reference centering and measurement uncertainty are not independently quantified;
+  optical x/y inverted to account for the observed upside-down native image; original
+  mechanical translation and viewing direction retained; not a full extrinsic calibration
+robot_head_bearing_in_lidar_deg: 78.2499993938468
+native_image_roll_about_optical_axis_deg: 180.0

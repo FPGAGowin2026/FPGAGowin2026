@@ -5,11 +5,11 @@
 //Fri Mar 27 15:12:37 2026
 
 //Source file index table:
-//file0 "\C:/Users/24165/Desktop/BX72_test_gowin/bx72_test/src/ddr3_hdmi/wr_data_fifo/temp/FIFO/fifo_define.v"
-//file1 "\C:/Users/24165/Desktop/BX72_test_gowin/bx72_test/src/ddr3_hdmi/wr_data_fifo/temp/FIFO/fifo_parameter.v"
-//file2 "\D:/Gowin/Gowin_V1.9.12.01_x64/IDE/ipcore/FIFO/data/edc.v"
-//file3 "\D:/Gowin/Gowin_V1.9.12.01_x64/IDE/ipcore/FIFO/data/fifo.v"
-//file4 "\D:/Gowin/Gowin_V1.9.12.01_x64/IDE/ipcore/FIFO/data/fifo_top.v"
+//file0 "fifo_define.v"
+//file1 "fifo_parameter.v"
+//file2 "edc.v"
+//file3 "fifo.v"
+//file4 "fifo_top.v"
 `timescale 100 ps/100 ps
 `pragma protect begin_protected
 `pragma protect version="2.3"

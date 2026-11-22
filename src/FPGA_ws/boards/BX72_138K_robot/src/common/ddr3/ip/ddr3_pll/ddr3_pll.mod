@@ -7,7 +7,7 @@
 
 -mod_name ddr3_pll
 -file_name ddr3_pll
--path C:/Users/Administrator/Desktop/456/720/ch47_ov5640_ddr3_tft/src/ddr3_pll/
+-path .
 -type PLL_ADV
 -file_type vlg
 -ssc false

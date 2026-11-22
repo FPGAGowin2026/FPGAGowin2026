@@ -9,8 +9,8 @@
 //Thu Oct 22 08:24:16 2026
 
 //Source file index table:
-//file0 "\E:/project/FPGA_workspace/FPGAGowin2026/GoWin/Gowin_V1.9.12.04_x64/IDE/ipcore/Color_Correction_Matrix/data/ccm_top.v"
-//file1 "\E:/project/FPGA_workspace/FPGAGowin2026/GoWin/Gowin_V1.9.12.04_x64/IDE/ipcore/Color_Correction_Matrix/data/ccm_top_wrap.v"
+//file0 "ccm_top.v"
+//file1 "ccm_top_wrap.v"
 `timescale 100 ps/100 ps
 `pragma protect begin_protected
 `pragma protect version="2.4"

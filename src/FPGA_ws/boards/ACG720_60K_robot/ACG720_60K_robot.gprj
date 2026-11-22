@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE gowin-fpga-project>
+<Project>
+    <Template>FPGA</Template>
+    <Version>5</Version>
+    <Device name="GW5AT-60B" pn="GW5AT-LV60PG484AC1/I0">gw5at60b-002</Device>
+    <FileList>
+        <File path="src/motion/hexapod_gait.v" type="file.verilog" enable="1" />
+        <File path="src/ethernet/hex1_udp_command_rx.v" type="file.verilog" enable="1" />
+        <File path="src/sensor/d500_uart.v" type="file.verilog" enable="1" />
+        <File path="src/sensor/imu963ra_spi.v" type="file.verilog" enable="1" />
+        <File path="src/sensor/imu_snapshot_cdc.v" type="file.verilog" enable="1" />
+        <File path="src/ethernet/camera_udp_stream.v" type="file.verilog" enable="1" />
+        <File path="src/ethernet/eth_udp_tx_gmii.v" type="file.verilog" enable="1" />
+        <File path="src/ethernet/gmii_to_rgmii.v" type="file.verilog" enable="1" />
+        <File path="src/ethernet/crc32_d8.v" type="file.verilog" enable="1" />
+        <File path="src/ethernet/ip_checksum.v" type="file.verilog" enable="1" />
+        <File path="src/ethernet/phy_reg_config.v" type="file.verilog" enable="1" />
+        <File path="src/ethernet/mdio_bit_shift.v" type="file.verilog" enable="1" />
+        <File path="src/common/clock/pll_init.v" type="file.verilog" enable="1" />
+        <File path="src/video/camera/DVP_Capture.v" type="file.verilog" enable="1" />
+        <File path="src/video/camera/camera_line_align.v" type="file.verilog" enable="1" />
+        <File path="src/video/camera/camera_init.v" type="file.verilog" enable="1" />
+        <File path="src/video/camera/ov5640_init_table_rgb.v" type="file.verilog" enable="1" />
+        <File path="src/video/camera/i2c_control/i2c_bit_shift.v" type="file.verilog" enable="1" />
+        <File path="src/video/camera/i2c_control/i2c_control.v" type="file.verilog" enable="1" />
+        <File path="src/common/ddr3/ip/ddr3_memory_interface/ddr3_memory_interface_60b.v" type="file.verilog" enable="1" />
+        <File path="src/common/ddr3/ip/ddr3_pll/ddr3_pll.v" type="file.verilog" enable="1" />
+        <File path="src/common/ddr3/ip/ddr3_pll/ddr3_pll_mod.v" type="file.verilog" enable="1" />
+        <File path="src/common/ddr3/ip/wr_data_fifo/wr_data_fifo.v" type="file.verilog" enable="1" />
+        <File path="src/common/ddr3/ip/rd_data_fifo/rd_data_fifo.v" type="file.verilog" enable="1" />
+        <File path="src/common/ip/gowin_pll/gowin_pll.v" type="file.verilog" enable="1" />
+        <File path="src/common/ddr3/camera_framebuffer.v" type="file.verilog" enable="1" />
+        <File path="src/top/camera_udp_top.v" type="file.verilog" enable="1" />
+        <File path="src/constraint/camera_udp.cst" type="file.cst" enable="1" />
+        <File path="src/constraint/camera_udp.sdc" type="file.sdc" enable="1" />
+    </FileList>
+</Project>

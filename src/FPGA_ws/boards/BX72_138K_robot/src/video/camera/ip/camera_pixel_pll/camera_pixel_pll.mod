@@ -7,7 +7,7 @@
 
 -mod_name Camera_Pixel_PLL_MOD
 -file_name camera_pixel_pll_mod
--path C:/Users/32035/Desktop/FPGAFowin2026/fpga_ws/boards/BX72_138K_robot/src/video/camera/ip/camera_pixel_pll/
+-path .
 -type PLL_ADV
 -file_type vlg
 -ip_version 1.0

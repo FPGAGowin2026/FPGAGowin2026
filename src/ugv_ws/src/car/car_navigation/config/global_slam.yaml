@@ -1,32 +1,29 @@
-global_map_node:
-  ros__parameters:
-    http_bind: '0.0.0.0'
-    http_port: 8766
-
 slam_toolbox:
   ros__parameters:
     use_sim_time: false
     mode: mapping
+    # The executable applies this only when explicitly configured.
+    stack_size_to_use: 40000000
     solver_plugin: solver_plugins::CeresSolver
     odom_frame: odom
     map_frame: map
     base_frame: base_link
-    scan_topic: /slam/scan
+    scan_topic: /scan
     scan_queue_size: 1
+    # Bound the recent matching window; the full pose graph remains stored.
+    scan_buffer_size: 20
     use_scan_matching: true
     do_loop_closing: true
     enable_interactive_mode: false
     resolution: 0.05
-    min_laser_range: 0.01
+    min_laser_range: 0.05
     max_laser_range: 8.0
-    minimum_travel_distance: 0.15
+    # Scan matching is time-gated; corrected motion selects permanent keyframes.
+    minimum_travel_distance: 0.05
     minimum_travel_heading: 0.2
     minimum_time_interval: 0.4
-    map_update_interval: 1.0
+    # Normal tracking uses the upstream window; relocation keeps its wider search.
+    correlation_search_space_dimension: 0.5
+    map_update_interval: 3.0
     transform_publish_period: 0.02
     transform_timeout: 0.2
-    loop_search_maximum_distance: 3.0
-    loop_match_minimum_chain_size: 10
-    loop_match_maximum_variance_coarse: 3.0
-    loop_match_minimum_response_coarse: 0.35
-    loop_match_minimum_response_fine: 0.45

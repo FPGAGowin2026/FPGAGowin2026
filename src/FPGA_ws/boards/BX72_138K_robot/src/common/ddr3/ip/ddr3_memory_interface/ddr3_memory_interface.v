@@ -8,8 +8,8 @@
 //Thu Oct  1 23:16:52 2026
 
 //Source file index table:
-//file0 "\E:/project/FPGA_workspace/FPGAGowin2026/GoWin/Gowin_V1.9.12.04_x64/IDE/ipcore/DDR3/data/ddr3_1_4code_hs/ddr3_1_4code_hs.v"
-//file1 "\E:/project/FPGA_workspace/FPGAGowin2026/GoWin/Gowin_V1.9.12.04_x64/IDE/ipcore/DDR3/data/ddr3_1_4code_hs/DDR3_TOP.v"
+//file0 "ddr3_1_4code_hs.v"
+//file1 "DDR3_TOP.v"
 `timescale 100 ps/100 ps
 `pragma protect begin_protected
 `pragma protect version="2.4"

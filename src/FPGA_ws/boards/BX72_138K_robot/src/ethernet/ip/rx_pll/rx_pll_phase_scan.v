@@ -29,6 +29,7 @@ module rx_pll_phase_scan #(
     localparam [3:0] ST_EVAL_DONE = 4'd8;
     localparam [3:0] ST_VERIFY    = 4'd9;
     localparam [3:0] ST_READY     = 4'd10;
+    localparam [3:0] ST_MASK_DONE = 4'd11;
     localparam       SETTLE_SCAN  = 1'b0;
     localparam       SETTLE_VERIFY= 1'b1;
 
@@ -37,6 +38,8 @@ module rx_pll_phase_scan #(
     reg [15:0] good_mask;
     reg [31:0] timer;
     reg [7:0] phase_good_count;
+    reg [7:0] phase_scores[0:15];
+    reg [7:0] peak_good_count;
     reg [1:0] verify_good_count;
     reg [4:0] move_steps;
     reg [1:0] pulse_count;
@@ -54,6 +57,10 @@ module rx_pll_phase_scan #(
     wire [3:0] selected_delta;
     wire [3:0] phase_zero_delta;
     wire [4:0] eval_center_full={1'b0,eval_start}+((eval_run_len-5'd1)>>1);
+    wire [7:0] final_good_count = (good_sync != good_seen && phase_good_count != 8'hff) ?
+        phase_good_count + 8'd1 : phase_good_count;
+    // ceil(3*peak/4) without overflowing the eight-bit saturated count.
+    wire [7:0] quality_threshold = peak_good_count - (peak_good_count >> 2);
 
     assign sampling_reset_o = resetlink_i || reset_sync || !lock_sync ||
         !((state == ST_MEASURE) || (state == ST_VERIFY) || (state == ST_READY));
@@ -105,6 +112,7 @@ module rx_pll_phase_scan #(
             phase_index_o <= 4'd0;
             timer <= 32'd0;
             phase_good_count <= 8'd0;
+            peak_good_count <= 8'd0;
             verify_good_count <= 2'd0;
             move_steps <= 5'd0;
             pulse_count <= 2'd0;
@@ -122,6 +130,7 @@ module rx_pll_phase_scan #(
             phase_index_o <= 4'd0;
             timer <= 32'd0;
             phase_good_count <= 8'd0;
+            peak_good_count <= 8'd0;
             verify_good_count <= 2'd0;
             move_steps <= 5'd0;
             pulse_count <= 2'd0;
@@ -140,6 +149,7 @@ module rx_pll_phase_scan #(
                     settle_next <= SETTLE_SCAN;
                     timer <= 32'd0;
                     phase_good_count <= 8'd0;
+                    peak_good_count <= 8'd0;
                     verify_good_count <= 2'd0;
                     move_steps <= 5'd0;
                     pulse_count <= 2'd0;
@@ -173,10 +183,9 @@ module rx_pll_phase_scan #(
 
                     if (timer >= PHASE_TICKS - 1) begin
                         timer <= 32'd0;
-                        if ((phase_good_count != 0) || (good_sync != good_seen))
-                            good_mask[phase_index_o] <= 1'b1;
-                        else
-                            good_mask[phase_index_o] <= 1'b0;
+                        phase_scores[phase_index_o] <= final_good_count;
+                        if(final_good_count > peak_good_count)
+                            peak_good_count <= final_good_count;
 
                         if (phase_index_o == 4'd15) begin
                             eval_start <= 4'd0;
@@ -228,6 +237,17 @@ module rx_pll_phase_scan #(
                 end
 
                 ST_EVALUATE: begin
+                    // A complete scan overwrites every score before use. Retry
+                    // paths clear the peak so no prior scan raises the threshold.
+                    good_mask[eval_start] <= peak_good_count >= 8'd8 &&
+                        phase_scores[eval_start] >= quality_threshold;
+                    if(eval_start == 4'd15)begin
+                        eval_start <= 4'd0;
+                        state <= ST_MASK_DONE;
+                    end else eval_start <= eval_start + 1'b1;
+                end
+
+                ST_MASK_DONE: begin
                     // 每周期只检查一个 run 起点；全 good 图直接选择相位 0。
                     if (good_mask == 16'hffff) begin
                         eval_best_len <= 5'd16;
@@ -277,6 +297,7 @@ module rx_pll_phase_scan #(
                     if (eval_best_len == 0) begin
                         // 全环没有 good 点；回到 0 相位并重新扫描。
                         good_mask <= 16'd0;
+                        peak_good_count <= 8'd0;
                         phase_index_o <= 4'd0;
                         move_steps <= 5'd1;
                         pulse_count <= 2'd0;
@@ -313,6 +334,7 @@ module rx_pll_phase_scan #(
                         // 复核不够 3 帧，回到 0 相位完整重扫。
                         timer <= 32'd0;
                         good_mask <= 16'd0;
+                        peak_good_count <= 8'd0;
                         phase_good_count <= 8'd0;
                         phase_index_o <= 4'd0;
                         settle_next <= SETTLE_SCAN;

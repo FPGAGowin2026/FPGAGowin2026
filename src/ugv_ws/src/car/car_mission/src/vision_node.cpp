@@ -5,6 +5,7 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <cstdlib>
 #include <cstring>
 #include <filesystem>
 #include <fstream>
@@ -25,7 +26,6 @@
 #include <cuda_runtime_api.h>
 #include <NvInfer.h>
 
-#include <cv_bridge/cv_bridge.h>
 #include <opencv2/imgproc.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/image_encodings.hpp>
@@ -127,8 +127,6 @@ Letterbox preprocess_to_nchw(const cv::Mat & bgr, std::vector<float> & input)
     static_cast<float>(resized_height) / bgr.rows};
 }
 
-std::string dims_string(const nvinfer1::Dims & dims);
-
 cv::Rect2f restore_xyxy(
   float x1, float y1, float x2, float y2, const Letterbox & letterbox,
   int image_width, int image_height)
@@ -144,24 +142,24 @@ cv::Rect2f restore_xyxy(
   return cv::Rect2f(x1, y1, std::max(0.0F, x2 - x1), std::max(0.0F, y2 - y1));
 }
 
-std::size_t output_rows_for_format(
-  const std::string & format, const nvinfer1::Dims & dims)
+bool is_red(const cv::Mat & bgr, const vision_msgs::msg::BoundingBox2D & box)
 {
-  if (dims.nbDims == 3 && dims.d[0] == 1 && dims.d[1] == 84 && dims.d[2] > 0) {
-    return static_cast<std::size_t>(dims.d[2]);
+  const double cx = box.center.position.x, cy = box.center.position.y;
+  const double half_width = box.size_x / 2, half_height = box.size_y / 2;
+  const int x0 = static_cast<int>(std::max(0.0, cx - half_width));
+  const int y0 = static_cast<int>(std::max(0.0, cy - half_height));
+  const int x1 = static_cast<int>(std::min<double>(bgr.cols, std::ceil(cx + half_width)));
+  const int y1 = static_cast<int>(std::min<double>(bgr.rows, std::ceil(cy + half_height)));
+  if (x1 <= x0 || y1 <= y0) {
+    return false;
   }
-  if (format != "rows_xyxy_score_class") {
-    throw std::runtime_error("unsupported output_format='" + format + "'");
-  }
-  if (dims.nbDims == 3 && dims.d[0] == 1 && dims.d[1] > 0 && dims.d[2] == 6) {
-    return static_cast<std::size_t>(dims.d[1]);
-  }
-  if (dims.nbDims == 2 && dims.d[0] > 0 && dims.d[1] == 6) {
-    return static_cast<std::size_t>(dims.d[0]);
-  }
-  throw std::runtime_error(
-          "rows_xyxy_score_class 只接受输出 [1,N,6] 或 [N,6]，实际为 " +
-          dims_string(dims));
+  const cv::Rect crop(x0, y0, x1 - x0, y1 - y0);
+  cv::Mat hsv, mask;
+  cv::cvtColor(bgr(crop), hsv, cv::COLOR_BGR2HSV);
+  cv::inRange(hsv, cv::Scalar(0, 100, 70), cv::Scalar(10, 255, 255), mask);
+  const int low_hue_red = cv::countNonZero(mask);
+  cv::inRange(hsv, cv::Scalar(170, 100, 70), cv::Scalar(179, 255, 255), mask);
+  return low_hue_red + cv::countNonZero(mask) >= 0.1 * crop.width * crop.height;
 }
 
 std::int64_t stamp_nanoseconds(std::int32_t sec, std::uint32_t nanosec)
@@ -193,32 +191,59 @@ bool steady_receipt_is_fresh(
   return std::chrono::duration<double>(now - received).count() <= timeout_s;
 }
 
-bool image_message_is_valid(const sensor_msgs::msg::Image & image)
+struct InputFrame {
+  sensor_msgs::msg::Image::ConstSharedPtr message;
+  int channels;
+  int to_bgr;
+
+  cv::Mat bgr() const
+  {
+    // Mat's external-buffer constructor takes void*. Keep this message-backed view read-only.
+    const cv::Mat source(static_cast<int>(message->height), static_cast<int>(message->width),
+      CV_8UC(channels), const_cast<std::uint8_t *>(message->data.data()), message->step);
+    if (to_bgr < 0) {
+      return source;
+    }
+    cv::Mat converted;
+    cv::cvtColor(source, converted, to_bgr);
+    return converted;
+  }
+};
+
+std::optional<InputFrame> input_frame(const sensor_msgs::msg::Image::ConstSharedPtr & message)
 {
+  const auto & image = *message;
   if (image.header.frame_id.empty() || image.width == 0 || image.height == 0 ||
     image.width > INT_MAX || image.height > INT_MAX)
   {
-    return false;
+    return std::nullopt;
   }
-  const auto & encoding = image.encoding;
-  if (encoding != sensor_msgs::image_encodings::BGR8 &&
-    encoding != sensor_msgs::image_encodings::RGB8 &&
-    encoding != sensor_msgs::image_encodings::MONO8 &&
-    encoding != sensor_msgs::image_encodings::BGRA8 &&
-    encoding != sensor_msgs::image_encodings::RGBA8)
+  namespace enc = sensor_msgs::image_encodings;
+  int channels;
+  int to_bgr = -1;
+  if (image.encoding == enc::BGR8) {
+    channels = 3;
+  } else if (image.encoding == enc::RGB8) {
+    channels = 3;
+    to_bgr = cv::COLOR_RGB2BGR;
+  } else if (image.encoding == enc::MONO8) {
+    channels = 1;
+    to_bgr = cv::COLOR_GRAY2BGR;
+  } else if (image.encoding == enc::BGRA8) {
+    channels = 4;
+    to_bgr = cv::COLOR_BGRA2BGR;
+  } else if (image.encoding == enc::RGBA8) {
+    channels = 4;
+    to_bgr = cv::COLOR_RGBA2BGR;
+  } else {
+    return std::nullopt;
+  }
+  if (image.step < static_cast<std::uint64_t>(image.width) * channels ||
+    image.data.size() != static_cast<std::uint64_t>(image.step) * image.height)
   {
-    return false;
+    return std::nullopt;
   }
-  try {
-    const int cv_type = cv_bridge::getCvType(image.encoding);
-    const std::uint64_t row_bytes =
-      static_cast<std::uint64_t>(image.width) * CV_ELEM_SIZE(cv_type);
-    const std::uint64_t image_bytes =
-      static_cast<std::uint64_t>(image.step) * image.height;
-    return image.step >= row_bytes && image.data.size() >= image_bytes;
-  } catch (const cv_bridge::Exception &) {
-    return false;
-  }
+  return InputFrame{message, channels, to_bgr};
 }
 
 std::string dims_string(const nvinfer1::Dims & dims)
@@ -276,8 +301,11 @@ class VisionNode final : public rclcpp::Node {
   VisionNode()
   : Node("vision_node")
   {
+    const char *home_dir = std::getenv("HOME");
+    const auto default_engine = std::filesystem::path(home_dir ? home_dir : ".") / "yolo" /
+      "yolo26n_fp16.engine";
     engine_path_ = declare_parameter<std::string>(
-      "engine_path", "/home/aa/yolo/yolo26n_fp16.engine");
+      "engine_path", default_engine.string());
     image_topic_ = declare_parameter<std::string>("image_topic", "/camera/image_raw");
     class_id_ = declare_parameter<int>("class_id", -1);
     process_hz_ = declare_parameter<double>("process_hz", 10.0);
@@ -299,10 +327,10 @@ class VisionNode final : public rclcpp::Node {
     {
       throw std::invalid_argument("process_hz, image_timeout_s, score_threshold 参数无效");
     }
-    if (output_format_ != "rows_xyxy_score_class") {
+    if (output_format_ != "rows_xyxy_score_class" && output_format_ != "raw_xywh_80_scores") {
       throw std::invalid_argument(
               "不支持 output_format='" + output_format_ +
-              "'；当前只接受 rows_xyxy_score_class");
+              "'；可选 rows_xyxy_score_class 或 raw_xywh_80_scores");
     }
 
     load_engine();
@@ -438,9 +466,21 @@ class VisionNode final : public rclcpp::Node {
               "输入 tensor 必须为 [1,3,416,416]，实际为 " + dims_string(input_dims_));
     }
     output_dims_ = context_->getTensorShape(output_name_.c_str());
-    raw_output_ = output_dims_.nbDims == 3 && output_dims_.d[0] == 1 && output_dims_.d[1] == 84;
-    if (raw_output_ && class_id_ >= 80) throw std::runtime_error("raw output class_id out of range");
-    output_rows_ = output_rows_for_format(output_format_, output_dims_);
+    const auto & dims = output_dims_;
+    const bool batched = dims.nbDims == 3 && dims.d[0] == 1;
+    const bool rows = (batched && dims.d[1] > 0 && dims.d[2] == 6) ||
+                      (dims.nbDims == 2 && dims.d[0] > 0 && dims.d[1] == 6);
+    const bool raw = batched && dims.d[1] == 84 && dims.d[2] > 0;
+    // Older configurations also use the rows setting for unambiguous raw engines.
+    raw_output_ = raw && (!rows || output_format_ == "raw_xywh_80_scores");
+    if (raw_output_) {
+      if (class_id_ >= 80) throw std::runtime_error("raw output class_id out of range");
+      output_rows_ = static_cast<std::size_t>(dims.d[2]);
+    } else if (rows && output_format_ == "rows_xyxy_score_class") {
+      output_rows_ = static_cast<std::size_t>(dims.d[batched ? 1 : 0]);
+    } else {
+      throw std::runtime_error("输出形状 " + dims_string(dims) + " 与 " + output_format_ + " 不匹配");
+    }
     if (output_rows_ > 1000000U) {
       throw std::runtime_error("输出行数超过节点支持上限: " + std::to_string(output_rows_));
     }
@@ -476,18 +516,19 @@ class VisionNode final : public rclcpp::Node {
         get_logger(), *get_clock(), 5000, "丢弃 ROS 时间戳无效、未来或过期的图像");
       return;
     }
-    if (!image_message_is_valid(*message)) {
+    auto frame = input_frame(message);
+    if (!frame) {
       RCLCPP_WARN_THROTTLE(
         get_logger(), *get_clock(), 5000, "丢弃 frame_id、编码、步长或数据长度无效的图像");
       return;
     }
     last_source_stamp_ns_ = stamp_ns;
     if (latest_image_ && !image_is_fresh(
-        *latest_image_, latest_image_received_, ros_now_ns))
+        *latest_image_->message, latest_image_received_, ros_now_ns))
     {
       discard_cached_image("新图像到达前缓存已过期", true);
     }
-    latest_image_ = message;
+    latest_image_ = std::move(frame);
     latest_image_received_ = SteadyClock::now();
     frame_schedule_->image_received();
     timeout_reset_done_ = false;
@@ -581,7 +622,7 @@ class VisionNode final : public rclcpp::Node {
   {
     std::vector<Object> detections;
     if (raw_output_) {
-      std::vector<cv::Rect> boxes;
+      std::vector<cv::Rect2d> boxes;
       std::vector<float> scores;
       std::vector<int> labels;
       for (std::size_t i = 0; i < output_rows_; ++i) {
@@ -596,11 +637,13 @@ class VisionNode final : public rclcpp::Node {
         if (!std::isfinite(x) || !std::isfinite(y) || !std::isfinite(w) || !std::isfinite(h) || w <= 0 || h <= 0) continue;
         auto r = restore_xyxy(x-w/2, y-h/2, x+w/2, y+h/2, letterbox, bgr.cols, bgr.rows);
         if (r.width <= 0 || r.height <= 0) continue;
-        boxes.emplace_back(cvRound(r.x), cvRound(r.y), cvRound(r.width), cvRound(r.height)); scores.push_back(best); labels.push_back(label);
+        boxes.emplace_back(r.x, r.y, r.width, r.height);
+        scores.push_back(best);
+        labels.push_back(label);
       }
       std::vector<int> kept;
       for (int label = 0; label < 80; ++label) {
-        std::vector<cv::Rect> class_boxes;
+        std::vector<cv::Rect2d> class_boxes;
         std::vector<float> class_scores;
         std::vector<int> indices, selected;
         for (std::size_t j = 0; j < labels.size(); ++j) {
@@ -656,7 +699,7 @@ class VisionNode final : public rclcpp::Node {
   }
 
   vision_msgs::msg::Detection2DArray make_message(
-    const sensor_msgs::msg::Image & image, const std::vector<Object> & detections,
+    const sensor_msgs::msg::Image & image, const cv::Mat & bgr, const std::vector<Object> & detections,
     const std::vector<STrack> & tracks)
   {
     vision_msgs::msg::Detection2DArray message;
@@ -697,6 +740,11 @@ class VisionNode final : public rclcpp::Node {
       result.hypothesis.class_id = std::to_string(observation.label);
       result.hypothesis.score = observation.prob;
       detection.results.push_back(result);
+      if (is_red(bgr, detection.bbox)) {
+        // Keep the model class first for consumers of the primary label.
+        result.hypothesis.class_id = "color:red";
+        detection.results.push_back(std::move(result));
+      }
       message.detections.push_back(std::move(detection));
     }
     return message;
@@ -716,13 +764,14 @@ class VisionNode final : public rclcpp::Node {
     }
     if (!frame_schedule_->has_pending()) {
       if (!timeout_reset_done_ && !image_is_fresh(
-          *latest_image_, latest_image_received_, ros_now_ns))
+          *latest_image_->message, latest_image_received_, ros_now_ns))
       {
         discard_cached_image("缓存图像已过期", true);
       }
       return;
     }
-    const auto image = latest_image_;
+    const auto frame = *latest_image_;
+    const auto & image = frame.message;
     const auto received = latest_image_received_;
     if (!image_is_fresh(*image, received, ros_now_ns)) {
       discard_cached_image("图像在推理前已过期", true);
@@ -733,12 +782,8 @@ class VisionNode final : public rclcpp::Node {
     }
 
     try {
-      const auto cv_image = cv_bridge::toCvCopy(
-        image, sensor_msgs::image_encodings::BGR8);
-      if (cv_image->image.empty() || cv_image->image.cols <= 0 || cv_image->image.rows <= 0) {
-        throw std::runtime_error("收到空图像");
-      }
-      const auto letterbox = preprocess_to_nchw(cv_image->image, input_float_);
+      const cv::Mat bgr = frame.bgr();
+      const auto letterbox = preprocess_to_nchw(bgr, input_float_);
       auto fresh_now_ns = get_clock()->now().nanoseconds();
       if (observe_ros_clock(fresh_now_ns)) {
         return;
@@ -756,7 +801,7 @@ class VisionNode final : public rclcpp::Node {
         discard_cached_image("图像在推理后已过期", true);
         return;
       }
-      const auto detections = detections_from_output(cv_image->image, letterbox);
+      const auto detections = detections_from_output(bgr, letterbox);
       if (debug_image_enabled_ && !diagnostic_logged_) {
         for (const auto & d : detections) {
           RCLCPP_INFO(get_logger(), "decoded class=%d score=%.6f xywh=%.2f,%.2f,%.2f,%.2f", d.label, d.prob, d.rect.x, d.rect.y, d.rect.width, d.rect.height);
@@ -765,7 +810,7 @@ class VisionNode final : public rclcpp::Node {
         diagnostic_logged_ = true;
       }
       const auto tracks = tracker_->update(detections);
-      auto message = make_message(*image, detections, tracks);
+      auto message = make_message(*image, bgr, detections, tracks);
       fresh_now_ns = get_clock()->now().nanoseconds();
       if (observe_ros_clock(fresh_now_ns)) {
         return;
@@ -776,7 +821,19 @@ class VisionNode final : public rclcpp::Node {
       }
       detections_publisher_->publish(message);
       if (debug_image_enabled_) {
-        cv::Mat debug = cv_image->image.clone();
+        sensor_msgs::msg::Image preview;
+        preview.header = image->header;
+        preview.height = image->height;
+        preview.width = image->width;
+        preview.encoding = sensor_msgs::image_encodings::BGR8;
+        const auto row_bytes = static_cast<std::size_t>(bgr.cols) * bgr.elemSize();
+        if (row_bytes > std::numeric_limits<std::uint32_t>::max()) {
+          throw std::runtime_error("BGR8 preview row exceeds the ROS Image step field");
+        }
+        preview.step = static_cast<std::uint32_t>(row_bytes);
+        preview.data.resize(row_bytes * preview.height);
+        cv::Mat debug(bgr.rows, bgr.cols, CV_8UC3, preview.data.data(), preview.step);
+        bgr.copyTo(debug);
         for (const auto & detection : message.detections) {
           const auto & box = detection.bbox;
           const cv::Point top_left(
@@ -790,9 +847,7 @@ class VisionNode final : public rclcpp::Node {
             debug, detection.id, top_left, cv::FONT_HERSHEY_SIMPLEX, 0.5,
             cv::Scalar(0, 255, 0), 1);
         }
-        debug_publisher_->publish(
-          *cv_bridge::CvImage(image->header, sensor_msgs::image_encodings::BGR8, debug)
-          .toImageMsg());
+        debug_publisher_->publish(preview);
       }
     } catch (const std::exception & error) {
       RCLCPP_ERROR_THROTTLE(
@@ -839,7 +894,7 @@ class VisionNode final : public rclcpp::Node {
   bool debug_image_enabled_{false};
   std::unique_ptr<BYTETracker> tracker_;
   std::string session_id_;
-  sensor_msgs::msg::Image::ConstSharedPtr latest_image_;
+  std::optional<InputFrame> latest_image_;
   SteadyClock::time_point latest_image_received_{};
   std::optional<FrameProcessingSchedule> frame_schedule_;
   std::int64_t last_source_stamp_ns_{0};
@@ -855,7 +910,6 @@ class VisionNode final : public rclcpp::Node {
 }  // namespace
 }  // namespace car_mission
 
-#ifndef CAR_MISSION_VISION_NODE_NO_MAIN
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
@@ -869,4 +923,3 @@ int main(int argc, char ** argv)
   rclcpp::shutdown();
   return 0;
 }
-#endif

@@ -1,0 +1,56 @@
+image_width: 640
+image_height: 360
+camera_name: car_ov5647
+distortion_model: plumb_bob
+calibration_preliminary: true
+camera_matrix:
+  rows: 3
+  cols: 3
+  data:
+  - 1017.8894867620593
+  - 0.0
+  - 318.36639809300897
+  - 0.0
+  - 1018.6149857961863
+  - 84.25011109178088
+  - 0.0
+  - 0.0
+  - 1.0
+distortion_coefficients:
+  rows: 1
+  cols: 5
+  data:
+  - -0.3886297255428934
+  - 0.3764074064055955
+  - 0.007525400983602516
+  - -0.0029475256676951647
+  - 0.0
+rectification_matrix:
+  rows: 3
+  cols: 3
+  data:
+  - 1.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 1.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 1.0
+projection_matrix:
+  rows: 3
+  cols: 4
+  data:
+  - 1017.8894867620593
+  - 0.0
+  - 318.36639809300897
+  - 0.0
+  - 0.0
+  - 1018.6149857961863
+  - 84.25011109178088
+  - 0.0
+  - 0.0
+  - 0.0
+  - 1.0
+  - 0.0

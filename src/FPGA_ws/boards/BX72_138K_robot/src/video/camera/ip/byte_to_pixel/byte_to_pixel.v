@@ -9,8 +9,8 @@
 //Fri Oct 16 16:15:33 2026
 
 //Source file index table:
-//file0 "\D:/gowin/gowin_v1.9.12.04_x64/gowin_v1.9.12.04_x64/ide/ipcore/MIPI_BYTE_TO_PIXEL/data/byte_to_pixel.v"
-//file1 "\D:/gowin/gowin_v1.9.12.04_x64/gowin_v1.9.12.04_x64/ide/ipcore/MIPI_BYTE_TO_PIXEL/data/byte_to_pixel_wrap.v"
+//file0 "byte_to_pixel.v"
+//file1 "byte_to_pixel_wrap.v"
 `timescale 100 ps/100 ps
 `pragma protect begin_protected
 `pragma protect version="2.4"

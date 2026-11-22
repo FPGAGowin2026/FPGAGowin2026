@@ -6,10 +6,7 @@
     "node": ">=22"
   },
   "scripts": {
-    "start": "node server.mjs",
-    "test": "node --test"
-  },
-  "dependencies": {
-    "ws": "^8.18.3"
+    "start": "python3 dashboard_server.py",
+    "test": "node --test test/new_dashboard_smoke.cjs test/swarm_dashboard.test.cjs test/optional_mapping.test.cjs test/hexapod_manual.test.cjs test/map_palette.test.cjs"
   }
 }
